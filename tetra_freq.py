@@ -1,16 +1,5 @@
 import itertools as it
 
-# Create empty dictionary that will contain all the 256 different possible tetramers
-tetramer = {}
-
-# Compute each possible tetramer using it.product
-for i in it.product('ATCG', repeat=4):
-    # For each tetramer, input an entry in dictionary, with 0 as sister value.
-    # Use ''.join to concatenate the it.product object from a list of individual strings to single string
-    tetramer[''.join(i)] = 0
-
-tetramer
-
 class Sequence:
     def __init__(self, seq='', tetramers={}):
         self.seq = seq
@@ -40,10 +29,27 @@ class Sequence:
             self.tetramers[product] = self.seq.count(product) / (len(self.seq)-3)
 
 
-test_seq = Sequence()
+import time
 
-test_seq.read_from_fasta('opsin_Amphiprion.fasta')
+timer_start = time.time()
+
+test_seq = Sequence()
+test_seq.read_from_fasta('dmel-2L-chromosome-r5.49.fasta')
+
+timer_end = time.time() - timer_start
+
+print( timer_end)
+
+
+with open('dmel_2L_1sequence', 'w') as f:
+    f.write(test_seq.seq)
+
+test_seq.seq
+
+timer_start = time.time()
 test_seq.tetramer_frequency()
+timer_end = time.time() - timer_start
+print( timer_end)
 
 test_seq.tetramers
 
