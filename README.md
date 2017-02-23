@@ -4,7 +4,7 @@ Looking into the different eukaryotes and prokaryotes genome's signature variabi
 
 Brief explanation of files found in this repo:
 
-'''
+```
 tetra_freq.py  :  compute frequency of each 256 different possible DNA tetramers, …
-''' 
+```
 
