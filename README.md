@@ -1,10 +1,19 @@
-## Evaluation of genomic signature of eukaryotic genomes for detection of horizontal gene transfer.
-Master project of the MLS Bioinformatic Mastership at Lausanne University (Swiss). 
-Looking into the different eukaryotes and prokaryotes genome's signature variability. Mainly done using Drosophila genome, analyzed using Python.
+##  Trying to distinguish properties, and origin, of Genomic Signatures
+Master project of the MLS Bioinformatic at Lausanne University (Swiss) in the  
+[group of Marc Robinson-Rechavi](https://www.unil.ch/dee/robinson-rechavi-group), 
+and under the supervision of [Kamil Jaron](https://github.com/KamilSJaron).
 
-Brief explanation of files found in this repo:
+### Dependencies
+Python 3 modules used during the analyses:
+```
+Bio (Biopython)
+joblib
+re
+glob
+subprocess
+sys
+os
+math
+```
 
-```
-tetra_freq.py  :  compute frequency of each 256 different possible DNA tetramers, …
-```
 
