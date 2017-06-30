@@ -24,6 +24,16 @@ for each_genome in $( seq 1 1 $number_genomes ) ; do
 
     wget -r -np -nd -A "genomic.fna.gz" $each_accession
 
+    all_tar=$( find *.gz )
+
+    # Will then decompress everything
+    for each_tar in $all_tar ; do
+        IFS='.' read -r -a array <<< "$each_tar"
+        outfile_name=$( echo $each_species'_'${array[1]}'.'${array[2]} )
+        gunzip < $each_tar > $outfile_name
+    done
+
+
     cd $way_back
 done
 

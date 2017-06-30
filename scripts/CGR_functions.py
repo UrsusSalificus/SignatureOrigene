@@ -1,6 +1,5 @@
 # This script will compute the Chaos Game Representation (CGR) of a sequence.
 from Bio import SeqIO
-import re
 import sys
 import math
 import glob
@@ -21,7 +20,7 @@ def checking_parent (file_path):
 # Extract all the path of files matching a certain pattern in a directory
 ###
 def extract_path(files_directory, pattern):
-    return (glob.glob(files_directory + pattern))
+    return glob.glob(files_directory + pattern)
 
 ###
 # Fetch a fasta file, and clean it (remove N or n, which stands for "any nucleotides)
@@ -29,49 +28,46 @@ def extract_path(files_directory, pattern):
 # Input:
 #   - fasta_file : Path to the file containing the sequence one wants the CGR computed on
 ###
-def fetch_and_clean_fasta(fasta_file):
+def fetch_fasta(fasta_file):
     # Will only take the first sequence of the fasta file
     try:
-        records = list(SeqIO.parse(fasta_file, "fasta"))[0]
+        records = list(SeqIO.parse(fasta_file, "fasta"))
     except:
         print("Cannot open %s, check path!" % fasta_file)
         sys.exit()
-    if len(list(SeqIO.parse(fasta_file, "fasta"))) > 1:
-        print("Multiple sequences, will only compute CGR for the first one")
-    cleaned_seq = re.sub('[Nn]', '', str(records.seq))
-    return(cleaned_seq)
+    return(records)
 
 
 ###
 # Compute the Chaos Game Representation (CGR) of the cleaned sequence
 # Inputs:
-#   - cleaned_seq : cleaned sequence (string) one wants the CGR computed on
+#   - records : fetched sequence (fasta) one wants the CGR computed on
 #   - outfile : path to the output file, which will contain the x/y CGR coordinates
 #           Note: if empty, will return the coordinates instead of writing a file.
 # Output:
 #   - Either a file, were each line contain a set of x/y coordinates (separated by \t)
 #   - Or the coordinates stocked as [[x coordinates], [y coordinates]]
 ###
-def CGR_coordinates(cleaned_seq, outfile):
+def CGR_coordinates(records, outfile):
     # Prepare the list of x and y coordinates, already at the right size as we will us numeric range in our loop
-    xcord = [0] * len(cleaned_seq)
-    ycord = [0] * len(cleaned_seq)
+    xcord = [0] * len(records)
+    ycord = [0] * len(records)
     # actual variables are the pointer variables (were are we?), it will change at each nucleotide.
     actual_x = 0.5
     actual_y = 0.5
     # For each nucleotide, from your actual position in the picture, go half-way to this nucleotide corner
     # Nucleotide corner (x axis, y axis): A (0,0), T (1,0), C (0,1) and G (1,1)
-    for each_char in range(len(cleaned_seq)):
-        if cleaned_seq[each_char] == "A" or cleaned_seq[each_char] == "a":
+    for each_char in range(len(records)):
+        if records[each_char] == "A" or records[each_char] == "a":
             xcord[each_char] = actual_x + ((-actual_x) / 2)
             ycord[each_char] = actual_y + ((-actual_y) / 2)
-        elif cleaned_seq[each_char] == "C" or cleaned_seq[each_char] == "c":
+        elif records[each_char] == "C" or records[each_char] == "c":
             xcord[each_char] = actual_x + ((-actual_x) / 2)
             ycord[each_char] = actual_y + ((1 - actual_y) / 2)
-        elif cleaned_seq[each_char] == "G" or cleaned_seq[each_char] == "g":
+        elif records[each_char] == "G" or records[each_char] == "g":
             xcord[each_char] = actual_x + ((1 - actual_x) / 2)
             ycord[each_char] = actual_y + ((1 - actual_y) / 2)
-        elif cleaned_seq[each_char] == "T" or cleaned_seq[each_char] == "t":
+        elif records[each_char] == "T" or records[each_char] == "t":
             xcord[each_char] = actual_x + ((1 - actual_x) / 2)
             ycord[each_char] = actual_y + ((-actual_y) / 2)
         else:
@@ -83,7 +79,7 @@ def CGR_coordinates(cleaned_seq, outfile):
     # If outfile is non-empty, write the output
     if outfile:
         with open(outfile, 'w') as file:
-            for each_char in range(len(cleaned_seq)):
+            for each_char in range(len(records)):
                 file.write(str(xcord[each_char])+ '\t')
                 file.write(str(ycord[each_char]) + '\n')
 
@@ -91,27 +87,35 @@ def CGR_coordinates(cleaned_seq, outfile):
     else:
         # Store the CGR in a form of a list of list
         coordinates = [xcord, ycord]
-        return(coordinates)
+
+    return coordinates
+
 
 
 ###
 # Compute the k-mer Frequencies of the Chaos Game Representation (FCGR) of the cleaned sequence
 # Inputs:
 #   - k_size : k-mer size
+#   - CGR :
+#       - Either a file (string)
+#       - Or a set a of coordinates (list) obtained through CGR_coordinates function
 #   - outfile : path to the output file, which will contain the FCGR
 #           Note: if empty, will return the FCGR instead of writing a file.
 # Output:
 #   - Either a file, were each k-mer frequencies are separated by \t
 #   - Or the coordinates stocked in the same format
 ###
-def FCGR_from_CGR(k_size, CGR_file, outfile):
-    x_coord = []
-    y_coord = []
-    with open(CGR_file, 'r') as input:
-        for each_coord in input:
-            x_coord.append(each_coord.split()[0])
-            y_coord.append(each_coord.split()[1])
-    CGR = [x_coord, y_coord]
+def FCGR_from_CGR(k_size, CGR, outfile):
+    # If CGR is a string = a path
+    if isinstance(CGR, str):
+        x_coord = []
+        y_coord = []
+        with open(CGR, 'r') as CGR_file:
+            for each_coord in CGR_file:
+                x_coord.append(each_coord.split()[0])
+                y_coord.append(each_coord.split()[1])
+        CGR = [x_coord, y_coord]
+    # Else it can be used as it is
 
     # Make sure the decimals are precise enough
     decimals = int(math.pow(10, k_size + 2))
@@ -137,7 +141,8 @@ def FCGR_from_CGR(k_size, CGR_file, outfile):
 
     FCGR = []
     coordinates = list(CGR)
-    # Compute the frequency of k-mer, by dividing the Chaos Game Representation (CGR) of the sequence into multiple grids
+    # Compute the frequency of k-mer:
+    #   by dividing the Chaos Game Representation (CGR) of the sequence into multiple grids
     # Note: we will intentionally exclude the k-1 first elements (as they are smaller than the k-mer size we want)
     for each_grid in grid_ranges:
         # grid_count will count the number of "points" in the actual grid
@@ -146,7 +151,8 @@ def FCGR_from_CGR(k_size, CGR_file, outfile):
         to_remove = []
         # For each set of coordinates, check if in the grid
         for each_set in range(len(coordinates[0])):
-            # If this set of coordinates is in the actual grid, increase actual grid count by 1 and stock it to remove it
+            # If this set of coordinates is in the actual grid,
+            # increase actual grid count by 1 and stock it to remove it
             if each_grid[0] < float(coordinates[0][each_set]) < each_grid[1] \
                     and each_grid[2] < float(coordinates[1][each_set]) < each_grid[3]:
                 grid_count += 1
@@ -169,7 +175,7 @@ def FCGR_from_CGR(k_size, CGR_file, outfile):
 
     # If no 2nd argument was given, outfile is empty (= considered False)
     else:
-        return (FCGR)
+        return FCGR
 
 
 ###
@@ -240,10 +246,10 @@ def FCGR_indexes(k_size):
     if len(grid_indexes) > 1:
         for each_index_grid in range(len(grid_indexes[0])):
             single_index = []
-            for each_index_size in range(len(grid_indexes)):
+            for each_index_size in reversed(range(len(grid_indexes))):
                 single_index.append(grid_indexes[each_index_size][each_index_grid])
             indexes.append(''.join(single_index))
     else:
         indexes = grid_indexes[0]
 
-    return(indexes)
+    return indexes

@@ -5,14 +5,14 @@ import math
 import subprocess
 
 # Path to the file containing the sequence one wants the CGR computed on
-fasta_file = '../data/genomes/e_coli/GCF_000023665.1_ASM2366v1_genomic.fna'
+fasta_file = '../data/genomes/a_thaliana/a_thaliana_3_TAIR10_genomic.fna'
 # Path to the output file, which will contain the x/y CGR coordinates
 # If empty, will print the coordinates instead of writing a file.
-CGR_outfile = '../data/genomes/e_coli/all_CGRs/CGR_region_'
+CGR_outfile = '../files/CGRs/a_thaliana/CGR_region_'
 # Path to the file which will be used in R to compute PCA
-FCGRs_for_R = '../files/FCGRs/FCGRs_e_coli'
+FCGRs_for_R = '../files/FCGRs/FCGRs_a_thaliana'
 # Path to the output picture of PC1/PC2
-PCA = '../files/PCA/PCA_e_coli'
+PCA = '../files/PCA/PCA_a_thaliana'
 # Size of the sliding window (not overlapping)
 window_size = 150000
 window_in_kb = '15kb'
@@ -42,7 +42,7 @@ def windowed_FCGR(fasta_file, CGR_outfile, FCGRs_for_R, window_size, window_in_k
                        for start in range(0, n_windows))
 
     # We will now compute the k-mer Frequencies of the Chaos Game Representation (FCGR) of tall these CGR
-    # Path to the CGr files:
+    # Path to the CGR files:
     CGR_files = []
     for each_region in range(0, n_windows):
         CGR_files.append(CGR_outfile + str(each_region))
