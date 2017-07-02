@@ -3,7 +3,7 @@ import math
 import numpy
 
 # Beta globin cds of human is used to perform this test
-# fasta_file = '../data/h_sapiens_globin.fasta'
+#fasta_file = '../data/h_sapiens_globin.fasta'
 fasta_file = '../../test2'
 
 records = CGR_functions.fetch_fasta(fasta_file)
@@ -11,7 +11,7 @@ records = CGR_functions.fetch_fasta(fasta_file)
 records_seq = str(records[0].seq)
 
 CGR = CGR_functions.CGR_coordinates(records_seq, '')   # '' -> don't want an outfile
-k_size = 2
+k_size = 8
 
 
 #####################################################################################################################3
@@ -41,7 +41,6 @@ for each_xy in [0,1]:
 sort_x = sorted(coordinates[0])
 
 
-
 # Make sure the decimals are precise enough
 decimals = int(math.pow(10, k_size + 2))
 # Calculate the number of different k-mer we will compute (= number of grid we divide the CGR with)
@@ -66,25 +65,36 @@ x_boundaries = []
 which_boundary = 0
 
 for each_coordinates in range(len(sort_x)):
-    # We search the starting boundary of next grid, if we find it, we note where we are in the index,
-    # and go for the next starting boundary (each_column +1)
+    # If we are a the last coordinate, we must mark any remaining boundaries as empty
+    if each_coordinates == len(sort_x) - 1:
+        x_boundaries.append(each_coordinates)
+        while len(x_boundaries) != len(start_coord_ranges) + 1:
+            x_boundaries.append('empty')
+        break
+    # First, we see if the i coordinates is a "boundary" of a grid (if bigger/outside of the i (which_boundary) grid)
     if sort_x[each_coordinates] >= start_coord_ranges[which_boundary] / decimals:
-        # If we get at the last grid, the last boundary is simply the last element
+        # If we are just before the last grid, we cannot have problem of empty grid left:
+        if which_boundary == len(start_coord_ranges)-1:
+            x_boundaries.append(each_coordinates)
+            which_boundary += 1
+        # In some cases, the i coordinates is not only bigger than the i boundary, but also of i+1
+        # (and even the next, so on and so on). In this case, we know that the i boundary
+        # does not contain any coordinates ('empty'), and that we can go to the next boundary (which_boundary +1)
+        elif sort_x[each_coordinates] >= start_coord_ranges[which_boundary+1] / decimals:
+            while sort_x[each_coordinates] >= start_coord_ranges[which_boundary+1] / decimals:
+                x_boundaries.append('empty')
+                which_boundary += 1
+        # If not at the before-last grid, or if only bigger to i grid, it is the boundary of the i grid,
+        # we then note where we are in the index, and go for the next starting boundary (which_boundary +1)
+        else:
+            x_boundaries.append(each_coordinates)
+            which_boundary += 1
+        # If we ended up being at the last grid, the last boundary is simply the last element
         # and we can stop here (break)
         if which_boundary == len(start_coord_ranges):
             x_boundaries.append(len(sort_x))
             break
-        if sort_x[each_coordinates] >= start_coord_ranges[which_boundary+1] / decimals:
-            while sort_x[each_coordinates] >= start_coord_ranges[which_boundary+1] / decimals:
-                x_boundaries.append('empty')
-                which_boundary += 1
-        else:
-            x_boundaries.append(each_coordinates)
-            which_boundary += 1
-    if each_coordinates == len(sort_x) - 1:
-        x_boundaries.append(each_coordinates)
-        while len(x_boundaries) != len(start_coord_ranges):
-            x_boundaries.append('empty')
+
 
 
 # We will need the order of indices of x coordinates to do the same operations on y:
@@ -93,7 +103,7 @@ numpy_y = numpy.array(coordinates[1])
 sort_index_x = numpy.argsort(numpy_x)
 y_boundaries = []
 
-for each_column in range(len(x_boundaries) -1):
+for each_column in range(len(x_boundaries)-1):
     y_boundaries.append([])
 
     # We will compute the y boundaries differently depending on whether the x column is empty or not:
@@ -128,46 +138,77 @@ for each_column in range(len(x_boundaries) -1):
         each_column_y = numpy_y[sort_index_x[corresponding_x_indexes[0]:corresponding_x_indexes[1]]]
         sort_y = numpy.sort(each_column_y)
         which_boundary = 0
-        # Now do the same operation
-        # TODO: finish this part
+        # Now do the same operation (see comments for the x coordinates operation)
         for each_coordinates in range(len(sort_y)):
-            # We search the starting boundary of next grid, if we find it, we note where we are in the index,
-            # and go for the next starting boundary (each_column +1)
             if sort_y[each_coordinates] >= start_coord_ranges[which_boundary] / decimals:
-                # If we get at the last grid, the last boundary is simply the last element
-                # and we can stop here (break)
-                if which_boundary == len(start_coord_ranges):
-                    y_boundaries[each_column].append(len(sort_y))
-                    break
-                if sort_y[each_coordinates] >= start_coord_ranges[which_boundary + 1] / decimals:
-                    while sort_x[each_coordinates] >= start_coord_ranges[which_boundary + 1] / decimals:
+                # Penultimate grid
+                if which_boundary == len(start_coord_ranges) - 1:
+                    y_boundaries[each_column].append(each_coordinates)
+                    which_boundary += 1
+                # Empty grid later on:
+                elif sort_y[each_coordinates] >= start_coord_ranges[which_boundary + 1] / decimals:
+                    while not which_boundary == len(start_coord_ranges) - 1 \
+                            and sort_y[each_coordinates] >= start_coord_ranges[which_boundary + 1] / decimals:
                         y_boundaries[each_column].append('empty')
                         which_boundary += 1
+                    y_boundaries[each_column].append(each_coordinates)
+                    which_boundary += 1
+                # Any not special grid
                 else:
                     y_boundaries[each_column].append(each_coordinates)
                     which_boundary += 1
-            if each_coordinates == len(sort_x) - 1:
-                y_boundaries[each_column].append(each_coordinates)
-                while len(y_boundaries[each_column]) != len(start_coord_ranges):
+                # Ultimate grid:
+                if which_boundary == len(start_coord_ranges):
+                    y_boundaries[each_column].append(len(sort_y))
+                    break
+            # If we are at the last coordinate
+            if each_coordinates == len(sort_y) - 1:
+                y_boundaries[each_column].append(len(sort_y))
+                while len(y_boundaries[each_column]) != len(start_coord_ranges) + 1:
                     y_boundaries[each_column].append('empty')
+                break
 
     # Else, the column is empty, and must be marked as such:
     else:
-        while len(y_boundaries[each_column]) != len(start_coord_ranges):
-            y_boundaries[each_column].append(0)
-
-
-    if each_column_y.any():
-
-    else:
-        while len(y_boundaries[each_column]) != len(start_coord_ranges):
-            y_boundaries[each_column].append(0)
+        while len(y_boundaries[each_column]) != len(start_coord_ranges)+1:
+            y_boundaries[each_column].append('empty')
 
 FCGR = []
 # We know have to use the y boundaries to count the frequencies:
+
 for each_column in range(len(y_boundaries)):
     for each_kmer in range(len(y_boundaries[each_column])-1):
-        FCGR.append(y_boundaries[each_column][each_kmer + 1] - y_boundaries[each_column][each_kmer])
+        next_kmer = each_kmer + 1
+        # If empty, this mean there is no counts for this kmer.
+        if y_boundaries[each_column][each_kmer] == 'empty':
+            FCGR.append(0)
+        # As we subtract, we must have a non-empty index to compare with:
+        elif y_boundaries[each_column][each_kmer + 1] == 'empty':
+            find_non_empty = True
+            while y_boundaries[each_column][next_kmer] == 'empty':
+                # If the last kmer is also empty it simply means that each_kmer was the last boundary
+                if next_kmer == len(start_coord_ranges):
+                    FCGR.append(0)
+                    find_non_empty = False
+                    break
+                else:
+                    next_kmer += 1
+            # If we find non-empty boundaries in the next kmers, can use it to count the number of kmer in grid i
+            # Note that we add +1 to the index, as we are not as a starting position
+            if find_non_empty:
+                # Note: Python start indexing at 0.
+                # To easily count using subtraction we must add +1 to the next index to get the real index.
+                FCGR.append( (y_boundaries[each_column][next_kmer]) - y_boundaries[each_column][each_kmer])
+        # Else can simply use the next kmer index to count the number of coordinates in the grid
+        else:
+            # Note: Python start indexing at 0.
+            # To easily count using subtraction we must add +1 to the next index to get the real index.
+            FCGR.append( (y_boundaries[each_column][next_kmer]) - y_boundaries[each_column][each_kmer])
+
+for each in range(len(FCGR)):
+    if FCGR[each] != 0:
+        print(each)
+
 
 sum(FCGR)
 
