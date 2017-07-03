@@ -4,6 +4,7 @@ import sys
 import math
 import glob
 import os
+import numpy
 
 
 ###
@@ -21,6 +22,7 @@ def checking_parent (file_path):
 ###
 def extract_path(files_directory, pattern):
     return glob.glob(files_directory + pattern)
+
 
 ###
 # Fetch a fasta file, and clean it (remove N or n, which stands for "any nucleotides)
@@ -91,9 +93,8 @@ def CGR_coordinates(records, outfile):
     return coordinates
 
 
-
 ###
-# Compute the k-mer Frequencies of the Chaos Game Representation (FCGR) of the cleaned sequence
+# Compute the k-mer Frequencies using the Chaos Game Representation (FCGR)
 # Inputs:
 #   - k_size : k-mer size
 #   - CGR :
@@ -103,10 +104,14 @@ def CGR_coordinates(records, outfile):
 #           Note: if empty, will return the FCGR instead of writing a file.
 # Output:
 #   - Either a file, were each k-mer frequencies are separated by \t
-#   - Or the coordinates stocked in the same format
+#   - Or the k-mer frequencies stocked ias a list
 ###
 def FCGR_from_CGR(k_size, CGR, outfile):
-    # If CGR is a string = a path
+    #####################
+    # 1)  Fetch the coordinates and compute all the boundaries of the grid (for a certain k-mer size)
+    #####################
+
+    # If CGR is a string, it must be a path leading to a file containing all the coordinates
     if isinstance(CGR, str):
         x_coord = []
         y_coord = []
@@ -114,65 +119,191 @@ def FCGR_from_CGR(k_size, CGR, outfile):
             for each_coord in CGR_file:
                 x_coord.append(each_coord.split()[0])
                 y_coord.append(each_coord.split()[1])
-        CGR = [x_coord, y_coord]
-    # Else it can be used as it is
+        coordinates = [x_coord, y_coord]
+    # Else it's a Python list of coordinates
+    else:
+        coordinates = CGR
+    # We take out the k_size-1 first coordinates, are these are the coordinates of words smaller than our
+    # wanted k-mer size, and would add small errors later on when counting the frequencies
+    for each_xy in [0, 1]:
+        coordinates[each_xy] = coordinates[each_xy][k_size - 1::]
 
+    # Now compute the different grid starting boundaries
     # Make sure the decimals are precise enough
     decimals = int(math.pow(10, k_size + 2))
     # Calculate the number of different k-mer we will compute (= number of grid we divide the CGR with)
     grid_size = int(math.pow(4, k_size))
-
-    # Compute all the possible starting/ending coordinates of all these grids
+    # Compute all the possible starting coordinates of all these grids
     start_coord_ranges = range(0, int(decimals), int(decimals / math.sqrt(grid_size)))
-    end_coord_ranges = range(int(decimals / math.sqrt(grid_size)), int(decimals + decimals / math.sqrt(grid_size)),
-                             int(decimals / math.sqrt(grid_size)))
 
-    # Compute all the grid x/y coordinates under the format [x minimum, x maximum, y minimum, y maximum]
-    # Note: grid_ranges have same length than grid_size
-    grid_ranges = []
-    for each_column in range(int(math.sqrt(grid_size))):
-        # Each "column" of grid has same max/min x coordinates, but all the possible different max/min y coordinates
-        x_start = start_coord_ranges[each_column] / decimals
-        x_end = end_coord_ranges[each_column] / decimals
-        for each_line in range(int(math.sqrt(grid_size))):
-            y_start = start_coord_ranges[each_line] / decimals
-            y_end = end_coord_ranges[each_line] / decimals
-            grid_ranges.append([x_start, x_end, y_start, y_end])
+    #####################
+    # 2)  After sorting the x coordinates, go one coordinates at a time, and check if it is a starting boundary
+    #####################
+    # For x coordinates:
+    sort_x = sorted(coordinates[0])
+    x_boundaries = []
+    which_boundary = 0
 
+    # We can go one sorted x coordinate at a time now:
+    for each_coordinates in range(len(sort_x)):
+        # If we are a the last coordinate, we must mark any remaining boundaries as empty, and we can stop here (break)
+        if each_coordinates == len(sort_x) - 1:
+            x_boundaries.append(each_coordinates)
+            while len(x_boundaries) != len(start_coord_ranges) + 1:
+                x_boundaries.append('empty')
+            break
+        # First, we see if the i coordinates is a "boundary" of a grid
+        # (if bigger/outside of the i grid (represented by 'which_boundary'))
+        if sort_x[each_coordinates] >= start_coord_ranges[which_boundary] / decimals:
+            # If we are just before the last grid, we cannot have problem of empty grid left (see next if):
+            if which_boundary == len(start_coord_ranges) - 1:
+                x_boundaries.append(each_coordinates)
+                which_boundary += 1
+            # In some cases, the i coordinates is not only bigger than the i boundary, but also of i+1
+            # (and even the next, so on and so on). In this case, we know that the i boundary
+            # does not contain any coordinates ('empty'), and that we can go to the next boundary (which_boundary +1)
+            elif sort_x[each_coordinates] >= start_coord_ranges[which_boundary + 1] / decimals:
+                while not which_boundary == len(start_coord_ranges) - 1 \
+                        and sort_x[each_coordinates] >= start_coord_ranges[which_boundary + 1] / decimals:
+                    x_boundaries.append('empty')
+                    which_boundary += 1
+                x_boundaries.append(each_coordinates)
+                which_boundary += 1
+            # If not at the before-last grid, or if only bigger to i grid, it is the boundary of the i grid.
+            # We then note where we are in the index, and go for the next starting boundary (which_boundary +1)
+            else:
+                x_boundaries.append(each_coordinates)
+                which_boundary += 1
+            # If we ended up being at the last grid, the last boundary is simply the last element
+            # and we can stop here (break)
+            if which_boundary == len(start_coord_ranges):
+                x_boundaries.append(len(sort_x))
+                break
+
+    #####################
+    # 3)  Quite similar step is done for each y coordinates corresponding to each x grids
+    #####################
+    # We will need the order of indices of x coordinates to do the same operations on y:
+    numpy_x = numpy.array(coordinates[0])
+    numpy_y = numpy.array(coordinates[1])
+    sort_index_x = numpy.argsort(numpy_x)
+    y_boundaries = []
+
+    # Can go one starting boundary of grids of x at a time:
+    # Note, we don't go for the -1 one, as it is not really a grid, but simply the ultimate grid's ending boundary
+    for each_column in range(len(x_boundaries) - 1):
+        y_boundaries.append([])
+
+        # We will compute the y boundaries differently depending on whether the x column is empty or not:
+        if not x_boundaries[each_column] == 'empty':
+            # For each column of grids, we can sort the y of the sorted x, and do the same steps as before
+            # First, we must find all the y corresponding to the x in the right grid:
+
+            # In case we are at the last column
+            if each_column == len(x_boundaries) - 1:
+                corresponding_x_indexes = [x_boundaries[each_column], len(sort_x)]
+
+            # Now in cases next column is an empty column, need the first non-empty one to know the corresponding x
+            next_column = each_column + 1
+            if x_boundaries[next_column] == 'empty':
+                while True:
+                    # In cases we have only empty columns left,
+                    if next_column == len(x_boundaries) - 1:
+                        corresponding_x_indexes = [x_boundaries[each_column], len(sort_x)]
+                        break
+                    # Else we must find which is the next non-empty
+                    if x_boundaries[next_column] == 'empty':
+                        next_column += 1
+                    else:
+                        corresponding_x_indexes = [x_boundaries[each_column], x_boundaries[next_column]]
+                        break
+            # Otherwise, it's simply the x between the boundaries
+            else:
+                corresponding_x_indexes = [x_boundaries[each_column], x_boundaries[next_column]]
+
+            # Now that we have the corresponding x indexes, we can find the y of these corresponding x, sort them
+            # and do the same operation that was performed on x before
+            each_column_y = numpy_y[sort_index_x[corresponding_x_indexes[0]:corresponding_x_indexes[1]]]
+            sort_y = numpy.sort(each_column_y)
+            which_boundary = 0
+            # Now do the same operation (see comments for the x coordinates operation)
+            # Note, we do not place the last coordinate break at the beginning here,
+            # as it would impede with counting later on.
+            for each_coordinates in range(len(sort_y)):
+                if sort_y[each_coordinates] >= start_coord_ranges[which_boundary] / decimals:
+                    # Penultimate grid
+                    if which_boundary == len(start_coord_ranges) - 1:
+                        y_boundaries[each_column].append(each_coordinates)
+                        which_boundary += 1
+                    # Empty grid later on:
+                    elif sort_y[each_coordinates] >= start_coord_ranges[which_boundary + 1] / decimals:
+                        while not which_boundary == len(start_coord_ranges) - 1 \
+                                and sort_y[each_coordinates] >= start_coord_ranges[which_boundary + 1] / decimals:
+                            y_boundaries[each_column].append('empty')
+                            which_boundary += 1
+                        y_boundaries[each_column].append(each_coordinates)
+                        which_boundary += 1
+                    # Any not special grid
+                    else:
+                        y_boundaries[each_column].append(each_coordinates)
+                        which_boundary += 1
+                    # Ultimate grid:
+                    if which_boundary == len(start_coord_ranges):
+                        y_boundaries[each_column].append(len(sort_y))
+                        break
+                # If we are at the last coordinate
+                if each_coordinates == len(sort_y) - 1:
+                    y_boundaries[each_column].append(len(sort_y))
+                    while len(y_boundaries[each_column]) != len(start_coord_ranges) + 1:
+                        y_boundaries[each_column].append('empty')
+                    break
+
+        # Else, the whole column is empty, and must be marked as such:
+        else:
+            while len(y_boundaries[each_column]) != len(start_coord_ranges) + 1:
+                y_boundaries[each_column].append('empty')
+
+    #####################
+    # 4)  Using only these y starting boundaries (indexes of y), we can count
+    # how many coordinates there is in each boundary
+    #####################
     FCGR = []
-    coordinates = list(CGR)
-    # Compute the frequency of k-mer:
-    #   by dividing the Chaos Game Representation (CGR) of the sequence into multiple grids
-    # Note: we will intentionally exclude the k-1 first elements (as they are smaller than the k-mer size we want)
-    for each_grid in grid_ranges:
-        # grid_count will count the number of "points" in the actual grid
-        grid_count = 0
-        # We also store the coordinates that were already assigned, to reduce computational time
-        to_remove = []
-        # For each set of coordinates, check if in the grid
-        for each_set in range(len(coordinates[0])):
-            # If this set of coordinates is in the actual grid,
-            # increase actual grid count by 1 and stock it to remove it
-            if each_grid[0] < float(coordinates[0][each_set]) < each_grid[1] \
-                    and each_grid[2] < float(coordinates[1][each_set]) < each_grid[3]:
-                grid_count += 1
-                to_remove.append(each_set)
-        # Stock the output
-        FCGR.append(grid_count)
-
-        # Remove the assigned coordinates (to reduce computational time)
-        # We sort the sets to remove to begin deleting by the end = no problem of moving indexes
-        for each_rm in sorted(to_remove, reverse=True):
-            del coordinates[0][each_rm]
-            del coordinates[1][each_rm]
+    # We know use the y boundaries to count the frequencies:
+    for each_column in range(len(y_boundaries)):
+        for each_kmer in range(len(y_boundaries[each_column]) - 1):
+            # next_kmer will help us know which boundary we will use to compare to our actual kmer
+            next_kmer = each_kmer + 1
+            # If empty, this mean there is no counts for this kmer.
+            if y_boundaries[each_column][each_kmer] == 'empty':
+                FCGR.append(0)
+            # As we subtract, we must have a non-empty index to compare with:
+            elif y_boundaries[each_column][each_kmer + 1] == 'empty':
+                find_non_empty = True
+                while y_boundaries[each_column][next_kmer] == 'empty':
+                    # If the ultimate kmer is also empty it simply means that each_kmer was the last boundary
+                    if next_kmer == len(start_coord_ranges):
+                        FCGR.append(0)
+                        find_non_empty = False
+                        break
+                    # Else, we must keep on searching for the next which is not empty
+                    else:
+                        next_kmer += 1
+                # If we find non-empty boundaries in the next kmers, can use it to count the number of kmer in grid i
+                # Note that we add +1 to the index, as we are not as a starting position
+                if find_non_empty:
+                    # Note: Python start indexing at 0.
+                    # To easily count using subtraction we must add +1 to the next index to get the real index.
+                    FCGR.append((y_boundaries[each_column][next_kmer]) - y_boundaries[each_column][each_kmer])
+            # Else can simply use the next kmer index to count the number of coordinates in the grid
+            else:
+                FCGR.append((y_boundaries[each_column][next_kmer]) - y_boundaries[each_column][each_kmer])
 
     # If outfile is non-empty, write the output
     if outfile:
         with open(outfile, 'w') as file:
-            for each_char in coordinates:
-                file.write(each_char + '\t')
+            for each_count in FCGR:
+                file.write(each_count + '\t')
             file.write('\n')
-
     # If no 2nd argument was given, outfile is empty (= considered False)
     else:
         return FCGR
