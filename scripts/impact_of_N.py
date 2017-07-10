@@ -66,3 +66,11 @@ for each_path in range(len(species_genomes)):
                 when_avoided[each_path].append(1)
     print(str('Ended' + species_genomes[each_path] + '!'))
 
+for each_species in range(len(when_avoided)):
+    print(species[each_species])
+    print(sum(when_removed[each_species]))
+    print(sum(when_avoided[each_species]))
+
+len(when_removed[5])
+species[5]
+

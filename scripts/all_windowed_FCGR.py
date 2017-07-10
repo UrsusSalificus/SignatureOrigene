@@ -1,25 +1,35 @@
-# This script will compute the Chaos Game Representation (CGR) of a sequence.
-from Bio import SeqIO
+# This script compute k-mer frequencies using CGR of all windows of a certain size, in all species
+from joblib import Parallel, delayed
 import sys
 import math
 import glob
-import os
 import numpy
+import os
+
+# Wanted k-mer size:
+k_size = int(sys.argv[1])
+# Wanted window size:
+window_size = int(sys.argv[2])
+window_in_kb = str(window_size)[:-3] + 'kb'
+# Wanted number of threads at the same time:
+n_threads = int(sys.argv[3])
 
 
 ###
-# Check if parent directory is present, if not create it
+# To makes up with any updates, we use the list of species from the downloading script:
 ###
-def checking_parent (file_path):
-    # We don't need the file name, so will take everything but the last part
-    parent_directories = '/'.join(file_path.split('/')[0:(len(file_path.split('/')) - 1)])
-    # As we uses parallel, we ended up we one thread doesn't seeing the directory, attempting
-    # creating it, while another just did the same -> error "The file already exist", and stopped everything...
-    try:
-        if not os.path.exists(parent_directories):
-            os.makedirs(parent_directories)
-    except:
-        pass
+def get_species(species_file='download_genomes.sh'):
+    species = []
+    with open(species_file, 'r') as list_of_species:
+        for each_line in list_of_species:
+            if each_line.split('=')[0] == 'species':
+                for each_species in each_line.split('=')[1].strip().strip('\'').split(' '):
+                    species.append(each_species)
+    return (species)
+
+
+# Get all the species abbreviation for the study
+species = get_species()
 
 
 ###
@@ -30,85 +40,18 @@ def extract_path(files_directory, pattern):
 
 
 ###
-# To makes up with any updates, we use the list of species from the downloading script:
+# Check if parent directory is present, if not create it
 ###
-def get_species(species_file='download_genomes.sh'):
-    species=[]
-    with open(species_file, 'r') as list_of_species:
-        for each_line in list_of_species:
-            if each_line.split('=')[0] == 'species':
-                for each_species in each_line.split('=')[1].strip().strip('\'').split(' '):
-                    species.append(each_species)
-    return(species)
-
-
-###
-# Fetch a fasta file, and clean it (remove N or n, which stands for "any nucleotides)
-# Note that if the fasta file contain multiple sequences, only the first will have its CGR computed !
-# Input:
-#   - fasta_file : Path to the file containing the sequence one wants the CGR computed on
-###
-def fetch_fasta(fasta_file):
-    # Will only take the first sequence of the fasta file
+def checking_parent(file_path):
+    # We don't need the file name, so will take everything but the last part
+    parent_directories = '/'.join(file_path.split('/')[0:(len(file_path.split('/')) - 1)])
+    # As we uses parallel, we ended up we one thread doesn't seeing the directory, attempting
+    # creating it, while another just did the same -> error "The file already exist", and stopped everything...
     try:
-        records = list(SeqIO.parse(fasta_file, "fasta"))
+        if not os.path.exists(parent_directories):
+            os.makedirs(parent_directories)
     except:
-        print("Cannot open %s, check path!" % fasta_file)
-        sys.exit()
-    return(records)
-
-
-###
-# Compute the Chaos Game Representation (CGR) of the cleaned sequence
-# Inputs:
-#   - records : fetched sequence (fasta) one wants the CGR computed on
-#   - outfile : path to the output file, which will contain the x/y CGR coordinates
-#           Note: if empty, will return the coordinates instead of writing a file.
-# Output:
-#   - Either a file, were each line contain a set of x/y coordinates (separated by \t)
-#   - Or the coordinates stocked as [[x coordinates], [y coordinates]]
-###
-def CGR_coordinates(records, outfile):
-    # Prepare the list of x and y coordinates, already at the right size as we will us numeric range in our loop
-    xcord = [0] * len(records)
-    ycord = [0] * len(records)
-    # actual variables are the pointer variables (were are we?), it will change at each nucleotide.
-    actual_x = 0.5
-    actual_y = 0.5
-    # For each nucleotide, from your actual position in the picture, go half-way to this nucleotide corner
-    # Nucleotide corner (x axis, y axis): A (0,0), T (1,0), C (0,1) and G (1,1)
-    for each_char in range(len(records)):
-        if records[each_char] == "A" or records[each_char] == "a":
-            xcord[each_char] = actual_x + ((-actual_x) / 2)
-            ycord[each_char] = actual_y + ((-actual_y) / 2)
-        elif records[each_char] == "C" or records[each_char] == "c":
-            xcord[each_char] = actual_x + ((-actual_x) / 2)
-            ycord[each_char] = actual_y + ((1 - actual_y) / 2)
-        elif records[each_char] == "G" or records[each_char] == "g":
-            xcord[each_char] = actual_x + ((1 - actual_x) / 2)
-            ycord[each_char] = actual_y + ((1 - actual_y) / 2)
-        elif records[each_char] == "T" or records[each_char] == "t":
-            xcord[each_char] = actual_x + ((1 - actual_x) / 2)
-            ycord[each_char] = actual_y + ((-actual_y) / 2)
-        else:
-            raise ValueError('Nucleotide not valid (not ATCG), may impede the rest of the analysis, please clean the '
-                             'sequence')
-        actual_x = xcord[each_char]
-        actual_y = ycord[each_char]
-
-    # If outfile is non-empty, write the output
-    if outfile:
-        checking_parent(outfile)
-        with open(outfile, 'w') as file:
-            for each_char in range(len(records)):
-                file.write(str(xcord[each_char])+ '\t')
-                file.write(str(ycord[each_char]) + '\n')
-
-    # If no 2nd argument was given, outfile is empty (= considered False)
-    else:
-        # Store the CGR in a form of a list of list
-        coordinates = [xcord, ycord]
-        return coordinates
+        pass
 
 
 ###
@@ -328,78 +271,16 @@ def FCGR_from_CGR(k_size, CGR, outfile):
         return FCGR
 
 
-###
-# Compute the indexes of the k-mer Frequencies of the Chaos Game Representation (FCGR)
-# Inputs:
-#   - k_size : k-mer size
-# Output:
-#   - The k-mer indexes (length(indexes) = all possible k-mer)
-###
-def FCGR_indexes(k_size):
-    # Get the indexes for this specific k-mer size
-    # Will take advantage of the fact that dividing the picture in grid yield mini tetramer square of indexes:
-    # Basically, a grid in an odd column and odd line yields a A (0,0), odd column and even line yields a C (0,1),
-    # even column and odd line yields a T (1,0) and even column and even line yields a G (1,1)
-    # First, we see what is the maximum number of mini-square we have in the picture
-    grid_size = int(math.pow(4, k_size))
-    mini_square = int(math.sqrt(grid_size))
-    grid_indexes = []
-    # For each k-mer size, find the indexes
-    for each_size in range(k_size):
-        # As python range begin at 0, must +1 to get to real k-mer size
-        each_size += 1
-        # actual_grid_index will contain all the indexes for this k-mer size
-        actual_grid_index = [''] * grid_size
-        # This pointer will track movement on the grid
-        grid_pointer = 0
-        # This will give us the number of grid for this size, which is used to find the number of mini-squares for this size
-        actual_grid_size = int(math.pow(4, each_size))
-        actual_mini_square = int(math.sqrt(actual_grid_size))
-        # multiplier will help use reach the max ammount of grid whenever we are at < size than max k-mer size
-        # Note: multiplying by 1 whenever we are at same size than max k-mer size
-        multiplier = mini_square / actual_mini_square
-        # We have to tweak the column/lines to make it works whenever we are at < size than max k-mer size
-        actual_lines = []
-        actual_column = []
-        # This part will thus only change line/column whenever we are at < size than max k-mer size
-        for each_mini_square in range(actual_mini_square):
-            multiplied_line = [each_mini_square] * int(multiplier)
-            multiplied_column = [each_mini_square] * int(multiplier)
-            for each_new_line in multiplied_line:
-                actual_lines.append(each_new_line)
-            for each_new_column in multiplied_column:
-                actual_column.append(each_new_column)
-
-        # Now can see whether odd/even column and stock the indexes for this size
-        for each_column in actual_column:
-            if not (each_column + 1) % 2 == 0:
-                for each_line in actual_lines:
-                    if not (each_line + 1) % 2 == 0:
-                        actual_grid_index[grid_pointer] = 'A'
-                        grid_pointer += 1
-                    else:
-                        actual_grid_index[grid_pointer] = 'C'
-                        grid_pointer += 1
-            else:
-                for each_line in actual_lines:
-                    if not (each_line + 1) % 2 == 0:
-                        actual_grid_index[grid_pointer] = 'T'
-                        grid_pointer += 1
-                    else:
-                        actual_grid_index[grid_pointer] = 'G'
-                        grid_pointer += 1
-        grid_indexes.append(actual_grid_index)
-
-    # Lastly, we now have k lists of indexes, which we must join to have the real index per grid
-    indexes = []
-    # If k = 1, we don't have ot go list by list (only one list of index)
-    if len(grid_indexes) > 1:
-        for each_index_grid in range(len(grid_indexes[0])):
-            single_index = []
-            for each_index_size in reversed(range(len(grid_indexes))):
-                single_index.append(grid_indexes[each_index_size][each_index_grid])
-            indexes.append(''.join(single_index))
-    else:
-        indexes = grid_indexes[0]
-
-    return indexes
+# Get all the different CGRs files path
+for each_species in range(len(species)):
+    all_records = extract_path(str('../files/CGRs/' + window_in_kb + '/'
+                                   + species[each_species] + '/'), '*')
+    for each_record in range(len(all_records)):
+        CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
+        ex_split_path = CGR_files[0].split('/')
+        FCGR_directory = '/'.join(['/'.join(ex_split_path[:2]), 'FCGRs', '_'.join([window_in_kb, str(k_size)]),
+                                   '/'.join(ex_split_path[4:-1]), 'FCGR_region_'])  # Path to directory
+        FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
+                                           (k_size, CGR_files[each_region], FCGR_directory + str(each_region))
+                                           # '' to have the ouput of the function as a list
+                                           for each_region in range(len(CGR_files)))

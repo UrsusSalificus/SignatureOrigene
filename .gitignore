@@ -1,0 +1,17 @@
+# Inputs #
+data
+
+# Outputs #
+files
+
+# Wrong scripts #
+scripts/CGR_to_PCA.py
+
+# Testing scripts #
+scripts/test.py
+scripts/testing_script.py
+
+# Scripts for me #
+scripts/for_group_meetings.py
+scripts/for_group_meetings.R
+

@@ -7,11 +7,12 @@ from Bio import SeqIO
 # AND Python's one by one dictionary checking function are identical
 # Beta globin cds of human is used to perform this test
 fasta_file = '../data/h_sapiens_globin.fasta'
+# Chose k-mer size:
+k_size = 7
+
 
 records = list(SeqIO.parse(fasta_file, "fasta"))[0]
 
-# Chose k-mer size:
-k_size = 2
 
 
 # Reference: checking every position, one at a time:
@@ -44,10 +45,13 @@ errors = []
 for number_k_mer in range(len(FCGR_labels)):
     each_k_mer = FCGR_labels[number_k_mer]
     if not FCGR[number_k_mer] == ref[each_k_mer]:
-        errors.append(str('Problem with ' + each_k_mer + ': count = ' + str(k_mer[each_k_mer]) +
-              ' / FCGR = ' + str(FCGR[number_k_mer])))
+        errors.append(str('Problem with ' + each_k_mer + ': count = ' + str(ref[each_k_mer]) +
+                          ' / FCGR = ' + str(FCGR[number_k_mer])))
 if not errors:
     print('No error detected!')
 else:
     for each_error in errors:
         print(each_error)
+
+
+
