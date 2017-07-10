@@ -266,6 +266,7 @@ def FCGR_from_CGR(k_size, CGR, outfile):
             for each_count in FCGR:
                 file.write(str(each_count) + '\t')
             file.write('\n')
+        return FCGR
     # If no 2nd argument was given, outfile is empty (= considered False)
     else:
         return FCGR
@@ -273,14 +274,25 @@ def FCGR_from_CGR(k_size, CGR, outfile):
 
 # Get all the different CGRs files path
 for each_species in range(len(species)):
-    all_records = extract_path(str('../files/CGRs/' + window_in_kb + '/'
-                                   + species[each_species] + '/'), '*')
-    for each_record in range(len(all_records)):
-        CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
-        ex_split_path = CGR_files[0].split('/')
-        FCGR_directory = '/'.join(['/'.join(ex_split_path[:2]), 'FCGRs', '_'.join([window_in_kb, str(k_size)]),
-                                   '/'.join(ex_split_path[4:-1]), 'FCGR_region_'])  # Path to directory
-        FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
-                                           (k_size, CGR_files[each_region], FCGR_directory + str(each_region))
-                                           # '' to have the ouput of the function as a list
-                                           for each_region in range(len(CGR_files)))
+    FCGR_directory = '/'.join(['../files/FCGRs', '_'.join([str(window_in_kb), str(k_size)]),
+                               species[each_species]])
+    concatenated_FCGRS = FCGR_directory + '_FCGRs'
+    checking_parent(concatenated_FCGRS)
+    with open(FCGR_directory + '_FCGRs', 'w') as outfile:
+        CGR_directory = '/'.join(['../files/CGRs/', window_in_kb, species[each_species]]) # Path to directory
+        all_records = extract_path(CGR_directory + '/', '*')
+        for each_record in range(len(all_records)):
+            CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
+            record_name = all_records[each_record].split('/')[-1]
+            FCGR_region = '/'.join([FCGR_directory, record_name, 'FCGR_region_'])   # Path to region
+            FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
+                                               (k_size, CGR_files[each_region], FCGR_region + str(each_region))
+                                               # '' to have the ouput of the function as a list
+                                               for each_region in range(len(CGR_files)))
+            for each_region in range(len(FCGRs)):
+                outfile.write(record_name + '\t')
+                for each_count in FCGRs[each_region]:
+                    outfile.write(str(each_count) + '\t')
+                outfile.write('\n')
+
+

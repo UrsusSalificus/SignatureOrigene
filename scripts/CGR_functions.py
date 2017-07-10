@@ -101,7 +101,7 @@ def CGR_coordinates(records, outfile):
         checking_parent(outfile)
         with open(outfile, 'w') as file:
             for each_char in range(len(records)):
-                file.write(str(xcord[each_char])+ '\t')
+                file.write(str(xcord[each_char]) + '\t')
                 file.write(str(ycord[each_char]) + '\n')
 
     # If no 2nd argument was given, outfile is empty (= considered False)
@@ -323,6 +323,7 @@ def FCGR_from_CGR(k_size, CGR, outfile):
             for each_count in FCGR:
                 file.write(str(each_count) + '\t')
             file.write('\n')
+        return FCGR
     # If no 2nd argument was given, outfile is empty (= considered False)
     else:
         return FCGR
