@@ -1,13 +1,11 @@
 # This script concatenate all the different FCGRs in a single file
 import CGR_functions as fn
-from Bio import SeqIO
-import glob
 import math
-import sys
-import os
+
 
 # Wanted window size:
-window_size = int(sys.argv[1])
+#window_size = int(sys.argv[1])
+window_size = 150000
 window_in_kb = str(window_size)[:-3] + 'kb'
 
 # Get all the species abbreviation for the study
@@ -26,63 +24,38 @@ for each_species in range(len(species)):
     species_table = fn.extract_path('../data/genomes/' + species[each_species], '*_feature_table*')[0]
 
     # Finally, the output file :
-    # TODO : you have to find a way to stock everything
-    species_CDS = '/'.join(['../files/CDS/', window_in_kb])
+    species_CDS = '/'.join(['../files/features/CDS', window_in_kb, species[each_species] + '_CDS'])
+    fn.checking_parent(species_CDS)
 
+    # Fetch all the records from this species fasta
     records = fn.fetch_fasta(species_genome)
-    for each_record in range(len(records)):
-        # Each element of this list represents a nucleotide
-        record_proxy = [0] * len(records[each_record].seq)
-        if len(records[each_record].seq) > window_size:
-            n_windows = math.floor(len(records[each_record].seq) / window_size)  # Number of windows
-            windows_kept = []
-            for start in range(0, n_windows):
-                window = str(records[each_record].seq)[(start * window_size):((start * window_size) + window_size)]
-                # If any character in the sequence is NOT a standard nucleotides (including unknown nucleotides), do NOT compute:
-                if not any([c not in 'ATCGatcg' for c in window]):
-                    windows_kept.append(start)
-                    with open(species_table, 'r') as feature_table:
-                        for each_line in feature_table:
-                            split_line = each_line.split('\t')
-                            if split_line[6] == records[each_record].id and split_line[0] == 'CDS':
-                                for each_nucleotide in range(int(split_line[7]), int(split_line[8])):
-                                    record_proxy[each_nucleotide] = 1
 
-
-for each_species in range(len(species)):
-    # For the feature table, it is much easier (only one per species)
-    species_table = fn.extract_path('../data/genomes/' + species[each_species], '*_feature_table*')[0]
-    with open(species_table, 'r') as feature_table:
+    with open(species_table, 'r') as feature_table, open(species_CDS, 'w') as outfile:
         feature_table.readline()
-        print(feature_table.readline().split('\t')[7])
-        print(feature_table.readline().split('\t')[8])
-
-
-
-
-
-    with open(species_table, 'r') as feature_table:
-        for each_record in range(len(all_records)):
-
-            for each_line in feature_table:
-                split_line = each_line.split()
-                if split_line[5] == :
-                    if split_line[0] == 'CDS':
-                        starts_I.append(split_line[7])
-                        ends_I.append(split_line[8])
-
-
-            all_region = fn.extract_path(all_records[each_record] + '/', '*')
-
-
-
-
-
-            all_regions = fn.extract_path(each_record+ '/', '*')
-            record_name = each_record.split('/')[-1]
-            for each_region in range(len(all_regions)):
-                outfile.write
-
-                CGR_directory = '/'.join(['../files/CGRs', window_in_kb, species[each_species]]) + '/'
-                all_records = fn.extract_path(CGR_directory + '/', '*')
-                records_names = [each_record.split('/')[-1] for each_record in all_records]
+        actual_line = feature_table.readline().split('\t')
+        for each_record in range(len(records)):
+            # Each element of this list represents a nucleotide
+            record_proxy = [0] * len(records[each_record].seq)
+            while records[each_record].id == actual_line[6]:
+                # If it is a CDS
+                if actual_line[0] == 'CDS':
+                    # For each nucleotide from start to end of the CDS:
+                    for each_nucleotide in range(int(actual_line[7]), int(actual_line[8])):
+                        record_proxy[each_nucleotide] = 1
+                actual_line = feature_table.readline().split('\t')
+                # If we get at the last line, actual_line only have one empty entry, which can be detected by
+                # calling the second element
+                try:
+                    actual_line[1]
+                except:
+                    break
+            if len(records[each_record].seq) > window_size:
+                n_windows = math.floor(len(records[each_record].seq) / window_size)  # Number of windows
+                for start in range(0, n_windows):
+                    window = str(records[each_record].seq)[(start * window_size):((start * window_size) + window_size)]
+                    # If any character in the sequence is NOT a standard nucleotides (including unknown nucleotides),
+                    # do NOT compute:
+                    if not any([c not in 'ATCGatcg' for c in window]):
+                        region_CDS = sum(record_proxy[(start * window_size):((start * window_size) + window_size)])
+                        outfile.write(records[each_record].id + '\t')
+                        outfile.write(str(region_CDS/window_size) + '\n')

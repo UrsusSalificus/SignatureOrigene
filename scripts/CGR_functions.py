@@ -5,6 +5,7 @@ import math
 import glob
 import os
 import numpy
+from numpy import fft
 
 
 ###
@@ -122,7 +123,7 @@ def CGR_coordinates(records, outfile):
 #           Note: if empty, will return the FCGR instead of writing a file.
 # Output:
 #   - Either a file, were each k-mer frequencies are separated by \t
-#   - Or the k-mer frequencies stocked ias a list
+#   - Or the k-mer frequencies stocked as a list
 ###
 def FCGR_from_CGR(k_size, CGR, outfile):
     #####################
@@ -404,3 +405,57 @@ def FCGR_indexes(k_size):
         indexes = grid_indexes[0]
 
     return indexes
+
+
+###
+# Compute the power spectrum of the Chaos Game Representation (CGR) of a sequence,
+# through the Discrete Fourier Transform (DFT) of the CGR
+# Inputs:
+#   - CGR :
+#       - Either a file (string)
+#       - Or a set a of coordinates (list) obtained through CGR_coordinates function
+#   - outfile : path to the output file, which will contain the power spectrum
+#           Note: if empty, will return the power spectrum instead of writing a file.
+# Output:
+#   - Either a file, were each power spectrum samples are separated by \t
+#   - Or the power spectrum samples stocked as a list
+###
+def DFT_from_CGR(CGR, outfile):
+    # If CGR is a string, it must be a path leading to a file containing all the coordinates
+    if isinstance(CGR, str):
+        x_coord = []
+        y_coord = []
+        with open(CGR, 'r') as CGR_file:
+            for each_coord in CGR_file:
+                x_coord.append(float(each_coord.split()[0]))
+                y_coord.append(float(each_coord.split()[1]))
+        coordinates = [x_coord, y_coord]
+    # Else it's a Python list of coordinates
+    else:
+        coordinates = CGR
+
+    # Z coordinates, as complex number of x and y coordinates
+    z_coord = []
+    for each_coord in range(len(coordinates[0])):
+        z_coord.append(complex(coordinates[0][each_coord], coordinates[1][each_coord]))
+
+    # Discrete Fourier Transform (DFT) through Fast Fourier Transform (FFT)
+    # Will linearly decompose the CGR coordinates (the signal) into its component frequencies
+    z_dft = fft.fft(z_coord)
+
+    # Now we can compute the Power spectrum of the DFT = 'which frequencies contain the signal´s power'
+    z_ps = []
+    for each_coord in range(len(z_dft)):
+        z_ps.append(abs(z_dft[each_coord]) ** 2)
+
+    # If outfile is non-empty, write the output
+    if outfile:
+        checking_parent(outfile)
+        with open(outfile, 'w') as file:
+            for each_sample in z_ps:
+                file.write(str(each_sample) + '\t')
+            file.write('\n')
+        return z_ps
+    # If no 2nd argument was given, outfile is empty (= considered False)
+    else:
+        return z_ps

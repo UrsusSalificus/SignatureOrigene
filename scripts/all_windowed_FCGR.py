@@ -278,7 +278,7 @@ for each_species in range(len(species)):
                                species[each_species]])
     concatenated_FCGRS = FCGR_directory + '_FCGRs'
     checking_parent(concatenated_FCGRS)
-    with open(FCGR_directory + '_FCGRs', 'w') as outfile:
+    with open(concatenated_FCGRS, 'w') as outfile:
         CGR_directory = '/'.join(['../files/CGRs/', window_in_kb, species[each_species]]) # Path to directory
         all_records = extract_path(CGR_directory + '/', '*')
         for each_record in range(len(all_records)):
@@ -287,7 +287,6 @@ for each_species in range(len(species)):
             FCGR_region = '/'.join([FCGR_directory, record_name, 'FCGR_region_'])   # Path to region
             FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
                                                (k_size, CGR_files[each_region], FCGR_region + str(each_region))
-                                               # '' to have the ouput of the function as a list
                                                for each_region in range(len(CGR_files)))
             for each_region in range(len(FCGRs)):
                 outfile.write(record_name + '\t')
