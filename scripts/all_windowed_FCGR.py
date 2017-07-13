@@ -64,7 +64,7 @@ def checking_parent(file_path):
 #   - outfile : path to the output file, which will contain the FCGR
 #           Note: if empty, will return the FCGR instead of writing a file.
 # Output:
-#   - Either a file, were each k-mer frequencies are separated by \t
+#   - Either a file, where each k-mer frequencies are separated by \t
 #   - Or the k-mer frequencies stocked ias a list
 ###
 def FCGR_from_CGR(k_size, CGR, outfile):

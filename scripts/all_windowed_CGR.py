@@ -69,14 +69,16 @@ def checking_parent(file_path):
 
 
 ###
-# Compute the Chaos Game Representation (CGR) of the cleaned sequence
+# Compute the Chaos Game Representation (CGR) of a sequence
 # Inputs:
 #   - records : fetched sequence (fasta) one wants the CGR computed on
 #   - outfile : path to the output file, which will contain the x/y CGR coordinates
 #           Note: if empty, will return the coordinates instead of writing a file.
 # Output:
-#   - Either a file, were each line contain a set of x/y coordinates (separated by \t)
+#   - Either a file, where each line contain a set of x/y coordinates (separated by \t)
 #   - Or the coordinates stocked as [[x coordinates], [y coordinates]]
+# Performance :
+#   - Takes around 1 second for a 300'000 base pairs long sequence.
 ###
 def CGR_coordinates(records, outfile):
     # Prepare the list of x and y coordinates, already at the right size as we will us numeric range in our loop
@@ -134,9 +136,18 @@ def N_sensitive_CGR(window, outfile):
 for each_species in range(len(species)):
     # Due to non-consistent pattern of file name, whole genome ('genomic') is used in multiple
     # fasta files (CDS or RNA only, and any nucleotides) names. We must thus reconstruct the exact path.
-    all_files = extract_path('../data/genomes/', str(species[each_species] + '*'))
-    index = all_files[0].split('/')[3].split('_')[2] + '_' + all_files[0].split('/')[3].split('_')[3]
-    pattern_genome = str(species[each_species] + '_' + index + '_genomic*')
+    # To do so, we will use the feature_table (only one per species)
+    species_table = extract_path('../data/genomes/' + species[each_species], '*_feature_table*')[0]
+
+    split_index = species_table.split('/')[3].split('_')
+    # The index word length varies between species : we must skip the two first  word (species name)
+    index = ''
+    walking = 2
+    while split_index[walking] != 'feature':
+        index += split_index[walking] + '_'
+        walking +=1
+
+    pattern_genome = str(species[each_species] + '_' + index + 'genomic*')
     species_genome = extract_path('../data/genomes/', pattern_genome)[0]
 
     # Fetching the genomic fasta file
@@ -153,3 +164,4 @@ for each_species in range(len(species)):
                                             (start * window_size):((start * window_size) + window_size)]),
                                         seq_directory + str(start))
                                        for start in range(0, n_windows))
+

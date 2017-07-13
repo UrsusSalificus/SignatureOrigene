@@ -1,11 +1,11 @@
 # This script concatenate all the different FCGRs in a single file
 import CGR_functions as fn
 import math
+import sys
 
 
 # Wanted window size:
-#window_size = int(sys.argv[1])
-window_size = 150000
+window_size = int(sys.argv[1])
 window_in_kb = str(window_size)[:-3] + 'kb'
 
 # Get all the species abbreviation for the study
@@ -15,13 +15,19 @@ CDS_all_records = []
 for each_species in range(len(species)):
     # Due to non-consistent pattern of file name, whole genome ('genomic') is used in multiple
     # fasta files (CDS or RNA only, and any nucleotides) names. We must thus reconstruct the exact path.
-    all_files = fn.extract_path('../data/genomes/', str(species[each_species] + '*'))
-    index = all_files[0].split('/')[3].split('_')[2] + '_' + all_files[0].split('/')[3].split('_')[3]
-    pattern_genome = str(species[each_species] + '_' + index + '_genomic*')
-    species_genome = fn.extract_path('../data/genomes/', pattern_genome)[0]
-
-    # For the feature table, it is much easier (only one per species)
+    # To do so, we will use the feature_table (only one per species)
     species_table = fn.extract_path('../data/genomes/' + species[each_species], '*_feature_table*')[0]
+
+    split_index = species_table.split('/')[3].split('_')
+    # The index word length varies between species : we must skip the two first  word (species name)
+    index = ''
+    walking = 2
+    while split_index[walking] != 'feature':
+        index += split_index[walking] + '_'
+        walking +=1
+
+    pattern_genome = str(species[each_species] + '_' + index + 'genomic*')
+    species_genome = fn.extract_path('../data/genomes/', pattern_genome)[0]
 
     # Finally, the output file :
     species_CDS = '/'.join(['../files/features/CDS', window_in_kb, species[each_species] + '_CDS'])
@@ -59,3 +65,4 @@ for each_species in range(len(species)):
                         region_CDS = sum(record_proxy[(start * window_size):((start * window_size) + window_size)])
                         outfile.write(records[each_record].id + '\t')
                         outfile.write(str(region_CDS/window_size) + '\n')
+

@@ -60,14 +60,16 @@ def fetch_fasta(fasta_file):
 
 
 ###
-# Compute the Chaos Game Representation (CGR) of the cleaned sequence
+# Compute the Chaos Game Representation (CGR) of a sequence
 # Inputs:
 #   - records : fetched sequence (fasta) one wants the CGR computed on
 #   - outfile : path to the output file, which will contain the x/y CGR coordinates
 #           Note: if empty, will return the coordinates instead of writing a file.
 # Output:
-#   - Either a file, were each line contain a set of x/y coordinates (separated by \t)
+#   - Either a file, where each line contain a set of x/y coordinates (separated by \t)
 #   - Or the coordinates stocked as [[x coordinates], [y coordinates]]
+# Performance :
+#   - Takes around 1 second for a 300'000 base pairs long sequence.
 ###
 def CGR_coordinates(records, outfile):
     # Prepare the list of x and y coordinates, already at the right size as we will us numeric range in our loop
@@ -122,7 +124,7 @@ def CGR_coordinates(records, outfile):
 #   - outfile : path to the output file, which will contain the FCGR
 #           Note: if empty, will return the FCGR instead of writing a file.
 # Output:
-#   - Either a file, were each k-mer frequencies are separated by \t
+#   - Either a file, where each k-mer frequencies are separated by \t
 #   - Or the k-mer frequencies stocked as a list
 ###
 def FCGR_from_CGR(k_size, CGR, outfile):
@@ -354,7 +356,8 @@ def FCGR_indexes(k_size):
         actual_grid_index = [''] * grid_size
         # This pointer will track movement on the grid
         grid_pointer = 0
-        # This will give us the number of grid for this size, which is used to find the number of mini-squares for this size
+        # This will give us the number of grid for this size,
+        # which is used to find the number of mini-squares for this size
         actual_grid_size = int(math.pow(4, each_size))
         actual_mini_square = int(math.sqrt(actual_grid_size))
         # multiplier will help use reach the max ammount of grid whenever we are at < size than max k-mer size
@@ -417,8 +420,10 @@ def FCGR_indexes(k_size):
 #   - outfile : path to the output file, which will contain the power spectrum
 #           Note: if empty, will return the power spectrum instead of writing a file.
 # Output:
-#   - Either a file, were each power spectrum samples are separated by \t
+#   - Either a file, where each power spectrum samples are separated by \t
 #   - Or the power spectrum samples stocked as a list
+# Performance :
+#   - Takes around 1 second for a set of 150'000 x/y coordinates.
 ###
 def DFT_from_CGR(CGR, outfile):
     # If CGR is a string, it must be a path leading to a file containing all the coordinates
@@ -459,3 +464,51 @@ def DFT_from_CGR(CGR, outfile):
     # If no 2nd argument was given, outfile is empty (= considered False)
     else:
         return z_ps
+
+
+###
+# Compute the pairwise euclidean distances of a set of genomic signatures from different regions
+# Inputs:
+#   - genomic_signatures : path to a file containing all the region's genomic signatures
+#   - n_region : number of region (lines in the genomic_signatures file)
+#   - distance_matrix : path to the output file, which will contain the euclidean distance matrix
+#           Note: if empty, will return the euclidean distance matrix instead of writing a file.
+# Output:
+#   - Either a file, where each distance between two regions are separated by \t,
+#       forming a matrix of line separated by \n
+#   - Or the euclidean distance matrix stocked as a numpy.array
+# Performance :
+#   - DFTs : takes around 1 second for a set of 150'000 DFTs (= 1 region).
+###
+def euclidean_distance(genomic_signatures, n_region, distance_matrix):
+    distances = []
+    with open(genomic_signatures, 'r') as DFTs:
+        i = 0
+        for each_region in DFTs:
+            distances.append([])
+            # Note that when importing each line, we must exclude the first element (record id) and the last (empty)
+            actual_line = numpy.array([float(each_DFT) for each_DFT in each_region.split('\t')[1:-1]])
+            j = 0
+            with open(genomic_signatures, 'r') as pair_DFTs:
+                # While we are at a pair already computed before, continue reading until find pair didn't compared
+                while not j == i + 1:
+                    distances[i].append(0)
+                    j += 1
+                    pair_DFTs.readline()
+                for each_left in range(n_region - j):
+                    pair_line = numpy.array([float(each_DFT) for each_DFT in pair_DFTs.readline().split('\t')[1:-1]])
+                    distances[i].append(numpy.linalg.norm(actual_line - pair_line))
+            i += 1
+
+    # If outfile is non-empty, write the output
+    if distance_matrix:
+        checking_parent(distance_matrix)
+        with open(distance_matrix, 'w') as outfile:
+            for each_row in distances:
+                for each_column in each_row:
+                    outfile.write(str(each_column) + '\t')
+                outfile.write('\n')
+        return distances
+    # If no 3rd argument was given, outfile is empty (= considered False)
+    else:
+        return distances

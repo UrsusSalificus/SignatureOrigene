@@ -1,4 +1,5 @@
-# This script compute CGR of all windows of a certain size, in all species
+# This script compute the power spectrum of the Chaos Game Representation (CGR) of a sequence,
+# through the Discrete Fourier Transform (DFT) of a CGR
 from Bio import SeqIO
 import glob
 import sys
@@ -78,8 +79,10 @@ def checking_parent(file_path):
 #   - outfile : path to the output file, which will contain the power spectrum
 #           Note: if empty, will return the power spectrum instead of writing a file.
 # Output:
-#   - Either a file, were each power spectrum samples are separated by \t
+#   - Either a file, where each power spectrum samples are separated by \t
 #   - Or the power spectrum samples stocked as a list
+# Performance :
+#   - Takes around 1 second for a set of 150'000 x/y coordinates.
 ###
 def DFT_from_CGR(CGR, outfile):
     # If CGR is a string, it must be a path leading to a file containing all the coordinates
@@ -124,9 +127,9 @@ def DFT_from_CGR(CGR, outfile):
 
 for each_species in range(len(species)):
     DFT_directory = '/'.join(['../files/DFTs', str(window_in_kb), species[each_species]])
-    concatenated_FCGRS = DFT_directory + '_DFTs'
-    checking_parent(concatenated_FCGRS)
-    with open(concatenated_FCGRS, 'w') as outfile:
+    concatenated_DFTs = DFT_directory + '_DFTs'
+    checking_parent(concatenated_DFTs)
+    with open(concatenated_DFTs, 'w') as outfile:
         CGR_directory = '/'.join(['../files/CGRs', window_in_kb, species[each_species]]) # Path to directory
         all_records = extract_path(CGR_directory + '/', '*')
         for each_record in range(len(all_records)):

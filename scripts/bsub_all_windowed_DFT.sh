@@ -9,7 +9,7 @@
 #BSUB -J DFT_a
 #BSUB -n 32
 #BSUB –R "span[ptile=32]"
-#BSUB -M 102400000
-#BSUB –R "rusage[mem=100000]"
+#BSUB -M 256000000
+#BSUB –R "rusage[mem=250000]"
 
 python3 all_windowed_DFT.py 150000 16
