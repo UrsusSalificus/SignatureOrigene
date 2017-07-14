@@ -12,7 +12,7 @@ window_in_kb = str(window_size)[:-3] + 'kb'
 # Wanted number of threads at the same time:
 n_threads = int(sys.argv[2])
 # Which genomic signature to use?
-gs_type = int(sys.argv[3])
+gs_type = str(sys.argv[3])
 
 
 ###

@@ -11,4 +11,4 @@
 #BSUB -M 15728640
 #BSUB –R "rusage[mem=15360]"
 
-python3 all_Euclidean.py 150000 3 DFTs
+python3 all_euclidean.py 150000 3 DFTs

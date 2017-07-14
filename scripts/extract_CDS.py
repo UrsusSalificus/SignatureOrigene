@@ -64,5 +64,5 @@ for each_species in range(len(species)):
                     if not any([c not in 'ATCGatcg' for c in window]):
                         region_CDS = sum(record_proxy[(start * window_size):((start * window_size) + window_size)])
                         outfile.write(records[each_record].id + '\t')
-                        outfile.write(str(region_CDS/window_size) + '\n')
+                        outfile.write(str((region_CDS/window_size)*100) + '\n')
 

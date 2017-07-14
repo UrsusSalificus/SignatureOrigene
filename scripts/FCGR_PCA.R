@@ -1,6 +1,8 @@
 #!/usr/bin/env Rscript
 library(RColorBrewer)
 
+# TODO: clean to have generic PCA script, change the round up
+
 ### PCA analysis of a set of FCGR
 # Will input the arguments:
 # 1. path to the FCGRs file
