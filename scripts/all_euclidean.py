@@ -106,7 +106,7 @@ Parallel(n_jobs=n_threads)(delayed(euclidean_distance)
                                       '_'.join([species[each_species], gs_type])]),
                             sum([len(extract_path(each_record + '/', '*')) for each_record in extract_path(
                                 '/'.join(['../files/CGRs', window_in_kb, species[each_species]]) + '/', '*')]),
-                            '/'.join(['../files/distances/euclidian', '_'.join([window_in_kb, gs_type]),
+                            '/'.join(['../files/distances/euclidean', '_'.join([window_in_kb, gs_type]),
                                       '_'.join([species[each_species], 'euc_dist'])])
                             )
                            for each_species in range(len(species)))

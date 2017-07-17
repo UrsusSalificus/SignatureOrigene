@@ -7,7 +7,7 @@ library(RColorBrewer)
 # Will input the arguments:
 # 1. path to the FCGRs file
 # 2. window size
-# 3. path to the output image (iwht its name in the path)
+# 3. path to the output image (with its name in the path)
 # 4. Plot argument: if == region -> plot with region name next ot the point
 #                   else, require a path to the file containing values for region as numerics
 args <- commandArgs(trailingOnly=TRUE)

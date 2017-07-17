@@ -448,7 +448,7 @@ def DFT_from_CGR(CGR, outfile):
     # Will linearly decompose the CGR coordinates (the signal) into its component frequencies
     z_dft = fft.fft(z_coord)
 
-    # Now we can compute the Power spectrum of the DFT = 'which frequencies contain the signal´s power'
+    # Now we can compute the Power spectrum of the DFT = 'which frequencies contain the signal's power'
     z_ps = []
     for each_coord in range(len(z_dft)):
         z_ps.append(abs(z_dft[each_coord]) ** 2)
