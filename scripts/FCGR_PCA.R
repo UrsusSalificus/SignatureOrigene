@@ -1,4 +1,9 @@
 #!/usr/bin/env Rscript
+
+# Author : Titouan Laessle
+# Copyright 2017 Titouan Laessle
+# License : MIT
+
 library(RColorBrewer)
 
 # TODO: clean to have generic PCA script, change the round up

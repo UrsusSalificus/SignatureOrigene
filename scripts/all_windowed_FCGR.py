@@ -1,10 +1,17 @@
-# This script compute k-mer frequencies using CGR of all windows of a certain size, in all species
+#!/usr/bin/env python3
+
+"""This script compute k-mer frequencies using CGR of all windows of a certain size, in all species
+"""
 from joblib import Parallel, delayed
 import sys
 import math
 import glob
 import numpy
 import os
+
+__author__ = "Titouan Laessle"
+__copyright__ = "Copyright 2017 Titouan Laessle"
+__license__ = "MIT"
 
 # Wanted k-mer size:
 k_size = int(sys.argv[1])

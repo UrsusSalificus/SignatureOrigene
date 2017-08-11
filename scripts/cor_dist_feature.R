@@ -1,5 +1,9 @@
 #!/usr/bin/env Rscript
 
+# Author : Titouan Laessle
+# Copyright 2017 Titouan Laessle
+# License : MIT
+
 ### Correlation analysis of a a feature in function of distance to median region
 # Will input the arguments:
 # 1. path to the distance matrix file

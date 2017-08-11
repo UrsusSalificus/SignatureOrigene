@@ -1,5 +1,12 @@
+#!/usr/bin/env python3
+
+
 import CGR_functions as fn
 import subprocess
+
+__author__ = "Titouan Laessle"
+__copyright__ = "Copyright 2017 Titouan Laessle"
+__license__ = "MIT"
 
 ########################################################################################################################
                                         ############ 1 ###############

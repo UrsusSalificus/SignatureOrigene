@@ -1,10 +1,17 @@
-# This script compute CGR of all windows of a certain size, in all species
+#!/usr/bin/env python3
+
+"""This script compute CGR of all windows of a certain size, in all species
+"""
 from Bio import SeqIO
 import glob
 import math
 import sys
 import os
 from joblib import Parallel, delayed
+
+__author__ = "Titouan Laessle"
+__copyright__ = "Copyright 2017 Titouan Laessle"
+__license__ = "MIT"
 
 # Wanted window size:
 window_size = int(sys.argv[1])

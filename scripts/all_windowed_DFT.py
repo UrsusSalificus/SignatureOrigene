@@ -1,11 +1,18 @@
-# This script compute the power spectrum of the Chaos Game Representation (CGR) of a sequence,
-# through the Discrete Fourier Transform (DFT) of a CGR
+#!/usr/bin/env python3
+
+"""This script compute the power spectrum of the Chaos Game Representation (CGR) of a sequence,
+through the Discrete Fourier Transform (DFT) of a CGR
+"""
 from Bio import SeqIO
 import glob
 import sys
 import os
 from numpy import fft
 from joblib import Parallel, delayed
+
+__author__ = "Titouan Laessle"
+__copyright__ = "Copyright 2017 Titouan Laessle"
+__license__ = "MIT"
 
 # Wanted window size:
 window_size = int(sys.argv[1])

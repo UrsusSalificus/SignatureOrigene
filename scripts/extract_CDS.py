@@ -1,8 +1,14 @@
-# This script concatenate all the different FCGRs in a single file
+#!/usr/bin/env python3
+
+"""Extract the percentage of windows' nucleotides which are coding (CDS)
+"""
 import CGR_functions as fn
 import math
 import sys
 
+__author__ = "Titouan Laessle"
+__copyright__ = "Copyright 2017 Titouan Laessle"
+__license__ = "MIT"
 
 # Wanted window size:
 window_size = int(sys.argv[1])

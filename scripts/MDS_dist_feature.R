@@ -1,4 +1,9 @@
 #!/usr/bin/env Rscript
+
+# Author : Titouan Laessle
+# Copyright 2017 Titouan Laessle
+# License : MIT
+
 library(RColorBrewer)
 
 ### MultiDimensional Scaling (MDS) analysis of a distance matrix

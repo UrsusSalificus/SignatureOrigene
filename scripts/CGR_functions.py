@@ -1,4 +1,7 @@
-# This script will compute the Chaos Game Representation (CGR) of a sequence.
+#!/usr/bin/env python3
+
+"""This script will compute the Chaos Game Representation (CGR) of a sequence.
+"""
 from Bio import SeqIO
 import sys
 import math
@@ -7,6 +10,9 @@ import os
 import numpy
 from numpy import fft
 
+__author__ = "Titouan Laessle"
+__copyright__ = "Copyright 2017 Titouan Laessle"
+__license__ = "MIT"
 
 ###
 # Check if parent directory is present, if not create it

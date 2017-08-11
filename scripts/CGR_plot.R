@@ -1,3 +1,9 @@
+#!/usr/bin/env Rscript
+
+# Author : Titouan Laessle
+# Copyright 2017 Titouan Laessle
+# License : MIT
+
 ### Plotting CGR
 # Stock the arguments given 
 # 1. The path to the CGR file

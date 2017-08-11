@@ -1,7 +1,14 @@
-# Making sure there is no mistakes in the FCGR_from_CGR function
+#!/usr/bin/env python3
+
+"""Making sure there is no mistakes in the FCGR_from_CGR function.
+"""
 import CGR_functions
 import itertools as it
 from Bio import SeqIO
+
+__author__ = "Titouan Laessle"
+__copyright__ = "Copyright 2017 Titouan Laessle"
+__license__ = "MIT"
 
 # This script enable to make sure the nucleotide frequencies obtained through own FCGR function
 # AND Python's one by one dictionary checking function are identical

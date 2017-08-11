@@ -1,6 +1,14 @@
+#!/usr/bin/env python3
+
+"""Quick overview of how does unknown nucleotides (N) impact genomic signatures.
+"""
 import CGR_functions as fn
 import re
 import math
+
+__author__ = "Titouan Laessle"
+__copyright__ = "Copyright 2017 Titouan Laessle"
+__license__ = "MIT"
 
 # To makes up with any updates, we use the list of species from the downloading script:
 species=[]
