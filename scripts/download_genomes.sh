@@ -22,13 +22,13 @@ all_accessions=(["h_sapiens"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/00
 accession=${all_accessions[$species]}
 
 IFS='/' read -r -a array <<< $accession
-whole_genome=$(echo $accession${array[9]}'_genomic.fna.gz' )
-feature_table=$(echo $accession${array[9]}'feature_table.txt.gz' )
+whole_genome=$(echo ${array[9]}'_genomic.fna.gz' )
+feature_table=$(echo ${array[9]}'_feature_table.txt.gz' )
 
-wget --no-use-server-timestamps $whole_genome
+wget --no-use-server-timestamps $accession$whole_genome
 gunzip < $whole_genome > $output_genome
 rm $whole_genome
 
-wget --no-use-server-timestamps $feature_table
+wget --no-use-server-timestamps $accession$feature_table
 gunzip < $feature_table > $output_table
 rm $feature_table
