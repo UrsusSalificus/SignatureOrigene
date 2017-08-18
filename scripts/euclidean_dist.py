@@ -6,36 +6,21 @@ import glob
 import sys
 import os
 import numpy
-from joblib import Parallel, delayed
 
 __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
 __license__ = "MIT"
 
+# Path to the file containing the genomic signatures from all the regions concatenated:
+concatenate = str(sys.argv[1])
+# Species genome path:
+species_genome = str(sys.argv[2])
+# Species abbreviation:
+species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Wanted window size:
-window_size = int(sys.argv[1])
-window_in_kb = str(window_size)[:-3] + 'kb'
-# Wanted number of threads at the same time:
-n_threads = int(sys.argv[2])
-# Which genomic signature to use?
-gs_type = str(sys.argv[3])
-
-
-###
-# To makes up with any updates, we use the list of species from the downloading script:
-###
-def get_species(species_file='download_genomes.sh'):
-    species = []
-    with open(species_file, 'r') as list_of_species:
-        for each_line in list_of_species:
-            if each_line.split('=')[0] == 'species':
-                for each_species in each_line.split('=')[1].strip().strip('\'').split(' '):
-                    species.append(each_species)
-    return (species)
-
-
-# Get all the species abbreviation for the study
-species = get_species()
+window_size = int(str(sys.argv[3]).split('/')[-1])
+# Output file:
+output = str(sys.argv[4])
 
 
 ###
@@ -76,22 +61,32 @@ def checking_parent(file_path):
 ###
 def euclidean_distance(genomic_signatures, n_region, distance_matrix):
     distances = []
+    # We will have ot compare line by line, in a pairwise fashion
     with open(genomic_signatures, 'r') as DFTs:
+        # i will help us know which line we have passed
         i = 0
         for each_region in DFTs:
+            # each_region = each line in the document
             distances.append([])
             # Note that when importing each line, we must exclude the first element (record id) and the last (empty)
             actual_line = numpy.array([float(each_DFT) for each_DFT in each_region.split('\t')[1:-1]])
+            # j will help us know which line still have to do
             j = 0
             with open(genomic_signatures, 'r') as pair_DFTs:
                 # While we are at a pair already computed before, continue reading until find pair didn't compared
                 while not j == i + 1:
+                    # This will basically fill the lower diagonal of the distance matrix with 0
                     distances[i].append(0)
+                    # Continue reading:
                     j += 1
                     pair_DFTs.readline()
+                # For each region left, compute the distance:
                 for each_left in range(n_region - j):
+                    # We import the line j to compare with i
                     pair_line = numpy.array([float(each_DFT) for each_DFT in pair_DFTs.readline().split('\t')[1:-1]])
+                    # Actual euclidean distance computation (linalg.norm):
                     distances[i].append(numpy.linalg.norm(actual_line - pair_line))
+            # This region/line done, update i
             i += 1
 
     # If outfile is non-empty, write the output
@@ -107,13 +102,11 @@ def euclidean_distance(genomic_signatures, n_region, distance_matrix):
     else:
         return distances
 
-Parallel(n_jobs=n_threads)(delayed(euclidean_distance)
-                           ('/'.join(['../files', gs_type, window_in_kb,
-                                      '_'.join([species[each_species], gs_type])]),
-                            sum([len(extract_path(each_record + '/', '*')) for each_record in extract_path(
-                                '/'.join(['../files/CGRs', window_in_kb, species[each_species]]) + '/', '*')]),
-                            '/'.join(['../files/distances/euclidean', '_'.join([window_in_kb, gs_type]),
-                                      '_'.join([species[each_species], 'euc_dist'])])
-                            )
-                           for each_species in range(len(species)))
+
+checking_parent(output)
+# Total number of region (thus sum of all regions, in all records) :
+n_region = sum([len(extract_path(each_record + '/', '*')) for each_record in extract_path(
+                                '/'.join(['files/CGRs', str(window_size), species]) + '/', '*')])
+
+euclidean_distance(concatenate, n_region, output)
 

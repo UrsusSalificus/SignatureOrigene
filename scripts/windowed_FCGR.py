@@ -22,7 +22,7 @@ window_size = int(str(sys.argv[3]).split('/')[-1])
 # Wanted k-mer size:
 k_size = int(str(sys.argv[4]).split('/')[-1])
 # Wanted number of threads at the same time:
-n_threads = int(str(sys.argv[5]).split('/')[-1])
+n_threads = int(sys.argv[5])
 # Tracking file:
 follow_up = str(sys.argv[6])
 
@@ -267,20 +267,28 @@ def FCGR_from_CGR(k_size, CGR, outfile):
         return FCGR
 
 
-# Get all the different CGRs files path
 FCGR_directory = '/'.join(['files/FCGRs', '_'.join([str(window_size), str(k_size)]), species])
 concatenated_FCGRS = FCGR_directory + '_FCGRs'
 checking_parent(concatenated_FCGRS)
+# Opening concatenated file on top level, to avoid rewriting at each record
 with open(concatenated_FCGRS, 'w') as outfile:
-    CGR_directory = '/'.join(['files/CGRs/', str(window_size), species]) # Path to directory
+    # Path to CGR directory
+    CGR_directory = '/'.join(['files/CGRs/', str(window_size), species])
+    # Get all the different CGRs files path
     all_records = extract_path(CGR_directory + '/', '*')
     for each_record in range(len(all_records)):
+        # Find all CGR files with glob:
         CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
+        # Extract all the record names and store it for later:
         record_name = all_records[each_record].split('/')[-1]
-        FCGR_region = '/'.join([FCGR_directory, record_name, 'FCGR_region_'])   # Path to region
+        # Prepare the prefix added before every region:
+        FCGR_region = '/'.join([FCGR_directory, record_name, 'FCGR_region_'])
+        # Parallel computation for every region:
         FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
                                            (k_size, CGR_files[each_region], FCGR_region + str(each_region) + ".txt")
                                            for each_region in range(len(CGR_files)))
+
+        # Write each region's genomic signature in a single file as well:
         for each_region in range(len(FCGRs)):
             outfile.write(record_name + '\t')
             for each_count in FCGRs[each_region]:

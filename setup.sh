@@ -271,6 +271,41 @@ confirm
 
 
 
+########### FEATURES ###########
+title="config/temp/title.txt"
+cat << "EOF" > $title
+ _______               __
+|    ___|.-----.---.-.|  |_.--.--.----.-----.-----.
+|    ___||  -__|  _  ||   _|  |  |   _|  -__|__ --|
+|___|    |_____|___._||____|_____|__| |_____|_____|
+
+EOF
+intro="Please chose among the following list which features should be included in the analysis."
+table="config/temp/table.txt"
+cat << "EOF" > $table
+Type their corresponding number as single block of numbers (eg. 12), then press [ENTER]:
+
+    1. CDS : coding sequences
+    2. LCR : low complexity regions (including transposable elements)
+EOF
+choice=fixed
+good_inputs=12
+abbrev="config/temp/abbrev.txt"
+cat << "EOF" > $abbrev
+NA CDS LCR
+EOF
+out_dir="config/features/"
+nice="config/temp/nice.txt"
+cat << "EOF" > $nice
+NA
+Coding sequences (CDS)
+Low complexity regions (LCR)
+EOF
+
+confirm
+
+
+
 ########### K-MER SIZE ###########
 # Checking if FCGR was chosen
 if [ -f config/gs/FCGRs ]; then

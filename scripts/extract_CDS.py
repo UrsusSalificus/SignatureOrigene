@@ -2,73 +2,89 @@
 
 """Extract the percentage of windows' nucleotides which are coding (CDS)
 """
-import CGR_functions as fn
+from Bio import SeqIO
 import math
 import sys
+import os
 
 __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
 __license__ = "MIT"
 
+# Species genome path:
+species_genome = str(sys.argv[1])
+# Species feature table path:
+species_table = str(sys.argv[2])
+# Species abbreviation:
+species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Wanted window size:
-window_size = int(sys.argv[1])
-window_in_kb = str(window_size)[:-3] + 'kb'
+window_size = int(str(sys.argv[3]).split('/')[-1])
+# Output file:
+output = str(sys.argv[4])
 
-# Get all the species abbreviation for the study
-species = fn.get_species()
 
-CDS_all_records = []
-for each_species in range(len(species)):
-    # Due to non-consistent pattern of file name, whole genome ('genomic') is used in multiple
-    # fasta files (CDS or RNA only, and any nucleotides) names. We must thus reconstruct the exact path.
-    # To do so, we will use the feature_table (only one per species)
-    species_table = fn.extract_path('../data/genomes/' + species[each_species], '*_feature_table*')[0]
+###
+# Check if parent directory is present, if not create it
+###
+def checking_parent(file_path):
+    # We don't need the file name, so will take everything but the last part
+    parent_directories = '/'.join(file_path.split('/')[0:(len(file_path.split('/')) - 1)])
+    # As we uses parallel, we ended up we one thread doesn't seeing the directory, attempting
+    # creating it, while another just did the same -> error "The file already exist", and stopped everything...
+    try:
+        if not os.path.exists(parent_directories):
+            os.makedirs(parent_directories)
+    except:
+        pass
 
-    split_index = species_table.split('/')[3].split('_')
-    # The index word length varies between species : we must skip the two first  word (species name)
-    index = ''
-    walking = 2
-    while split_index[walking] != 'feature':
-        index += split_index[walking] + '_'
-        walking +=1
 
-    pattern_genome = str(species[each_species] + '_' + index + 'genomic*')
-    species_genome = fn.extract_path('../data/genomes/', pattern_genome)[0]
+###
+# Fetch a fasta file, and clean it (remove N or n, which stands for "any nucleotides)
+# Note that if the fasta file contain multiple sequences, only the first will have its CGR computed !
+# Input:
+#   - fasta_file : Path to the file containing the sequence one wants the CGR computed on
+###
+def fetch_fasta(fasta_file):
+    # Will only take the first sequence of the fasta file
+    try:
+        records = list(SeqIO.parse(fasta_file, "fasta"))
+    except:
+        print("Cannot open %s, check path!" % fasta_file)
+        sys.exit()
+    return (records)
 
-    # Finally, the output file :
-    species_CDS = '/'.join(['../files/features/CDS', window_in_kb, species[each_species] + '_CDS'])
-    fn.checking_parent(species_CDS)
+# Checking parent directory of output are present
+checking_parent(output)
 
-    # Fetch all the records from this species fasta
-    records = fn.fetch_fasta(species_genome)
+# Fetch all the records from this species fasta
+records = fetch_fasta(species_genome)
 
-    with open(species_table, 'r') as feature_table, open(species_CDS, 'w') as outfile:
-        feature_table.readline()
-        actual_line = feature_table.readline().split('\t')
-        for each_record in range(len(records)):
-            # Each element of this list represents a nucleotide
-            record_proxy = [0] * len(records[each_record].seq)
-            while records[each_record].id == actual_line[6]:
-                # If it is a CDS
-                if actual_line[0] == 'CDS':
-                    # For each nucleotide from start to end of the CDS:
-                    for each_nucleotide in range(int(actual_line[7]), int(actual_line[8])):
-                        record_proxy[each_nucleotide] = 1
-                actual_line = feature_table.readline().split('\t')
-                # If we get at the last line, actual_line only have one empty entry, which can be detected by
-                # calling the second element
-                try:
-                    actual_line[1]
-                except:
-                    break
-            if len(records[each_record].seq) > window_size:
-                n_windows = math.floor(len(records[each_record].seq) / window_size)  # Number of windows
-                for start in range(0, n_windows):
-                    window = str(records[each_record].seq)[(start * window_size):((start * window_size) + window_size)]
-                    # If any character in the sequence is NOT a standard nucleotides (including unknown nucleotides),
-                    # do NOT compute:
-                    if not any([c not in 'ATCGatcg' for c in window]):
-                        region_CDS = sum(record_proxy[(start * window_size):((start * window_size) + window_size)])
-                        outfile.write(records[each_record].id + '\t')
-                        outfile.write(str((region_CDS/window_size)*100) + '\n')
-
+with open(species_table, 'r') as feature_table, open(output, 'w') as outfile:
+    feature_table.readline()
+    actual_line = feature_table.readline().split('\t')
+    for each_record in range(len(records)):
+        # Each element of this list represents a nucleotide
+        record_proxy = [0] * len(records[each_record].seq)
+        while records[each_record].id == actual_line[6]:
+            # If it is a CDS
+            if actual_line[0] == 'CDS' and actual_line[9] == '+':
+                # For each nucleotide from start to end of the CDS:
+                for each_nucleotide in range(int(actual_line[7]), int(actual_line[8])):
+                    record_proxy[each_nucleotide] = 1
+            actual_line = feature_table.readline().split('\t')
+            # If we get at the last line, actual_line only have one empty entry, which can be detected by
+            # calling the second element
+            try:
+                actual_line[1]
+            except:
+                break
+        if len(records[each_record].seq) > window_size:
+            n_windows = math.floor(len(records[each_record].seq) / window_size)  # Number of windows
+            for start in range(0, n_windows):
+                window = str(records[each_record].seq)[(start * window_size):((start * window_size) + window_size)]
+                # If any character in the sequence is NOT a standard nucleotides (including unknown nucleotides),
+                # do NOT compute:
+                if not any([c not in 'ATCGatcg' for c in window]):
+                    region_CDS = sum(record_proxy[(start * window_size):((start * window_size) + window_size)])
+                    outfile.write(records[each_record].id + '\t')
+                    outfile.write(str((region_CDS/window_size)*100) + '\n')
