@@ -20,8 +20,8 @@ species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 window_size = int(str(sys.argv[3]).split('/')[-1])
 # Wanted number of threads at the same time:
 n_threads = int(sys.argv[4])
-# Tracking file:
-follow_up = str(sys.argv[5])
+# Output file:
+output = str(sys.argv[5])
 
 
 ###
@@ -96,7 +96,6 @@ def DFT_from_CGR(CGR, outfile):
             for each_sample in z_ps:
                 file.write(str(each_sample) + '\t')
             file.write('\n')
-        return z_ps
     # If no 2nd argument was given, outfile is empty (= considered False)
     else:
         return z_ps
@@ -119,19 +118,12 @@ with open(concatenated_DFTs, 'w') as outfile:
         # Prepare the prefix added before every region:
         DFT_region = '/'.join([DFT_directory, record_name, 'DFT_region_'])
         # Parallel computation for every region, stored in individual files:
-        DFTs = Parallel(n_jobs=n_threads)(delayed(DFT_from_CGR)
-                                          (CGR_files[each_region], DFT_region + str(each_region) + ".txt")
+        DFTs = Parallel(n_jobs=n_threads)(delayed(DFT_from_CGR)(CGR_files[each_region], '')
                                           for each_region in range(len(CGR_files)))
 
-        # Write each region's genomic signature in a single file as well:
+        # Write each region's genomic signature in a single concatenated file:
         for each_region in range(len(DFTs)):
             outfile.write(record_name + '\t')
             for each_count in DFTs[each_region]:
                 outfile.write(str(each_count) + '\t')
             outfile.write('\n')
-
-
-# Follow the progression of the analysis
-checking_parent(follow_up)
-with open(follow_up, 'w') as file:
-    file.write('')

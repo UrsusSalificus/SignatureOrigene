@@ -1,6 +1,5 @@
 SPECIES, = glob_wildcards("config/species/{any}")
 WINDOWS, = glob_wildcards("config/windows/{any}")
-GS, = glob_wildcards("config/gs/{any}")
 KMER, = glob_wildcards("config/kmer/{any}")
 FEATURES, = glob_wildcards("config/features/{any}")
 

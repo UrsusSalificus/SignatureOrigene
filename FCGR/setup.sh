@@ -25,6 +25,9 @@ echo " _______        __
 echo "________________________________________________________________________________"
 echo ""
 echo "Welcome to the setup of the analysis!"
+echo "You are using Frequency CGR (FCGR) as genomic signature. FCGR is basically the  "
+echo "k-mer frequencies using optimized computation (through the Chaos Game "
+echo "Representation (CGR) of a sequence)."
 echo "________________________________________________________________________________"
 echo ""
 #read -n 1 -s -r -p "Press any key to continue"
@@ -230,47 +233,6 @@ confirm
 
 
 
-########### GENOMIC SIGNATURE TYPES ###########
-title="config/temp/title.txt"
-cat << "EOF" > $title
-     _______                              __
-    |     __|.-----.-----.-----.--------.|__|.----.
-    |    |  ||  -__|     |  _  |        ||  ||  __|
-    |_______||_____|__|__|_____|__|__|__||__||____|
-            __                     __
-    .-----.|__|.-----.-----.---.-.|  |_.--.--.----.-----.
-    |__ --||  ||  _  |     |  _  ||   _|  |  |   _|  -__|
-    |_____||__||___  |__|__|___._||____|_____|__| |_____|
-               |_____|
-
-EOF
-intro="Please chose among the following list which type of genomic signature should be included in the analysis."
-table="config/temp/table.txt"
-cat << "EOF" > $table
-Type their corresponding number as single block of numbers (eg. 12), then press [ENTER]:
-
-    1. FCGR : k-mer frequencies using optimized computation (through the Chaos Game Representation
-              (CGR) of a sequence)
-    2. DFT : a lossless transformation of the CGR of a sequence, using Fourier transform
-EOF
-choice=fixed
-good_inputs=12
-abbrev="config/temp/abbrev.txt"
-cat << "EOF" > $abbrev
-NA FCGRs DFTs
-EOF
-out_dir="config/gs/"
-nice="config/temp/nice.txt"
-cat << "EOF" > $nice
-NA
-FCGR
-DFT
-EOF
-
-confirm
-
-
-
 ########### FEATURES ###########
 title="config/temp/title.txt"
 cat << "EOF" > $title
@@ -307,9 +269,6 @@ confirm
 
 
 ########### K-MER SIZE ###########
-# Checking if FCGR was chosen
-if [ -f config/gs/FCGRs ]; then
-
 title="config/temp/title.txt"
 cat << "EOF" > $title
      __  __                                       __
@@ -354,7 +313,6 @@ EOF
 
 confirm
 
-fi
 
 
 

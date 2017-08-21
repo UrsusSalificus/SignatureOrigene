@@ -3,7 +3,6 @@
 """This script compute CGR of all windows of a certain size, in all species
 """
 from Bio import SeqIO
-import glob
 import math
 import sys
 import os
@@ -13,36 +12,16 @@ __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
 __license__ = "MIT"
 
+# Species genome path:
+species_genome = str(sys.argv[1])
+# Species abbreviation:
+species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Wanted window size:
-window_size = int(sys.argv[1])
-window_in_kb = str(window_size)[:-3] + 'kb'
+window_size = int(str(sys.argv[2]).split('/')[-1])
 # Wanted number of threads at the same time:
-n_threads = int(sys.argv[2])
-
-
-###
-# To makes up with any updates, we use the list of species from the downloading script:
-###
-def get_species(species_file='download_genomes.sh'):
-    species = []
-    with open(species_file, 'r') as list_of_species:
-        for each_line in list_of_species:
-            if each_line.split('=')[0] == 'species':
-                for each_species in each_line.split('=')[1].strip().strip('\'').split(' '):
-                    species.append(each_species)
-    return (species)
-
-
-# Get all the species abbreviation for the study
-species = get_species()
-
-
-###
-# Extract all the path of files matching a certain pattern in a directory
-###
-def extract_path(files_directory, pattern):
-    return glob.glob(files_directory + pattern)
-
+n_threads = int(sys.argv[3])
+# Tracking file:
+follow_up = str(sys.argv[4])
 
 ###
 # Fetch a fasta file, and clean it (remove N or n, which stands for "any nucleotides)
@@ -139,36 +118,22 @@ def N_sensitive_CGR(window, outfile):
         CGR_coordinates(window, outfile)
 
 
-# For each species, we will compute CGR on each window, of each records.
-for each_species in range(len(species)):
-    # Due to non-consistent pattern of file name, whole genome ('genomic') is used in multiple
-    # fasta files (CDS or RNA only, and any nucleotides) names. We must thus reconstruct the exact path.
-    # To do so, we will use the feature_table (only one per species)
-    species_table = extract_path('../data/genomes/' + species[each_species], '*_feature_table*')[0]
+# Fetching the genomic fasta file
+records = fetch_fasta(species_genome)
+# Will work for single record too:
+for each_sequence in records:
+    if len(each_sequence.seq) > window_size:
+        n_windows = math.floor(len(each_sequence.seq) / window_size)  # Number of windows
+        seq_directory = '/'.join(['files/CGRs', str(window_size), species, each_sequence.id, 'CGR_region_'])
+        # Parallel the CGR on n_jobs core
+        Parallel(n_jobs=n_threads)(delayed(N_sensitive_CGR)
+                                   (str(each_sequence.seq[
+                                        (start * window_size):((start * window_size) + window_size)]),
+                                    seq_directory + str(start))
+                                   for start in range(0, n_windows))
 
-    split_index = species_table.split('/')[3].split('_')
-    # The index word length varies between species : we must skip the two first  word (species name)
-    index = ''
-    walking = 2
-    while split_index[walking] != 'feature':
-        index += split_index[walking] + '_'
-        walking +=1
 
-    pattern_genome = str(species[each_species] + '_' + index + 'genomic*')
-    species_genome = extract_path('../data/genomes/', pattern_genome)[0]
-
-    # Fetching the genomic fasta file
-    records = fetch_fasta(species_genome)
-    # Will work for single record too:
-    for each_sequence in records:
-        if len(each_sequence.seq) > window_size:
-            n_windows = math.floor(len(each_sequence.seq) / window_size)  # Number of windows
-            seq_directory = '/'.join(['../files/CGRs', window_in_kb, species[each_species],
-                                      each_sequence.id, 'CGR_region_'])
-            # Parallel the CGR on n_jobs core
-            Parallel(n_jobs=n_threads)(delayed(N_sensitive_CGR)
-                                       (str(each_sequence.seq[
-                                            (start * window_size):((start * window_size) + window_size)]),
-                                        seq_directory + str(start))
-                                       for start in range(0, n_windows))
-
+# Follow the progression of the analysis
+checking_parent(follow_up)
+with open(follow_up, 'w') as file:
+    file.write('')

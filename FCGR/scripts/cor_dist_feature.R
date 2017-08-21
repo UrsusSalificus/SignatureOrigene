@@ -13,6 +13,9 @@
 # 5. path to the output image (with its name in the path)
 args <- commandArgs(trailingOnly=TRUE)
 
+feature_type = basename(args[3])
+window_size = basename(args[4])
+output = args[5]
 
 distance_matrix <- read.table(args[1], sep = "\t", header = FALSE)
 # Will remove any empty column
@@ -34,12 +37,13 @@ feature <- feature[-min_column,]
 # Quick correlation test and parsing the resulting p-value
 pv <- round(cor.test(median_region, feature[,2])$p.value, 6)
 
-plot_title <- paste(args[3], 'in function of distance to the median region \n', 
-                    paste('(', args[4], ')', '\n', sep = ''), 
+plot_title <- paste('% of', feature_type, 'in function of distance to the median region \n',
+                    paste('(FCGRs, ', window_size, ' bp)', '\n', sep = ''),
                     'Correlation test p-value :', pv)
 
-png(args[5], width=700, height=500, units="px")
-plot(median_region, feature[,2], main=plot_title, xlab='Distance to median region', ylab = args[3], pch = 19)
+png(output, width=700, height=500, units="px")
+plot(median_region, feature[,2], main=plot_title, xlab='Distance to median region',
+     ylab = paste('% of', feature_type), pch = 19)
 dev.off() 
 
 

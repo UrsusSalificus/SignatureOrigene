@@ -1,0 +1,94 @@
+SPECIES, = glob_wildcards("config/species/{any}")
+WINDOWS, = glob_wildcards("config/windows/{any}")
+FEATURES, = glob_wildcards("config/features/{any}")
+
+rule all:
+    input:
+        expand("files/results/{windows}_{features}/{species}_correlation.png",
+            windows = WINDOWS, features = FEATURES, species = SPECIES),
+        expand("files/results/{windows}_{features}/{species}_MDS.png",
+            windows = WINDOWS, features = FEATURES, species = SPECIES)
+
+rule download:
+    input:
+        "config/species/{species}"
+    output:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/genomes/{species}_feature_table.fna"
+    shell:
+        """
+        no_path=$( basename {input} )
+        bash scripts/download_genomes.sh $no_path {output}
+        """
+
+rule CGR:
+    input:
+        expand("../data/genomes/{species}_genomes.fna", species = SPECIES),
+        expand("config/windows/{windows}", windows = WINDOWS)
+    output:
+        "../data/following/CGRs/{windows}/{species}_done.txt"
+    threads:
+        3
+    shell:
+        "python3 scripts/windowed_CGR.py {input} {threads} {output}"
+
+if "CDS" in FEATURES:
+    rule CDS_extract:
+        input:
+            expand("../data/genomes/{species}_genomes.fna", species = SPECIES),
+            expand("../data/genomes/{species}_feature_table.fna", species = SPECIES),
+            expand("config/windows/{windows}", windows = WINDOWS)
+        output:
+            "../files/features/{windows}_{features}/{species}.txt"
+        shell:
+            "python3 scripts/extract_CDS.py {input} {output}"
+
+rule DFT:
+    input:
+        expand("../data/following/CGRs/{windows}/{species}_done.txt",
+            windows = WINDOWS, species = SPECIES),
+        expand("../data/genomes/{species}_genomes.fna", species = SPECIES),
+        expand("config/windows/{windows}", windows = WINDOWS)
+    output:
+        "files/DFTs/{windows}/{species}_DFTs.txt"
+    threads:
+        3
+    shell:
+        "python3 scripts/windowed_DFT.py {input} {threads} {output}"
+
+rule DFT_dist:
+    input:
+        expand("files/DFTs/{windows}/{species}_DFTs.txt",
+            windows = WINDOWS, species = SPECIES),
+        expand("../data/genomes/{species}_genomes.fna", species = SPECIES),
+        expand("config/windows/{windows}", windows = WINDOWS)
+    output:
+        "files/distances/euclidean/{windows}/{species}_dist_matrix.txt"
+    shell:
+        "python3 scripts/euclidean_dist.py {input} {output}"
+
+rule figures:
+    input:
+        expand("files/distances/euclidean/{windows}/{species}_dist_matrix.txt",
+            windows = WINDOWS, species = SPECIES),
+        expand("../files/features/{windows}_{features}/{species}.txt",
+            windows = WINDOWS, features = FEATURES, species = SPECIES),
+        expand("config/features/{features}", features = FEATURES),
+        expand("config/windows/{windows}", windows = WINDOWS)
+    output:
+        "files/results/{windows}_{features}/{species}_correlation.png",
+        "files/results/{windows}_{features}/{species}_MDS.png"
+    shell:
+        """
+        Rscript scripts/cor_dist_feature.R {input} {output}
+        Rscript scripts/MDS_dist_feature.R {input} {output}
+        """
+
+
+
+
+
+
+
+
+##############

@@ -15,6 +15,9 @@ library(RColorBrewer)
 # 5. path to the output image (with its name in the path)
 args <- commandArgs(trailingOnly=TRUE)
 
+feature_type = basename(args[3])
+window_size = basename(args[4])
+output = args[6]
 
 distance_matrix <- read.table(args[1], sep = "\t", header = FALSE)
 # Will remove any empty column
@@ -56,8 +59,7 @@ if (length(size) > 10) {
 }
 increasing_order = order(size)
 
-
-plot_title <- paste('MDS metrics of', args[4],'distance matrix\n')
+plot_title <- paste('MDS metrics of FCGRs/', window_size, ' bp windows distance matrix')
 
 # Will just plot the result to get good x limits
 plot(fit$points[,1], fit$points[,2])
@@ -68,11 +70,10 @@ if (min(fit$points[,1]) < 0) {
   good_x_lim <- c( min(fit$points[,1]) + range_x * 0.25, par("usr")[1:2][2])
 }
 
-
-png(args[5], width=700, height=500, units="px")
+png(output, width=700, height=500, units="px")
 plot(fit$points[,1], fit$points[,2], xlab="Coordinate 1", ylab="Coordinate 2", main=plot_title, xlim=good_x_lim,
      pch=21, col = 'black', bg = colours_heat[increasing_order], cex =1.5)
-legend_number = c(paste(max(size), args[3], sep=''), rep (' . ', 8) , paste(min(size), args[3], sep=''))
+legend_number = c(paste(max(size), feature_type, sep=''), rep (' . ', 8) , paste(min(size), feature_type, sep=''))
 legend('topleft',  legend_number, pch =21, pt.bg = brewer.pal(10, 'RdYlBu'), pt.cex=1.5)
 dev.off() 
 

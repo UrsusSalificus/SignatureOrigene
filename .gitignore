@@ -4,6 +4,10 @@ data
 # Outputs #
 files
 
+# Configs #
+config
+.snakemake
+
 # Wrong scripts #
 scripts/CGR_to_PCA.py
 scripts/concatenate_FCGRs.py
