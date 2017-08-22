@@ -23,8 +23,8 @@ window_size = int(str(sys.argv[3]).split('/')[-1])
 k_size = int(str(sys.argv[4]).split('/')[-1])
 # Wanted number of threads at the same time:
 n_threads = int(sys.argv[5])
-# Tracking file:
-follow_up = str(sys.argv[6])
+# Output file:
+output = str(sys.argv[6])
 
 
 ###
@@ -268,7 +268,7 @@ def FCGR_from_CGR(k_size, CGR, outfile):
 
 
 FCGR_directory = '/'.join(['files/FCGRs', '_'.join([str(window_size), str(k_size)]), species])
-concatenated_FCGRS = FCGR_directory + '_FCGRs'
+concatenated_FCGRS = FCGR_directory + '_FCGRs.txt'
 checking_parent(concatenated_FCGRS)
 # Opening concatenated file on top level, to avoid rewriting at each record
 with open(concatenated_FCGRS, 'w') as outfile:
@@ -294,9 +294,3 @@ with open(concatenated_FCGRS, 'w') as outfile:
             for each_count in FCGRs[each_region]:
                 outfile.write(str(each_count) + '\t')
             outfile.write('\n')
-
-
-# Follow the progression of the analysis
-checking_parent(follow_up)
-with open(follow_up, 'w') as file:
-    file.write('')

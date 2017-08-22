@@ -266,7 +266,10 @@ EOF
 confirm
 
 
-
+# Marking which type of Genomic Signature we have
+if [ ! -f "config/gs/DFTs" ]; then
+    mkdir -p "config/gs" && touch "config/gs/DFTs"
+fi
 
 echo " ___ ___ _______ _______      ______ _______ ______ __  __ __
 |   |   |       |   |   |    |   __ \       |      |  |/  |  |

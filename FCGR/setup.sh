@@ -30,7 +30,7 @@ echo "k-mer frequencies using optimized computation (through the Chaos Game "
 echo "Representation (CGR) of a sequence)."
 echo "________________________________________________________________________________"
 echo ""
-#read -n 1 -s -r -p "Press any key to continue"
+read -n 1 -s -r -p "Press any key to continue"
 echo ""
 echo "________________________________________________________________________________"
 echo "
@@ -314,7 +314,10 @@ EOF
 confirm
 
 
-
+# Marking which type of Genomic Signature we have
+if [ ! -f "config/gs/FCGRs" ]; then
+    mkdir -p "config/gs" && touch "config/gs/FCGRs"
+fi
 
 echo " ___ ___ _______ _______      ______ _______ ______ __  __ __
 |   |   |       |   |   |    |   __ \       |      |  |/  |  |

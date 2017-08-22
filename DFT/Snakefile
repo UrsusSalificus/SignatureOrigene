@@ -1,6 +1,7 @@
 SPECIES, = glob_wildcards("config/species/{any}")
 WINDOWS, = glob_wildcards("config/windows/{any}")
 FEATURES, = glob_wildcards("config/features/{any}")
+GS, = glob_wildcards("config/gs/{any}")
 
 rule all:
     input:
@@ -18,7 +19,7 @@ rule download:
     shell:
         """
         no_path=$( basename {input} )
-        bash scripts/download_genomes.sh $no_path {output}
+        bash ../scripts/download_genomes.sh $no_path {output}
         """
 
 rule CGR:
@@ -30,7 +31,7 @@ rule CGR:
     threads:
         3
     shell:
-        "python3 scripts/windowed_CGR.py {input} {threads} {output}"
+        "python3 ../scripts/windowed_CGR.py {input} {threads} {output}"
 
 if "CDS" in FEATURES:
     rule CDS_extract:
@@ -41,7 +42,7 @@ if "CDS" in FEATURES:
         output:
             "../files/features/{windows}_{features}/{species}.txt"
         shell:
-            "python3 scripts/extract_CDS.py {input} {output}"
+            "python3 ../scripts/extract_CDS.py {input} {output}"
 
 rule DFT:
     input:
@@ -74,21 +75,13 @@ rule figures:
         expand("../files/features/{windows}_{features}/{species}.txt",
             windows = WINDOWS, features = FEATURES, species = SPECIES),
         expand("config/features/{features}", features = FEATURES),
-        expand("config/windows/{windows}", windows = WINDOWS)
+        expand("config/windows/{windows}", windows = WINDOWS),
+        expand("config/gs/{gs}", gs = GS)
     output:
         "files/results/{windows}_{features}/{species}_correlation.png",
         "files/results/{windows}_{features}/{species}_MDS.png"
     shell:
         """
-        Rscript scripts/cor_dist_feature.R {input} {output}
-        Rscript scripts/MDS_dist_feature.R {input} {output}
+        Rscript ../scripts/cor_dist_feature.R {output} {input}
+        Rscript ../scripts/MDS_dist_feature.R {output} {input}
         """
-
-
-
-
-
-
-
-
-##############
