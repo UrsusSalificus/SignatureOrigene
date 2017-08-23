@@ -18,9 +18,9 @@ species_genome = str(sys.argv[2])
 # Species abbreviation:
 species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Wanted window size:
-window_size = int(str(sys.argv[3]).split('/')[-1])
+window_size = int(sys.argv[3])
 # Wanted k-mer size:
-k_size = int(str(sys.argv[4]).split('/')[-1])
+k_size = int(sys.argv[3])
 # Wanted number of threads at the same time:
 n_threads = int(sys.argv[5])
 # Output file:

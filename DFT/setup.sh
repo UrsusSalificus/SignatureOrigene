@@ -7,9 +7,6 @@
 # Will setup the whole analysis through user commands
 # ASCII arty letters created through    http://patorjk.com/software/taag/#p=display&f=Chunky&t=Example
 
-if [ -d config/* ]; then
-    rm -r config/*
-fi
 mkdir -p config/temp
 
 echo " _______ __                     __
@@ -280,3 +277,23 @@ echo " ___ ___ _______ _______      ______ _______ ______ __  __ __
 # Cleaning
 cd config
 rm -r temp
+cd ..
+
+
+# Do the entire analysis for each combination
+cd config/species
+SPECIES=$( find * )
+cd ../windows
+WINDOWS=$( find * )
+cd ../features
+FEATURES=$( find * )
+cd ../..
+
+for each_species in $SPECIES; do
+    for each_window in $WINDOWS; do
+        for each_feature in $FEATURES; do
+            snakemake files/results/$each_window\_$each_feature/$each_species\_correlation.png \
+                files/results/$each_window\_$each_feature/$each_species\_MDS.png
+        done
+    done
+done

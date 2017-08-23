@@ -1,90 +1,63 @@
-SPECIES, = glob_wildcards("config/species/{any}")
-WINDOWS, = glob_wildcards("config/windows/{any}")
-KMER, = glob_wildcards("config/kmer/{any}")
-FEATURES, = glob_wildcards("config/features/{any}")
 GS, = glob_wildcards("config/gs/{any}")
-
-rule all:
-    input:
-        expand("files/results/{windows}_{kmer}_{features}/{species}_correlation.png",
-            windows = WINDOWS, kmer = KMER, features = FEATURES, species = SPECIES),
-        expand("files/results/{windows}_{kmer}_{features}/{species}_MDS.png",
-            windows = WINDOWS, kmer = KMER, features = FEATURES, species = SPECIES)
+FEATURES, = glob_wildcards("config/features/{any}")
 
 rule download:
-    input:
-        "config/species/{species}"
     output:
         "../data/genomes/{species}_genomes.fna",
         "../data/genomes/{species}_feature_table.fna"
     shell:
-        """
-        no_path=$( basename {input} )
-        bash ../scripts/download_genomes.sh $no_path {output}
-        """
+        "bash ../scripts/download_genomes.sh {wildcards.species} {output}"
 
 rule CGR:
     input:
-        expand("../data/genomes/{species}_genomes.fna", species = SPECIES),
-        expand("config/windows/{windows}", windows = WINDOWS)
+        "../data/genomes/{species}_genomes.fna"
     output:
         "../data/following/CGRs/{windows}/{species}_done.txt"
     threads:
         3
     shell:
-        "python3 ../scripts/windowed_CGR.py {input} {threads} {output}"
+        "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} {threads} {output}"
 
 if "CDS" in FEATURES:
     rule CDS_extract:
         input:
-            expand("../data/genomes/{species}_genomes.fna", species = SPECIES),
-            expand("../data/genomes/{species}_feature_table.fna", species = SPECIES),
-            expand("config/windows/{windows}", windows = WINDOWS)
+            "../data/genomes/{species}_genomes.fna",
+            "../data/genomes/{species}_feature_table.fna"
         output:
-            "../files/features/{windows}_{features}/{species}.txt"
+            "../files/features/{windows}_{feat}/{species}.txt"
         shell:
-            "python3 ../scripts/extract_CDS.py {input} {output}"
+            "python3 ../scripts/extract_CDS.py {input} {wildcards.windows} {output}"
 
 rule FCGR:
     input:
-        expand("../data/following/CGRs/{windows}/{species}_done.txt",
-            windows = WINDOWS, species = SPECIES),
-        expand("../data/genomes/{species}_genomes.fna", species = SPECIES),
-        expand("config/windows/{windows}", windows = WINDOWS),
-        expand("config/kmer/{kmer}", kmer = KMER)
+        "../data/following/CGRs/{windows}/{species}_done.txt",
+        "../data/genomes/{species}_genomes.fna"
     output:
         "files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt"
     threads:
         3
     shell:
-        "python3 scripts/windowed_FCGR.py {input} {threads} {output}"
+        "python3 scripts/windowed_FCGR.py {input} {wildcards.windows} {wildcards.kmer} {threads} {output}"
 
 rule FCGR_dist:
     input:
-        expand("files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt",
-            windows = WINDOWS, kmer = KMER, species = SPECIES),
-        expand("../data/genomes/{species}_genomes.fna", species = SPECIES),
-        expand("config/windows/{windows}", windows = WINDOWS)
+        "files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt",
+        "../data/genomes/{species}_genomes.fna",
     output:
         "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt"
     shell:
-        "python3 scripts/pearson_dist.py {input} {output}"
+        "python3 scripts/pearson_dist.py {input} {wildcards.windows} {output}"
 
 rule figures:
     input:
-        expand("files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt",
-            windows = WINDOWS, kmer = KMER, species = SPECIES),
-        expand("../files/features/{windows}_{features}/{species}.txt",
-            windows = WINDOWS, features = FEATURES, species = SPECIES),
-        expand("config/features/{features}", features = FEATURES),
-        expand("config/windows/{windows}", windows = WINDOWS),
-        expand("config/gs/{gs}", gs = GS),
-        expand("config/kmer/{kmer}", kmer = KMER)
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt",
+        "../files/features/{windows}_{feat}/{species}.txt",
+        expand("config/gs/{gs}", gs = GS)
     output:
-        "files/results/{windows}_{kmer}_{features}/{species}_correlation.png",
-        "files/results/{windows}_{kmer}_{features}/{species}_MDS.png"
+        "files/results/{windows}_{kmer}_{feat}/{species}_correlation.png",
+        "files/results/{windows}_{kmer}_{feat}/{species}_MDS.png"
     shell:
         """
-        Rscript ../scripts/cor_dist_feature.R {output} {input}
-        Rscript ../scripts/MDS_dist_feature.R {output} {input}
+        Rscript ../scripts/cor_dist_feature.R {output} {input} {wildcards.feat} {wildcards.windows} {wildcards.kmer}
+        Rscript ../scripts/MDS_dist_feature.R {output} {input} {wildcards.feat} {wildcards.windows} {wildcards.kmer}
         """

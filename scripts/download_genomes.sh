@@ -6,9 +6,9 @@
 
 # Will download whole concatenated genomes
 
-species=$1
-output_genome=$2
-output_table=$3
+species=$( $1 | tr -d '{}')
+output_genome=$( $2 | tr -d '{}')
+output_table=$( $3 | tr -d '{}')
 
 declare -A all_accessions
 all_accessions=(["h_sapiens"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.36_GRCh38.p10/"

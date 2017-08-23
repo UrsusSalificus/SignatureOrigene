@@ -16,12 +16,12 @@
 # 8. IF USING FCGR : k-mer size
 args <- commandArgs(trailingOnly=TRUE)
 
-output = args[1]
-feature_type = basename(args[5])
-window_size = basename(args[6])
-gs = basename(args[7])
+output <- args[1]
+gs <- basename(args[5])
+feature_type <- args[6]
+window_size <- args[7]
 if (gs == 'FCGRs'){
-  kmer = basename(args[8])
+  kmer <- args[8]
 } 
 
 distance_matrix <- read.table(args[3], sep = "\t", header = FALSE)
