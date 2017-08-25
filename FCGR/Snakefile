@@ -4,7 +4,8 @@ FEATURES, = glob_wildcards("config/features/{any}")
 rule download:
     output:
         "../data/genomes/{species}_genomes.fna",
-        "../data/genomes/{species}_feature_table.fna"
+        "../data/genomes/{species}_feature_table.txt"
+        "../data/genomes/{species}_repeats.txt"
     shell:
         "bash ../scripts/download_genomes.sh {wildcards.species} {output}"
 
@@ -18,15 +19,15 @@ rule CGR:
     shell:
         "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} {threads} {output}"
 
-if "CDS" in FEATURES:
-    rule CDS_extract:
-        input:
-            "../data/genomes/{species}_genomes.fna",
-            "../data/genomes/{species}_feature_table.fna"
-        output:
-            "../files/features/{windows}_{feat}/{species}.txt"
-        shell:
-            "python3 ../scripts/extract_CDS.py {input} {wildcards.windows} {output}"
+rule feature_extract:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/genomes/{species}_feature_table.txt"
+    output:
+        "../files/features/{windows}_{features}/{species}.txt"
+    shell:
+        "python3 ../scripts/extract_feature.py {input} {wildcards.windows} \
+            {wildcards.features} {output}"
 
 rule FCGR:
     input:
