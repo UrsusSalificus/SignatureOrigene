@@ -107,7 +107,7 @@ checking_parent(concatenated_DFTs)
 # Opening concatenated file on top level, to avoid rewriting at each record
 with open(concatenated_DFTs, 'w') as outfile:
     # Path to CGR directory
-    CGR_directory = '/'.join(['files/CGRs', str(window_size), species])
+    CGR_directory = '/'.join(['../files/CGRs/', str(window_size), species])
     # Get all the different CGRs files path
     all_records = extract_path(CGR_directory + '/', '*')
     for each_record in range(len(all_records)):

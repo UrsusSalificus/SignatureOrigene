@@ -5,7 +5,12 @@
 # License : MIT
 
 # Will setup the whole analysis through user commands
+# Usage : bash setup.sh other_snakemake_arguments
 # ASCII arty letters created through    http://patorjk.com/software/taag/#p=display&f=Chunky&t=Example
+
+# Any argument can be passed to snakemake as argument of this setup script
+# E.g. number of cores (--cores #) or dry run (-np = will just show the jobs to do, not really running them)
+snakemake_arguments="$*"
 
 mkdir -p config/temp
 
@@ -243,20 +248,20 @@ cat << "EOF" > $table
 Type their corresponding number as single block of numbers (eg. 12), then press [ENTER]:
 
     1. CDS : coding sequences
-    2. STR : Short Tandem Repeats
+    2. LCR : Low Complexity Regions (repeats)
 EOF
 choice=fixed
 good_inputs=12
 abbrev="config/temp/abbrev.txt"
 cat << "EOF" > $abbrev
-NA CDS STR
+NA CDS LCR
 EOF
 out_dir="config/features/"
 nice="config/temp/nice.txt"
 cat << "EOF" > $nice
 NA
 Coding sequences (CDS)
-Short Tandem Repeats (STR)
+Low Complexity Regions (LCR)
 EOF
 
 confirm
@@ -337,11 +342,20 @@ cd ../kmer
 KMER=$( find * )
 cd ../..
 
+# We will have to check the downloaded files, as they are input files and rise error in snakemake...
 for each_species in $SPECIES; do
+    genome_file=../data/genomes/$each_species\_genomes.fna
+    feature_file=../data/genomes/$each_species\_feature_table.txt
+    repeat_file=../data/genomes/$each_species\_repeats.txt
+    # If any of those is missing, download again
+    if [[ ! -f $genome_file || ! -f $feature_file || ! -f $repeat_file ]]; then
+        bash ../scripts/download_genomes.sh $each_species $genome_file $feature_file $repeat_file
+    fi
     for each_window in $WINDOWS; do
         for each_feature in $FEATURES; do
             for each_kmer in $KMER; do
-                snakemake files/results/$each_window\_$each_kmer\_$each_feature/$each_species\_correlation.png \
+                snakemake $snakemake_arguments \
+                    files/results/$each_window\_$each_kmer\_$each_feature/$each_species\_correlation.png \
                     files/results/$each_window\_$each_kmer\_$each_feature/$each_species\_MDS.png
             done
         done

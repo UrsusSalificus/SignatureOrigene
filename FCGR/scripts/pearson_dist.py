@@ -6,7 +6,7 @@ import glob
 import sys
 import os
 import numpy
-from scipy import stats as ss
+from scipy.stats.stats import pearsonr
 
 __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
@@ -61,6 +61,13 @@ def checking_parent(file_path):
 #   - FCGRs : takes around 1 second for a set of 150'000 FCGRs (= 1 region).
 ###
 def pearson_distance(genomic_signatures, n_region, distance_matrix):
+    genomic_signatures = "/home/titouan/PycharmProjects/Master/Main/FCGR/files/FCGRs/5000_4/s_cerevisiae_FCGRs.txt"
+    n_region = 2424
+    window_size = 5000
+    species = "s_cerevisiae"
+    n_region = 2
+    # Simply does not understand why it doesn't work... Seems like readline does not work...
+
     distances = []
     # We will have to compare line by line, in a pairwise fashion
     with open(genomic_signatures, 'r') as FCGRs:
@@ -70,8 +77,7 @@ def pearson_distance(genomic_signatures, n_region, distance_matrix):
             # each_region = each line in the document
             distances.append([])
             # Note that when importing each line, we must exclude the first element (record id) and the last (empty)
-            actual_line = numpy.array([float(each_DFT) for each_DFT in each_region.split('\t')[1:-1]])
-            pair_line = numpy.array([float(each_DFT) for each_DFT in each_region.split('\t')[1:-1]])
+            actual_line = numpy.array([int(each_FCGR) for each_FCGR in each_region.split('\t')[1:-1]])
             # j will help us know which line still have to do
             j = 0
             with open(genomic_signatures, 'r') as pair_FCGRs:
@@ -85,23 +91,26 @@ def pearson_distance(genomic_signatures, n_region, distance_matrix):
                 # For each region left, compute the distance:
                 for each_left in range(n_region - j):
                     # We import the line j to compare with i
-                    pair_line = numpy.array([float(each_DFT) for each_DFT in pair_FCGRs.readline().split('\t')[1:-1]])
+                    pair_line = numpy.array([int(each_FCGR) for each_FCGR in pair_FCGRs.readline().split('\t')[1:-1]])
                     # Actual Pearson correlation distance computation (scipy.stats.pearsonr):
-                    distances[i].append(ss.pearsonr(actual_line, pair_line)[0])     # Only take the r value [0]
+                    distances[i].append(pearsonr(actual_line, pair_line)[0])     # Only take the r value [0]
             # This region/line done, update i
             i += 1
-
+    print(distances)
     # If outfile is non-empty, write the output
     if distance_matrix:
-        checking_parent(distance_matrix)
+        # checking_parent(distance_matrix)
+        '''
         with open(distance_matrix, 'w') as outfile:
             for each_row in distances:
                 for each_column in each_row:
                     outfile.write(str(each_column) + '\t')
                 outfile.write('\n')
         return distances
+        '''
     # If no 3rd argument was given, outfile is empty (= considered False)
     else:
+        print(distances)
         return distances
 
 

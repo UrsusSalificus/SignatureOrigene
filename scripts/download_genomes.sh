@@ -6,11 +6,11 @@
 
 # Will download whole concatenated genomes
 
-species=$( $1 )
-output_genome=$( $2 )
-output_table=$( $3 )
+species="$1"
+output_genome="$2"
+output_table="$3"
 if [ $species != e_coli ]; then
-    output_repeats=$( $4 )
+    output_repeats="$4"
 fi
 
 declare -A all_accessions

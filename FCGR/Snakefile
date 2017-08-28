@@ -1,13 +1,4 @@
 GS, = glob_wildcards("config/gs/{any}")
-FEATURES, = glob_wildcards("config/features/{any}")
-
-rule download:
-    output:
-        "../data/genomes/{species}_genomes.fna",
-        "../data/genomes/{species}_feature_table.txt"
-        "../data/genomes/{species}_repeats.txt"
-    shell:
-        "bash ../scripts/download_genomes.sh {wildcards.species} {output}"
 
 rule CGR:
     input:
@@ -17,17 +8,19 @@ rule CGR:
     threads:
         3
     shell:
-        "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} {threads} {output}"
+        "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
+        {threads} {output}"
 
 rule feature_extract:
     input:
         "../data/genomes/{species}_genomes.fna",
-        "../data/genomes/{species}_feature_table.txt"
+        "../data/genomes/{species}_feature_table.txt",
+        "../data/genomes/{species}_repeats.txt"
     output:
         "../files/features/{windows}_{features}/{species}.txt"
     shell:
-        "python3 ../scripts/extract_feature.py {input} {wildcards.windows} \
-            {wildcards.features} {output}"
+        "python3 ../scripts/extract_feature.py {wildcards.windows} \
+            {wildcards.features} {output} {input}"
 
 rule FCGR:
     input:
@@ -38,7 +31,8 @@ rule FCGR:
     threads:
         3
     shell:
-        "python3 scripts/windowed_FCGR.py {input} {wildcards.windows} {wildcards.kmer} {threads} {output}"
+        "python3 scripts/windowed_FCGR.py {input} {wildcards.windows} \
+        {wildcards.kmer} {threads} {output}"
 
 rule FCGR_dist:
     input:
@@ -52,13 +46,15 @@ rule FCGR_dist:
 rule figures:
     input:
         "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt",
-        "../files/features/{windows}_{feat}/{species}.txt",
+        "../files/features/{windows}_{features}/{species}.txt",
         expand("config/gs/{gs}", gs = GS)
     output:
-        "files/results/{windows}_{kmer}_{feat}/{species}_correlation.png",
-        "files/results/{windows}_{kmer}_{feat}/{species}_MDS.png"
+        "files/results/{windows}_{kmer}_{features}/{species}_correlation.png",
+        "files/results/{windows}_{kmer}_{features}/{species}_MDS.png"
     shell:
         """
-        Rscript ../scripts/cor_dist_feature.R {output} {input} {wildcards.feat} {wildcards.windows} {wildcards.kmer}
-        Rscript ../scripts/MDS_dist_feature.R {output} {input} {wildcards.feat} {wildcards.windows} {wildcards.kmer}
+        Rscript ../scripts/cor_dist_feature.R {output} {input} \
+            {wildcards.features} {wildcards.windows} {wildcards.kmer}
+        Rscript ../scripts/MDS_dist_feature.R {output} {input} \
+            {wildcards.features} {wildcards.windows} {wildcards.kmer}
         """

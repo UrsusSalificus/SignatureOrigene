@@ -20,7 +20,7 @@ species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Wanted window size:
 window_size = int(sys.argv[3])
 # Wanted k-mer size:
-k_size = int(sys.argv[3])
+k_size = int(sys.argv[4])
 # Wanted number of threads at the same time:
 n_threads = int(sys.argv[5])
 # Output file:
@@ -273,7 +273,7 @@ checking_parent(concatenated_FCGRS)
 # Opening concatenated file on top level, to avoid rewriting at each record
 with open(concatenated_FCGRS, 'w') as outfile:
     # Path to CGR directory
-    CGR_directory = '/'.join(['files/CGRs/', str(window_size), species])
+    CGR_directory = '/'.join(['../files/CGRs/', str(window_size), species])
     # Get all the different CGRs files path
     all_records = extract_path(CGR_directory + '/', '*')
     for each_record in range(len(all_records)):

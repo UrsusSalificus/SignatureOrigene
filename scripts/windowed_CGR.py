@@ -124,7 +124,7 @@ records = fetch_fasta(species_genome)
 for each_sequence in records:
     if len(each_sequence.seq) > window_size:
         n_windows = math.floor(len(each_sequence.seq) / window_size)  # Number of windows
-        seq_directory = '/'.join(['files/CGRs', str(window_size), species, each_sequence.id, 'CGR_region_'])
+        seq_directory = '/'.join(['../files/CGRs', str(window_size), species, each_sequence.id, 'CGR_region_'])
         # Parallel the CGR on n_jobs core
         Parallel(n_jobs=n_threads)(delayed(N_sensitive_CGR)
                                    (str(each_sequence.seq[

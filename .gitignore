@@ -7,6 +7,7 @@ files
 # Configs #
 config
 .snakemake
+.Rhistory
 
 # Wrong scripts #
 scripts/CGR_to_PCA.py
