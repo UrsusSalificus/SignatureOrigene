@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""This script compute k-mer frequencies using CGR of all windows of a certain size, in all species
+"""This script compute k-mer frequencies using CGR of all windows of a certain size
 """
 from joblib import Parallel, delayed
 import sys
@@ -13,30 +13,18 @@ __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
 __license__ = "MIT"
 
-# Wanted k-mer size:
-k_size = int(sys.argv[1])
+# Species genome path:
+species_genome = str(sys.argv[2])
+# Species abbreviation:
+species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Wanted window size:
-window_size = int(sys.argv[2])
-window_in_kb = str(window_size)[:-3] + 'kb'
+window_size = int(sys.argv[3])
+# Wanted k-mer size:
+k_size = int(sys.argv[4])
 # Wanted number of threads at the same time:
-n_threads = int(sys.argv[3])
-
-
-###
-# To makes up with any updates, we use the list of species from the downloading script:
-###
-def get_species(species_file='download_genomes.sh'):
-    species = []
-    with open(species_file, 'r') as list_of_species:
-        for each_line in list_of_species:
-            if each_line.split('=')[0] == 'species':
-                for each_species in each_line.split('=')[1].strip().strip('\'').split(' '):
-                    species.append(each_species)
-    return (species)
-
-
-# Get all the species abbreviation for the study
-species = get_species()
+n_threads = int(sys.argv[5])
+# Output file:
+output = str(sys.argv[6])
 
 
 ###
@@ -279,26 +267,30 @@ def FCGR_from_CGR(k_size, CGR, outfile):
         return FCGR
 
 
-# Get all the different CGRs files path
-for each_species in range(len(species)):
-    FCGR_directory = '/'.join(['../files/FCGRs', '_'.join([str(window_in_kb), str(k_size)]),
-                               species[each_species]])
-    concatenated_FCGRS = FCGR_directory + '_FCGRs'
-    checking_parent(concatenated_FCGRS)
-    with open(concatenated_FCGRS, 'w') as outfile:
-        CGR_directory = '/'.join(['../files/CGRs/', window_in_kb, species[each_species]]) # Path to directory
-        all_records = extract_path(CGR_directory + '/', '*')
-        for each_record in range(len(all_records)):
-            CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
-            record_name = all_records[each_record].split('/')[-1]
-            FCGR_region = '/'.join([FCGR_directory, record_name, 'FCGR_region_'])   # Path to region
-            FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
-                                               (k_size, CGR_files[each_region], FCGR_region + str(each_region))
-                                               for each_region in range(len(CGR_files)))
-            for each_region in range(len(FCGRs)):
-                outfile.write(record_name + '\t')
-                for each_count in FCGRs[each_region]:
-                    outfile.write(str(each_count) + '\t')
-                outfile.write('\n')
+FCGR_directory = '/'.join(['files/FCGRs', '_'.join([str(window_size), str(k_size)]), species])
+concatenated_FCGRS = FCGR_directory + '_FCGRs.txt'
+checking_parent(concatenated_FCGRS)
+# Opening concatenated file on top level, to avoid rewriting at each record
+with open(concatenated_FCGRS, 'w') as outfile:
+    # Path to CGR directory
+    CGR_directory = '/'.join(['../files/CGRs/', str(window_size), species])
+    # Get all the different CGRs files path
+    all_records = extract_path(CGR_directory + '/', '*')
+    for each_record in range(len(all_records)):
+        # Find all CGR files with glob:
+        CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
+        # Extract all the record names and store it for later:
+        record_name = all_records[each_record].split('/')[-1]
+        # Prepare the prefix added before every region:
+        FCGR_region = '/'.join([FCGR_directory, record_name, 'FCGR_region_'])
+        # Parallel computation for every region:
+        FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
+                                           (k_size, CGR_files[each_region], FCGR_region + str(each_region) + ".txt")
+                                           for each_region in range(len(CGR_files)))
 
-
+        # Write each region's genomic signature in a single file as well:
+        for each_region in range(len(FCGRs)):
+            outfile.write(record_name + '\t')
+            for each_count in FCGRs[each_region]:
+                outfile.write(str(each_count) + '\t')
+            outfile.write('\n')

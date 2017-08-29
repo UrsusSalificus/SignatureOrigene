@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-"""This script compute the power spectrum of the Chaos Game Representation (CGR) of a sequence,
-through the Discrete Fourier Transform (DFT) of a CGR
+"""This script compute k-mer frequencies using CGR of all windows of a certain size
 """
-from Bio import SeqIO
 import glob
 import sys
 import os
@@ -14,28 +12,16 @@ __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
 __license__ = "MIT"
 
+# Species genome path:
+species_genome = str(sys.argv[2])
+# Species abbreviation:
+species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Wanted window size:
-window_size = int(sys.argv[1])
-window_in_kb = str(window_size)[:-3] + 'kb'
+window_size = int(str(sys.argv[3]).split('/')[-1])
 # Wanted number of threads at the same time:
-n_threads = int(sys.argv[2])
-
-
-###
-# To makes up with any updates, we use the list of species from the downloading script:
-###
-def get_species(species_file='download_genomes.sh'):
-    species = []
-    with open(species_file, 'r') as list_of_species:
-        for each_line in list_of_species:
-            if each_line.split('=')[0] == 'species':
-                for each_species in each_line.split('=')[1].strip().strip('\'').split(' '):
-                    species.append(each_species)
-    return (species)
-
-
-# Get all the species abbreviation for the study
-species = get_species()
+n_threads = int(sys.argv[4])
+# Output file:
+output = str(sys.argv[5])
 
 
 ###
@@ -43,22 +29,6 @@ species = get_species()
 ###
 def extract_path(files_directory, pattern):
     return glob.glob(files_directory + pattern)
-
-
-###
-# Fetch a fasta file, and clean it (remove N or n, which stands for "any nucleotides)
-# Note that if the fasta file contain multiple sequences, only the first will have its CGR computed !
-# Input:
-#   - fasta_file : Path to the file containing the sequence one wants the CGR computed on
-###
-def fetch_fasta(fasta_file):
-    # Will only take the first sequence of the fasta file
-    try:
-        records = list(SeqIO.parse(fasta_file, "fasta"))
-    except:
-        print("Cannot open %s, check path!" % fasta_file)
-        sys.exit()
-    return (records)
 
 
 ###
@@ -126,33 +96,34 @@ def DFT_from_CGR(CGR, outfile):
             for each_sample in z_ps:
                 file.write(str(each_sample) + '\t')
             file.write('\n')
-        return z_ps
     # If no 2nd argument was given, outfile is empty (= considered False)
     else:
         return z_ps
 
 
-for each_species in range(len(species)):
-    DFT_directory = '/'.join(['../files/DFTs', str(window_in_kb), species[each_species]])
-    concatenated_DFTs = DFT_directory + '_DFTs'
-    checking_parent(concatenated_DFTs)
-    with open(concatenated_DFTs, 'w') as outfile:
-        CGR_directory = '/'.join(['../files/CGRs', window_in_kb, species[each_species]]) # Path to directory
-        all_records = extract_path(CGR_directory + '/', '*')
-        for each_record in range(len(all_records)):
-            CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
-            record_name = all_records[each_record].split('/')[-1]
-            DFT_region = '/'.join([DFT_directory, record_name, 'DFT_region_'])   # Path to region
-            DFTs = Parallel(n_jobs=n_threads)(delayed(DFT_from_CGR)
-                                               (CGR_files[each_region], DFT_region + str(each_region))
-                                               for each_region in range(len(CGR_files)))
-            for each_region in range(len(DFTs)):
-                outfile.write(record_name + '\t')
-                for each_count in DFTs[each_region]:
-                    outfile.write(str(each_count) + '\t')
-                outfile.write('\n')
+DFT_directory = '/'.join(['files/DFTs', str(window_size), species])
+concatenated_DFTs = DFT_directory + '_DFTs.txt'
+checking_parent(concatenated_DFTs)
+# Opening concatenated file on top level, to avoid rewriting at each record
+with open(concatenated_DFTs, 'w') as outfile:
+    # Path to CGR directory
+    CGR_directory = '/'.join(['../files/CGRs/', str(window_size), species])
+    # Get all the different CGRs files path
+    all_records = extract_path(CGR_directory + '/', '*')
+    for each_record in range(len(all_records)):
+        # Find all CGR files with glob:
+        CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
+        # Extract all the record names and store it for later:
+        record_name = all_records[each_record].split('/')[-1]
+        # Prepare the prefix added before every region:
+        DFT_region = '/'.join([DFT_directory, record_name, 'DFT_region_'])
+        # Parallel computation for every region, stored in individual files:
+        DFTs = Parallel(n_jobs=n_threads)(delayed(DFT_from_CGR)(CGR_files[each_region], '')
+                                          for each_region in range(len(CGR_files)))
 
-
-
-
-
+        # Write each region's genomic signature in a single concatenated file:
+        for each_region in range(len(DFTs)):
+            outfile.write(record_name + '\t')
+            for each_count in DFTs[each_region]:
+                outfile.write(str(each_count) + '\t')
+            outfile.write('\n')
