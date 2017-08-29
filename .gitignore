@@ -9,18 +9,6 @@ config
 .snakemake
 .Rhistory
 
-# Wrong scripts #
-scripts/CGR_to_PCA.py
-scripts/concatenate_FCGRs.py
-
-# Testing scripts #
-scripts/test.py
-scripts/testing_script.py
-scripts/testing_bash.sh
-
-# Personnal scripts #
-scripts/for_group_meetings.py
-scripts/for_group_meetings.R
 
 
 
