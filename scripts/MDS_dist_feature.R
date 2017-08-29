@@ -72,7 +72,6 @@ ggplot(data, aes(x = MDS_1, y = MDS_2, colour = size)) +
     axis.title.y = element_text(size = 15),
     axis.text.y  = element_text(size = 12)
   ) +
-  scale_colour_gradientn(name = "% of CDS", colours = colorRampPalette(rev(brewer.pal(10, "RdYlBu")))(100))
+  scale_colour_gradientn(name = paste("% of", feature_type), colours = colorRampPalette(rev(brewer.pal(10, "RdYlBu")))(100))
 dev.off() 
-
 

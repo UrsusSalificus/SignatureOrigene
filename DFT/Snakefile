@@ -31,16 +31,19 @@ rule DFT:
     threads:
         3
     shell:
-        "python3 scripts/windowed_DFT.py {input} {wildcards.windows} {threads} {output}"
+        "python3 scripts/windowed_DFT.py {input} {wildcards.windows} \
+        {threads} {output}"
 
 rule DFT_dist:
     input:
         "files/DFTs/{windows}/{species}_DFTs.txt",
-        "../data/genomes/{species}_genomes.fna",
     output:
         "files/distances/euclidean/{windows}/{species}_dist_matrix.txt"
+    threads:
+        1
     shell:
-        "python3 scripts/euclidean_dist.py {input} {wildcards.windows} {output}"
+        "python3 scripts/euclidean_dist.py {input} {wildcards.species} \
+            {wildcards.windows} {output}"
 
 rule figures:
     input:

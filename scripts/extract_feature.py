@@ -68,17 +68,21 @@ def extract_features (feature, species_table, output, id_column, feature_column,
         # Must skip the header, which is different among different feature:
         if feature == 'CDS':
             feature_table.readline()
-        if feature == 'STR':
+        elif feature == 'LCR':
             feature_table.readline()
             feature_table.readline()
             feature_table.readline()
         # From now on, will move through the document by .readline()
-        actual_line = feature_table.readline().split()
+        # Problem, tables have different separation type:
+        if feature == 'CDS':
+            actual_line = feature_table.readline().split('\t')
+        elif feature == 'LCR':
+            actual_line = feature_table.readline().rsplit()
         for each_record in range(len(records)):
             # Each element of this list represents a nucleotide
             record_proxy = [0] * len(records[each_record].seq)
             # While repeats from the actual record, continue extracting
-            try :
+            try:
                 while records[each_record].id == actual_line[id_column]:
                     # Now depends on the feature type:
                     if feature == 'CDS':
@@ -91,7 +95,10 @@ def extract_features (feature, species_table, output, id_column, feature_column,
                         # For each nucleotide from start to end of the repeat:
                         for each_nucleotide in range(int(actual_line[start_column]), int(actual_line[end_column])):
                             record_proxy[each_nucleotide] = 1
-                    actual_line = feature_table.readline().split()
+                    if feature == 'CDS':
+                        actual_line = feature_table.readline().split('\t')
+                    elif feature == 'LCR':
+                        actual_line = feature_table.readline().rsplit()
                     # If we get at the last line, actual_line only have one empty entry, which can be detected by
                     # calling the second element ([1])
                     try:
@@ -102,7 +109,7 @@ def extract_features (feature, species_table, output, id_column, feature_column,
                     n_windows = math.floor(len(records[each_record].seq) / window_size)  # Number of windows
                     for start in range(0, n_windows):
                         window = str(records[each_record].seq)[(start * window_size):((start * window_size) + window_size)]
-                        # If any character in the sequence is NOT a standard nucleotides (including unknown nucleotides),
+                        # If any character in the sequence is NOT a standard nucleotides (including unknown nucleotides)
                         # do NOT compute:
                         if not any([c not in 'ATCGatcg' for c in window]):
                             region_CDS = sum(record_proxy[(start * window_size):((start * window_size) + window_size)])

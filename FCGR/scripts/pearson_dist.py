@@ -14,10 +14,8 @@ __license__ = "MIT"
 
 # Path to the file containing the genomic signatures from all the regions concatenated:
 concatenate = str(sys.argv[1])
-# Species genome path:
-species_genome = str(sys.argv[2])
 # Species abbreviation:
-species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
+species = str(sys.argv[2])
 # Wanted window size:
 window_size = int(sys.argv[3])
 # Output file:
@@ -60,13 +58,10 @@ def checking_parent(file_path):
 # Performance :
 #   - FCGRs : takes around 1 second for a set of 150'000 FCGRs (= 1 region).
 ###
-def pearson_distance(genomic_signatures, n_region, distance_matrix):
-    genomic_signatures = "/home/titouan/PycharmProjects/Master/Main/FCGR/files/FCGRs/5000_4/s_cerevisiae_FCGRs.txt"
-    n_region = 2424
-    window_size = 5000
-    species = "s_cerevisiae"
-    n_region = 2
-    # Simply does not understand why it doesn't work... Seems like readline does not work...
+def pearson_distance(genomic_signatures, species, distance_matrix):
+    # Total number of region (thus sum of all regions, in all records) :
+    n_region = sum([len(extract_path(each_record + '/', '*')) for each_record in extract_path(
+        '/'.join(['../files/CGRs', str(window_size), species]) + '/', '*')])
 
     distances = []
     # We will have to compare line by line, in a pairwise fashion
@@ -96,28 +91,21 @@ def pearson_distance(genomic_signatures, n_region, distance_matrix):
                     distances[i].append(pearsonr(actual_line, pair_line)[0])     # Only take the r value [0]
             # This region/line done, update i
             i += 1
-    print(distances)
     # If outfile is non-empty, write the output
     if distance_matrix:
         # checking_parent(distance_matrix)
-        '''
         with open(distance_matrix, 'w') as outfile:
             for each_row in distances:
                 for each_column in each_row:
                     outfile.write(str(each_column) + '\t')
                 outfile.write('\n')
         return distances
-        '''
     # If no 3rd argument was given, outfile is empty (= considered False)
     else:
-        print(distances)
         return distances
 
 
 checking_parent(output)
-# Total number of region (thus sum of all regions, in all records) :
-n_region = sum([len(extract_path(each_record + '/', '*')) for each_record in extract_path(
-                                '/'.join(['files/CGRs', str(window_size), species]) + '/', '*')])
 
-pearson_distance(concatenate, n_region, output)
+pearson_distance(genomic_signatures = concatenate, species = species, distance_matrix = output)
 

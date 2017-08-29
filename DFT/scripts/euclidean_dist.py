@@ -13,10 +13,8 @@ __license__ = "MIT"
 
 # Path to the file containing the genomic signatures from all the regions concatenated:
 concatenate = str(sys.argv[1])
-# Species genome path:
-species_genome = str(sys.argv[2])
 # Species abbreviation:
-species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
+species = str(sys.argv[2])
 # Wanted window size:
 window_size = int(sys.argv[3])
 # Output file:
@@ -59,7 +57,11 @@ def checking_parent(file_path):
 # Performance :
 #   - DFTs : takes around 1 second for a set of 150'000 DFTs (= 1 region).
 ###
-def euclidean_distance(genomic_signatures, n_region, distance_matrix):
+def euclidean_distance(genomic_signatures, species, distance_matrix):
+    # Total number of region (thus sum of all regions, in all records) :
+    n_region = sum([len(extract_path(each_record + '/', '*')) for each_record in extract_path(
+        '/'.join(['../files/CGRs', str(window_size), species]) + '/', '*')])
+
     distances = []
     # We will have ot compare line by line, in a pairwise fashion
     with open(genomic_signatures, 'r') as DFTs:
@@ -104,9 +106,6 @@ def euclidean_distance(genomic_signatures, n_region, distance_matrix):
 
 
 checking_parent(output)
-# Total number of region (thus sum of all regions, in all records) :
-n_region = sum([len(extract_path(each_record + '/', '*')) for each_record in extract_path(
-                                '/'.join(['files/CGRs', str(window_size), species]) + '/', '*')])
 
-euclidean_distance(concatenate, n_region, output)
+euclidean_distance(concatenate, species, output)
 

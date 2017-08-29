@@ -36,12 +36,14 @@ rule FCGR:
 
 rule FCGR_dist:
     input:
-        "files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt",
-        "../data/genomes/{species}_genomes.fna",
+        "files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt"
     output:
         "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt"
+    threads:
+        1
     shell:
-        "python3 scripts/pearson_dist.py {input} {wildcards.windows} {output}"
+        "python3 scripts/pearson_dist.py {input} {wildcards.species} \
+            {wildcards.windows} {output}"
 
 rule figures:
     input:
