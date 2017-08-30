@@ -6,7 +6,7 @@ rule CGR:
     output:
         "../data/following/CGRs/{windows}/{species}_done.txt"
     threads:
-        3
+        99
     shell:
         "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
         {threads} {output}"
@@ -29,7 +29,7 @@ rule FCGR:
     output:
         "files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt"
     threads:
-        3
+        99
     shell:
         "python3 scripts/windowed_FCGR.py {input} {wildcards.windows} \
         {wildcards.kmer} {threads} {output}"
@@ -40,10 +40,9 @@ rule FCGR_dist:
     output:
         "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt"
     threads:
-        1
+        99
     shell:
-        "python3 scripts/pearson_dist.py {input} {wildcards.species} \
-            {wildcards.windows} {output}"
+        "Rscript scripts/pearson_distance.R {input} {output}"
 
 rule figures:
     input:
@@ -60,3 +59,11 @@ rule figures:
         Rscript ../scripts/MDS_dist_feature.R {output} {input} \
             {wildcards.features} {wildcards.windows} {wildcards.kmer}
         """
+
+rule potato:
+    input:
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt"
+    output:
+        "{windows}_{kmer}_TO_REMOVE.txt"
+    shell:
+        "echo {input} > {output}"

@@ -29,7 +29,7 @@ for each_species in $species; do
     fi
     for each_window in $windows; do
         for each_feature in $features; do
-            for each_kmer in $KMER; do
+            for each_kmer in $kmer; do
                 snakemake $snakemake_arguments \
                     files/results/$each_window\_$each_kmer\_$each_feature/$each_species\_correlation.png \
                     files/results/$each_window\_$each_kmer\_$each_feature/$each_species\_MDS.png

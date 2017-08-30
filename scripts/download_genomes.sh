@@ -32,16 +32,16 @@ if [ $species != e_coli ]; then
     repeats=$( echo ${array[9]}'_rm.out.gz' )
 fi
 
-wget --no-use-server-timestamps $accession$whole_genome
+wget $accession$whole_genome
 gunzip < $whole_genome > $output_genome
 rm $whole_genome
 
-wget --no-use-server-timestamps $accession$feature_table
+wget $accession$feature_table
 gunzip < $feature_table > $output_table
 rm $feature_table
 
 if [ $species != e_coli ]; then
-    wget --no-use-server-timestamps $accession$repeats
+    wget $accession$repeats
     gunzip < $repeats > $output_repeats
     rm $repeats
 fi
