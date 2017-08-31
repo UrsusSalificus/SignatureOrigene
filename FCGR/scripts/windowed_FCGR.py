@@ -13,10 +13,8 @@ __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
 __license__ = "MIT"
 
-# Species genome path:
-species_genome = str(sys.argv[2])
 # Species abbreviation:
-species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
+species = str(sys.argv[2])
 # Wanted window size:
 window_size = int(sys.argv[3])
 # Wanted k-mer size:
@@ -285,10 +283,10 @@ with open(concatenated_FCGRS, 'w') as outfile:
         FCGR_region = '/'.join([FCGR_directory, record_name, 'FCGR_region_'])
         # Parallel computation for every region:
         FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
-                                           (k_size, CGR_files[each_region], FCGR_region + str(each_region) + ".txt")
+                                           (k_size, CGR_files[each_region], '')
                                            for each_region in range(len(CGR_files)))
 
-        # Write each region's genomic signature in a single file as well:
+        # Write each region's genomic signature in a single file:
         for each_region in range(len(FCGRs)):
             outfile.write(record_name + '\t')
             for each_count in FCGRs[each_region]:

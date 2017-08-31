@@ -9,7 +9,7 @@ rule CGR:
         99
     shell:
         "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
-        {threads} {output}"
+            {threads} {output}"
 
 rule feature_extract:
     input:
@@ -24,15 +24,14 @@ rule feature_extract:
 
 rule DFT:
     input:
-        "../data/following/CGRs/{windows}/{species}_done.txt",
-        "../data/genomes/{species}_genomes.fna"
+        "../data/following/CGRs/{windows}/{species}_done.txt"
     output:
         "files/DFTs/{windows}/{species}_DFTs.txt"
     threads:
         99
     shell:
-        "python3 scripts/windowed_DFT.py {input} {wildcards.windows} \
-        {threads} {output}"
+        "python3 scripts/windowed_DFT.py {input} {wildcards.species} \
+            {wildcards.windows} {threads} {output}"
 
 rule DFT_dist:
     input:

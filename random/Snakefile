@@ -1,0 +1,91 @@
+rule genomic_signatures:
+    output:
+        "files/FCGRs/{windows}_{kmer}/all_FCGRs.txt"
+        "files/DFTs/{windows}/all_DFTs.txt"
+    threads:
+        99
+    shell:
+        "python3 scripts/random/scripts/random_GS.py {input} {wildcards.windows} \
+        {wildcards.kmer} {threads} {output}"
+
+rule concatenate_FCGR:
+    input:
+        expand("files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt",
+            species = SPECIES)
+    output:
+        "../files/features/{windows}_{features}/{species}.txt"
+    shell:
+        "python3 ../scripts/extract_feature.py {wildcards.windows} \
+            {wildcards.features} {output} {input}"
+
+rule FCGR:
+    input:
+        "../data/following/CGRs/{windows}/{species}_done.txt"
+    output: vc
+        "files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt"
+    threads:
+        99
+    shell:
+        "python3 scripts/windowed_FCGR.py {input} {wildcards.species} \
+            {wildcards.windows} {wildcards.kmer} {threads} {output}"
+
+rule FCGR_dist:
+    input:
+        "files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt"
+    output:
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt"
+    threads:
+        99
+    shell:
+        "Rscript scripts/pearson_distance.R {input} {output}"
+
+rule figures:
+    input:
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt",
+        "../files/features/{windows}_{features}/{species}.txt",
+        expand("config/gs/{gs}", gs = GS)
+    output:
+        "files/results/{windows}_{kmer}_{features}/{species}_correlation.png",
+        "files/results/{windows}_{kmer}_{features}/{species}_MDS.png"
+    shell:
+        """
+        Rscript ../scripts/cor_dist_feature.R {output} {input} \
+            {wildcards.features} {wildcards.windows} {wildcards.kmer}
+        Rscript ../scripts/MDS_dist_feature.R {output} {input} \
+            {wildcards.features} {wildcards.windows} {wildcards.kmer}
+        """
+
+rule random_20_CGR_FCGR:
+    input:
+        "../data/genomes/{species}_genomes.fna"
+    output:
+        "files/random_20_FCGRs/{windows}_{kmer}/{species}_FCGRs.txt"
+    shell:
+        "python3 scripts/random_20_FCGR.py {input} {wildcards.windows} \
+        {wildcards.kmer} {output}"
+
+rule random_20_dist_fig:
+    input:
+        "files/random_20_FCGRs/{windows}_{kmer}/{species}_FCGRs.txt"
+    output:
+        "files/random_20_distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt"
+    threads:
+        99
+    shell:
+        "Rscript scripts/pearson_distance.R {input} {output}"
+
+rule random_20_figures:
+    input:
+        "files/random_20_distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt",
+        "../files/features/{windows}_{features}/{species}.txt",
+        expand("config/gs/{gs}", gs = GS)
+    output:
+        "files/results/{windows}_{kmer}_{features}/{species}_correlation.png",
+        "files/results/{windows}_{kmer}_{features}/{species}_MDS.png"
+    shell:
+        """
+        Rscript ../scripts/cor_dist_feature.R {output} {input} \
+            {wildcards.features} {wildcards.windows} {wildcards.kmer}
+        Rscript ../scripts/MDS_dist_feature.R {output} {input} \
+            {wildcards.features} {wildcards.windows} {wildcards.kmer}
+        """

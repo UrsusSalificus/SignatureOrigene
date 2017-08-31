@@ -27,12 +27,7 @@ if (gs == 'FCGRs'){
   kmer <- args[8]
 } 
 
-distance_matrix <- read.table(args[3], sep = "\t", header = FALSE)
-# Will remove any empty column
-distance_matrix <- distance_matrix[, colSums(is.na(distance_matrix)) == 0]
-
-# Copying the upper diagonal into the lower one
-distance_matrix[lower.tri(distance_matrix)] <- t(distance_matrix)[lower.tri(distance_matrix)]
+distance_matrix <- readRDS(args[3])
 
 # MDS
 fit <- cmdscale(distance_matrix,eig=TRUE, k=2) # k is the number of dim

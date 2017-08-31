@@ -5,17 +5,15 @@
 import glob
 import sys
 import os
-from numpy import fft
+import numpy
 from joblib import Parallel, delayed
 
 __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
 __license__ = "MIT"
 
-# Species genome path:
-species_genome = str(sys.argv[2])
 # Species abbreviation:
-species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
+species = str(sys.argv[2])
 # Wanted window size:
 window_size = int(str(sys.argv[3]).split('/')[-1])
 # Wanted number of threads at the same time:
@@ -82,7 +80,7 @@ def DFT_from_CGR(CGR, outfile):
 
     # Discrete Fourier Transform (DFT) through Fast Fourier Transform (FFT)
     # Will linearly decompose the CGR coordinates (the signal) into its component frequencies
-    z_dft = fft.fft(z_coord)
+    z_dft = numpy.fft.fft(z_coord)
 
     # Now we can compute the Power spectrum of the DFT = 'which frequencies contain the signal´s power'
     z_ps = []
