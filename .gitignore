@@ -8,6 +8,7 @@ files
 config
 .snakemake
 .Rhistory
+temp
 
 
 

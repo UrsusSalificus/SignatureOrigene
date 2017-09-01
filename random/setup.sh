@@ -9,7 +9,7 @@
 # ASCII arty letters created through    http://patorjk.com/software/taag/#p=display&f=Chunky&t=Example
 
 # The number of cores used can be set as the first argument of the script
-n_cores="$1"
+n_cores=$1
 
 mkdir -p config/temp
 
@@ -55,11 +55,13 @@ setup () {
 
     if [[ "$4" == "fixed" ]]; then
         split_input=$( echo $input | grep -o . )
+        good_input=$( cat $5 | grep -o . )
+    else
+        good_input=$( echo $5 | grep -o . )
     fi
 
     # Checking this is the right input
     good_to_go=0
-    good_input=$( echo $5 | grep -o . )
     until [[ "$good_to_go" -eq "1" ]]; do
         good_to_go=1
         for each_input in $split_input ; do
@@ -148,40 +150,20 @@ cat << "EOF" > $title
 
 EOF
 intro="Please chose among the following list which species should be included in the analysis."
-table="config/temp/table.txt"
-cat << "EOF" > $table
-Type their corresponding number as single block of numbers (eg. 127), then press [ENTER]:
-
-    1. Homo sapiens (long computational time!)
-    2. Mus musculus (long computational time!)
-    3. Caenorhabditis elegans
-    4. Drosophila melanogaster
-    5. Arabidopsis thaliana
-    6. Saccharomyces cerevisiae
-    7. Escherichia coli
-EOF
+table="../input/table_species.txt"
 choice=fixed
-good_inputs=1234567
-abbrev="config/temp/abbrev.txt"
-cat << "EOF" > $abbrev
-NA h_sapiens m_musculus c_elegans d_melanogaster a_thaliana s_cerevisiae e_coli
-EOF
+good_inputs="../input/good_species.txt"
+abbrev="../input/abbrev_species.txt"
 out_dir="config/species/"
-nice="config/temp/nice.txt"
-cat << "EOF" > $nice
-NA
-Homo sapiens
-Mus musculus
-Caenorhabditis elegans
-Drosophila melanogaster
-Arabidopsis thaliana
-Saccharomyces cerevisiae
-Escherichia coli
-EOF
+nice="../input/all_species.txt"
 
 confirm
 
-
+# Check there is at least two species...
+if [[ $( ls config/species | wc -w ) -lt 2 ]] ; then
+    echo "Cannot compute the analysis with only one species, please select more!"
+    exit
+fi
 
 ########### WINDOW SIZE TYPES ###########
 title="config/temp/title.txt"
@@ -334,21 +316,32 @@ cd ../sample
 SAMPLE=$( find * )
 cd ../..
 
+
 # We will have to check the downloaded files, as they are input files and rise error in snakemake...
 for each_species in $SPECIES; do
-    genome_file=../data/genomes/$each_species\_genomes.fna
-    feature_file=../data/genomes/$each_species\_feature_table.txt
-    repeat_file=../data/genomes/$each_species\_repeats.txt
+    go_back=$( pwd )
+    cd ..
+    genome_file=data/genomes/$each_species\_genomes.fna
+    feature_file=data/genomes/$each_species\_feature_table.txt
+    repeat_file=data/genomes/$each_species\_repeats.txt
     # If any of those is missing, download again
     if [[ ! -f $genome_file || ! -f $feature_file || ! -f $repeat_file ]]; then
-        bash ../scripts/download_genomes.sh $each_species $genome_file $feature_file $repeat_file
+        bash scripts/download_genomes.sh $each_species $genome_file $feature_file $repeat_file
+        # Clean non-nuclear
+        python3 scripts/remove_non_nuclear.py $genome_file
     fi
+    cd $go_back
 done
 
 for each_sample in $SAMPLE; do
     for each_window in $WINDOWS; do
         for each_kmer in $KMER; do
             python3 scripts/random_GS.py $each_sample $each_window $each_kmer $n_cores
+            Rscript scripts/random_MDS.R
         done
     done
 done
+
+# Clean everything
+rm -r config
+rm -r temp

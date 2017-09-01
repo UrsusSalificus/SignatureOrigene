@@ -1,0 +1,10 @@
+Type their corresponding number as single block of numbers (eg. 127), then press [ENTER]:
+
+    1. Homo sapiens (long computational time!)
+    2. Mus musculus (long computational time!)
+    3. Caenorhabditis elegans
+    4. Drosophila melanogaster
+    5. Arabidopsis thaliana
+    6. Saccharomyces cerevisiae
+    7. Escherichia coli
+

@@ -7,7 +7,6 @@ import math
 import sys
 import os
 from joblib import Parallel, delayed
-import glob
 
 __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
@@ -118,7 +117,6 @@ def N_sensitive_CGR(window, outfile):
     if not any([c not in 'ATCGatcg' for c in window]):
         CGR_coordinates(window, outfile)
 
-glob.glob()
 # Fetching the genomic fasta file
 records = fetch_fasta(species_genome)
 # Will work for single record too:

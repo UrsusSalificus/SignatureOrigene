@@ -57,5 +57,3 @@ if [ $species != e_coli ]; then
     rm $repeats
 fi
 
-# Clean non-nuclear
-python3 scripts/remove_non_nuclear.py $output_genome
