@@ -6,7 +6,7 @@
 
 # Any argument can be passed to snakemake as argument of this setup script
 # E.g. number of cores (--cores #) or dry run (-np = will just show the jobs to do, not really running them)
-snakemake_arguments="$*"
+snakemake_arguments=$*
 
 # Copy/paste at each step which species/features/window size should be included
 # SPECIES :     h_sapiens m_musculus c_elegans d_melanogaster a_thaliana s_cerevisiae e_coli
@@ -18,8 +18,9 @@ features="CDS LCR"
 # KMER : e.g.       4 7
 kmer="7"
 
+
 # We will have to check the downloaded files, as they are input files and rise error in snakemake...
-for each_species in $SPECIES; do
+for each_species in $species; do
     go_back=$( pwd )
     cd ..
     genome_file=data/genomes/$each_species\_genomes.fna

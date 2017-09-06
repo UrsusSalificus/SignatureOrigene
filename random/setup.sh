@@ -10,6 +10,11 @@
 
 # The number of cores used can be set as the first argument of the script
 n_cores=$1
+while [[ "$n_cores" == "" ]]; do
+  echo "Please, enter the number of cores you wish to use (e.g. 2)."
+  read input
+  n_cores=$input
+done
 
 mkdir -p config/temp
 

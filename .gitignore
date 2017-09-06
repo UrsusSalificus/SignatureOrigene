@@ -9,7 +9,7 @@ config
 .snakemake
 .Rhistory
 temp
-
+to_remove*
 
 
 

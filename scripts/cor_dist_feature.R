@@ -27,18 +27,13 @@ if (gs == 'FCGRs'){
 distance_matrix <- readRDS(args[3])
 distance_matrix <- as.matrix(distance_matrix)
 
-# Finding which column (= which region) as the smallest distance to the other column/region.
-# This column/region will then represent the median region.
-min_column = which.min(colSums(distance_matrix))
-# We can now use this column (median region) as "distance to median" of all other regions
-median_region = distance_matrix[-min_column, min_column]
+# Mean_distance
+mean_dist <- rowMeans(distance_matrix)
 
 feature <- read.table(args[4], sep = "\t", header = FALSE)
-# We take out the median region's feature
-feature <- feature[-min_column,]
 
 #  Correlation test between distance to median and feature; and parsing the resulting p-value
-pv <- round(cor.test(median_region, feature[,2])$p.value, 6)
+pv <- round(cor.test(mean_dist, feature[,2], method = 'spearman')$p.value, 6)
 
 if (gs == 'FCGRs'){
   plot_title <- paste('% of', feature_type, 'in function of distance to the median region \n',
@@ -53,9 +48,8 @@ if (gs == 'FCGRs'){
 
 
 png(output, width=700, height=500, units="px")
-plot(median_region, feature[,2], main=plot_title, xlab='Distance to median region',
+plot(mean_dist, feature[,2], main=plot_title, xlab='Distance to median region',
      ylab = paste('% of', feature_type), pch = 19)
 dev.off() 
-
 
 

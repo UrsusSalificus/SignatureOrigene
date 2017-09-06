@@ -16,9 +16,8 @@ windows=15000
 # FEATURE TYPE :    CDS LCR
 features="CDS LCR"
 
-
 # We will have to check the downloaded files, as they are input files and rise error in snakemake...
-for each_species in $SPECIES; do
+for each_species in $species; do
     go_back=$( pwd )
     cd ..
     genome_file=data/genomes/$each_species\_genomes.fna

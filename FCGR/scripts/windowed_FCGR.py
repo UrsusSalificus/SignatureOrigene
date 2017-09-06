@@ -265,11 +265,9 @@ def FCGR_from_CGR(k_size, CGR, outfile):
         return FCGR
 
 
-FCGR_directory = '/'.join(['files/FCGRs', '_'.join([str(window_size), str(k_size)]), species])
-concatenated_FCGRS = FCGR_directory + '_FCGRs.txt'
-checking_parent(concatenated_FCGRS)
+checking_parent(output)
 # Opening concatenated file on top level, to avoid rewriting at each record
-with open(concatenated_FCGRS, 'w') as outfile:
+with open(output, 'w') as outfile:
     # Path to CGR directory
     CGR_directory = '/'.join(['../files/CGRs/', str(window_size), species])
     # Get all the different CGRs files path
@@ -279,8 +277,6 @@ with open(concatenated_FCGRS, 'w') as outfile:
         CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
         # Extract all the record names and store it for later:
         record_name = all_records[each_record].split('/')[-1]
-        # Prepare the prefix added before every region:
-        FCGR_region = '/'.join([FCGR_directory, record_name, 'FCGR_region_'])
         # Parallel computation for every region:
         FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
                                            (k_size, CGR_files[each_region], '')

@@ -107,7 +107,7 @@ def extract_features (feature, species_table, output, id_column, feature_column,
                         break
                 if len(records[each_record].seq) > window_size:
                     n_windows = math.floor(len(records[each_record].seq) / window_size)  # Number of windows
-                    for start in range(0, n_windows):
+                    for start in range(n_windows):
                         window = str(records[each_record].seq)[(start * window_size):((start * window_size) + window_size)]
                         # If any character in the sequence is NOT a standard nucleotides (including unknown nucleotides)
                         # do NOT compute:

@@ -278,10 +278,6 @@ EOF
 confirm
 
 
-# Marking which type of Genomic Signature we have
-if [ ! -f "config/gs/FCGRs" ]; then
-    mkdir -p "config/gs" && touch "config/gs/FCGRs"
-fi
 
 echo " ___ ___ _______ _______      ______ _______ ______ __  __ __
 |   |   |       |   |   |    |   __ \       |      |  |/  |  |

@@ -99,11 +99,9 @@ def DFT_from_CGR(CGR, outfile):
         return z_ps
 
 
-DFT_directory = '/'.join(['files/DFTs', str(window_size), species])
-concatenated_DFTs = DFT_directory + '_DFTs.txt'
-checking_parent(concatenated_DFTs)
+checking_parent(output)
 # Opening concatenated file on top level, to avoid rewriting at each record
-with open(concatenated_DFTs, 'w') as outfile:
+with open(output, 'w') as outfile:
     # Path to CGR directory
     CGR_directory = '/'.join(['../files/CGRs/', str(window_size), species])
     # Get all the different CGRs files path
@@ -113,8 +111,6 @@ with open(concatenated_DFTs, 'w') as outfile:
         CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
         # Extract all the record names and store it for later:
         record_name = all_records[each_record].split('/')[-1]
-        # Prepare the prefix added before every region:
-        DFT_region = '/'.join([DFT_directory, record_name, 'DFT_region_'])
         # Parallel computation for every region, stored in individual files:
         DFTs = Parallel(n_jobs=n_threads)(delayed(DFT_from_CGR)(CGR_files[each_region], '')
                                           for each_region in range(len(CGR_files)))

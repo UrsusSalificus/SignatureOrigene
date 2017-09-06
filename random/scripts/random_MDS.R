@@ -69,8 +69,8 @@ for (each_gs in 1:length(GS)) {
   cluster <- hclust(distance_matrix, method = "ward.D2")
   cluster_cut <- cutree(cluster, n_species)
   
-  cluster <- kmeans(distance_matrix, n_species)
-  cluster_cut <- cluster$cluster
+  #cluster <- kmeans(distance_matrix, n_species)
+  #cluster_cut <- cluster$cluster
   
   # Now check if in the right cluster or not
   data <- data.frame(MDS_1 = fit$points[,1], MDS_2 = fit$points[,2], species = species, cluster=cluster_cut)
@@ -87,7 +87,7 @@ for (each_gs in 1:length(GS)) {
   colours <- c("#6839a6","#3a6f2f","#c94e8f","#736221","#006591","#a44023","#8f8ee1")
 
   # The plot in itself
-  #png(output, width=700, height=500, units="px")
+  png(output, width=700, height=500, units="px")
   plot <- ggplot(data, aes(x = MDS_1, y = MDS_2)) + 
     geom_point(aes(shape = factor(cluster), colour = factor(species)),size = 4) + 
     labs(title=plot_title, x ="Coordinate 1", y = "Coordinate 2") +
@@ -98,9 +98,9 @@ for (each_gs in 1:length(GS)) {
       axis.title.y = element_text(size = 15),
       axis.text.y  = element_text(size = 12)
     ) + scale_shape_manual(name = "Clustering", values=c(0, 1, 2, 3, 7, 8, 9)[1:nlevels(species)]) + 
-    scale_color_manual(values=colours[1:nlevels(species)])
+    scale_color_manual(name = "Species", values=colours[1:nlevels(species)])
   print(plot)
-  #dev.off() 
+  dev.off() 
 }
 
 
