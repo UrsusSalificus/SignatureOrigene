@@ -1,4 +1,5 @@
-Type their corresponding number as single block of numbers (eg. 127), then press [ENTER]:
+Type their corresponding number as single block of numbers (eg. 127), then press
+[ENTER]:
 
     1. Homo sapiens (long computational time!)
     2. Mus musculus (long computational time!)
@@ -7,4 +8,3 @@ Type their corresponding number as single block of numbers (eg. 127), then press
     5. Arabidopsis thaliana
     6. Saccharomyces cerevisiae
     7. Escherichia coli
-

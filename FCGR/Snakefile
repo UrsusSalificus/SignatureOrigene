@@ -9,16 +9,25 @@ rule CGR:
         "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
             {threads} {output}"
 
-rule feature_extract:
+rule CDS:
     input:
         "../data/genomes/{species}_genomes.fna",
         "../data/genomes/{species}_feature_table.txt",
-        "../data/genomes/{species}_repeats.txt"
     output:
-        "../files/features/{windows}_{features}/{species}.txt"
+        "../files/features/{windows}/{species}_CDS.txt"
     shell:
-        "python3 ../scripts/extract_feature.py {wildcards.windows} \
-            {wildcards.features} {output} {input}"
+        "python3 ../scripts/extract_CDS.py {input} {wildcards.windows} \
+            {output}"
+
+rule LCR:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/genomes/{species}_repeats.txt",
+    output:
+        "../files/features/{windows}/{species}_LCR.txt"
+    shell:
+        "python3 ../scripts/extract_LCR.py {input} {wildcards.windows} \
+            {output}"
 
 rule ratio_extract:
     input:
@@ -26,7 +35,7 @@ rule ratio_extract:
     output:
         "../files/features/{windows}_ratios/{species}.txt"
     shell:
-        "python3 ../scripts/nucleotide_ratio_figures.R {input} \
+        "python3 ../scripts/nucleotide_ratio_extract.py {input} \
             {wildcards.species} {wildcards.windows} {threads} {output}"
 
 rule FCGR:
@@ -50,17 +59,32 @@ rule FCGR_dist:
     shell:
         "Rscript scripts/pearson_distance.R {input} {output}"
 
-rule figures:
+rule correlation:
     input:
         "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt",
-        "../files/features/{windows}_{features}/{species}.txt"
+        "../files/features/{windows}/{species}_{features}.txt"
     output:
-        "files/results/{windows}_{kmer}_{features}/{species}_correlation.png",
+        "files/results/{windows}_{kmer}_{features}/{species}_correlation.png"
+    shell:
+        "Rscript ../scripts/cor_dist_feature.R {output} {input} FCGRs \
+            {wildcards.features} {wildcards.windows} {wildcards.kmer}"
+
+rule MDS:
+    input:
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt",
+        "../files/features/{windows}/{species}_{features}.txt"
+    output:
         "files/results/{windows}_{kmer}_{features}/{species}_MDS.png"
     shell:
-        """
-        Rscript ../scripts/cor_dist_feature.R {output} {input} FCGRs \
-            {wildcards.features} {wildcards.windows} {wildcards.kmer}
-        Rscript ../scripts/MDS_dist_feature.R {output} {input} FCGRs \
-            {wildcards.features} {wildcards.windows} {wildcards.kmer}
-        """
+        "Rscript ../scripts/MDS_dist_feature.R {output} {input} FCGRs \
+            {wildcards.features} {wildcards.windows} {wildcards.kmer}"
+
+rule ratio_figure:
+    input:
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt",
+        "../files/features/{windows}_ratios/{species}.txt"
+    output:
+        "files/results/{windows}_{kmer}_ratios/{species}.png"
+    shell:
+        "Rscript ../scripts/nucleotide_ratio_figures.R {output} {input} \
+            {wildcards.windows} FCGRs {wildcards.kmer}"

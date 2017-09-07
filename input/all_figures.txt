@@ -1,0 +1,4 @@
+NA
+MultiDimensional Scaling of the distance matrix (MDS)
+Correlation between distance matrix and feature (correlation)
+Ratios of each nucleotide (ratios)

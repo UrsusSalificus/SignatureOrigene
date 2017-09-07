@@ -1,0 +1,14 @@
+Type their corresponding number as single block of numbers (eg. 12), then press
+[ENTER]:
+
+    1. MDS : MultiDimensional Scaling of the distance matrix, showing how does
+        the different windows approximately cluster together. Percentage of
+        feature per windows also shown.
+
+    2. Correlation : between the mean distance of each window to all other
+        windows and the percentage of feature per windows.
+
+    3. Ratios : comparing different ratios of nucleotide (single nucleotide,
+        purine/pyrimidine, CG/AT and TG/AC) between windows which are the most
+        different from the others according to the distance matrix, and the one
+        much closer to each others.

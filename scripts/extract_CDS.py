@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Extract the percentage of windows' nucleotides which part of the selected feature
+"""Extract the percentage of windows' nucleotides which are Coding Sequences (CDS)
 """
 from Bio import SeqIO
 import math
@@ -11,21 +11,16 @@ __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
 __license__ = "MIT"
 
-# Wanted window size:
-window_size = int(sys.argv[1])
-# Wanted feature:
-feature = str(sys.argv[2])
-# Output path:
-output = str(sys.argv[3])
 # Species genome path:
-species_genome = str(sys.argv[4])
+species_genome = str(sys.argv[1])
 # Species abbreviation:
 species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Species feature table path:
-if feature == "CDS":
-    species_table = str(sys.argv[5])
-elif feature == "LCR":
-    species_table = str(sys.argv[6])
+species_table = str(sys.argv[2])
+# Wanted window size:
+window_size = int(sys.argv[3])
+# Output path:
+output = str(sys.argv[4])
 
 
 ###
@@ -59,46 +54,29 @@ def fetch_fasta(fasta_file):
     return (records)
 
 
-def extract_features (feature, species_table, output, id_column, feature_column, feature_type, strand_column,
-                      start_column, end_column):
+def extract_CDS(species_table, output, id_column, feature_column, feature_type, strand_column,
+                start_column, end_column):
     # Checking parent directory of output are present
     checking_parent(output)
 
     with open(species_table, 'r') as feature_table, open(output, 'w') as outfile:
-        # Must skip the header, which is different among different feature:
-        if feature == 'CDS':
-            feature_table.readline()
-        elif feature == 'LCR':
-            feature_table.readline()
-            feature_table.readline()
-            feature_table.readline()
+        # Must skip the header:
+        feature_table.readline()
         # From now on, will move through the document by .readline()
         # Problem, tables have different separation type:
-        if feature == 'CDS':
-            actual_line = feature_table.readline().split('\t')
-        elif feature == 'LCR':
-            actual_line = feature_table.readline().rsplit()
+        actual_line = feature_table.readline().split('\t')
         for each_record in range(len(records)):
             # Each element of this list represents a nucleotide
             record_proxy = [0] * len(records[each_record].seq)
             # While repeats from the actual record, continue extracting
             try:
                 while records[each_record].id == actual_line[id_column]:
-                    # Now depends on the feature type:
-                    if feature == 'CDS':
-                        # If it is the wanted feature and on the positive strand
-                        if actual_line[feature_column] == feature_type and actual_line[strand_column] == '+':
-                            # For each nucleotide from start to end of the CDS:
-                            for each_nucleotide in range(int(actual_line[start_column]), int(actual_line[end_column])):
-                                record_proxy[each_nucleotide] = 1
-                    elif feature == 'LCR':
-                        # For each nucleotide from start to end of the repeat:
+                    # If it is the wanted feature and on the positive strand
+                    if actual_line[feature_column] == feature_type and actual_line[strand_column] == '+':
+                        # For each nucleotide from start to end of the CDS:
                         for each_nucleotide in range(int(actual_line[start_column]), int(actual_line[end_column])):
                             record_proxy[each_nucleotide] = 1
-                    if feature == 'CDS':
-                        actual_line = feature_table.readline().split('\t')
-                    elif feature == 'LCR':
-                        actual_line = feature_table.readline().rsplit()
+                    actual_line = feature_table.readline().split('\t')
                     # If we get at the last line, actual_line only have one empty entry, which can be detected by
                     # calling the second element ([1])
                     try:
@@ -114,31 +92,23 @@ def extract_features (feature, species_table, output, id_column, feature_column,
                         if not any([c not in 'ATCGatcg' for c in window]):
                             region_CDS = sum(record_proxy[(start * window_size):((start * window_size) + window_size)])
                             outfile.write(records[each_record].id + '\t')
-                            outfile.write(str((region_CDS/window_size)*100) + '\n')
+                            outfile.write(str((region_CDS / window_size) * 100) + '\n')
             except:
                 print("Extracting stopped at record " + str(each_record) + "/" + str(len(records)))
                 print("If near the end, may come from the fact that RepeatMasker was not done on mitochondrion!")
                 break
 
+
 # Fetch all the records from this species fasta
 records = fetch_fasta(species_genome)
 
 # Particularities of each feature (e.g. which column (the numbers) contains what information):
-if feature == 'CDS':
-    id_column = 6
-    feature_column = 0
-    feature_type = 'CDS'
-    strand_column = 9
-    start_column = 7
-    end_column = 8
-elif feature == 'LCR':
-    id_column = 4
-    feature_column = 10     # NOT USED
-    feature_type = ''       # NOT USED
-    strand_column = 8       # NOT USED
-    start_column = 5
-    end_column = 6
+id_column = 6
+feature_column = 0
+feature_type = 'CDS'
+strand_column = 9
+start_column = 7
+end_column = 8
 
-extract_features(feature, species_table, output, id_column, feature_column, feature_type, strand_column,
-                      start_column, end_column)
-
+extract_CDS(species_table, output, id_column, feature_column, feature_type, strand_column,
+            start_column, end_column)

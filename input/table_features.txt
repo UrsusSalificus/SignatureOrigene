@@ -1,5 +1,5 @@
-Type their corresponding number as single block of numbers (eg. 12), then press [ENTER]:
+Type their corresponding number as single block of numbers (eg. 12), then press
+[ENTER]:
 
-    1. CDS : coding sequences
-    2. LCR : Low Complexity Regions (repeats)
-
+    1. CDS : percentage of coding sequences per windows
+    2. LCR : percentage of Low Complexity Regions (repeats) per windows

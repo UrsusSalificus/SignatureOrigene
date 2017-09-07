@@ -9,31 +9,30 @@ library(ggplot2)
 
 ### MultiDimensional Scaling (MDS) analysis of a distance matrix
 # Will input the arguments:
-# 1. NOT USED IN THIS SCRIPT
-# 2. path to the output image (with its name in the path)
-# 3. path to the distance matrix
-# 4. path to the feature file
+# 1. path to the output image (with its name in the path)
+# 2. path to the distance matrix
+# 3. path to the feature file
+# 4. Genomic signature type
 # 5. feature type
 # 6. window size
-# 7. Genomic signature type
-# 8. IF USING FCGR : k-mer size
+# 7. IF USING FCGR : k-mer size
 args <- commandArgs(trailingOnly=TRUE)
 
-output = args[2]
-gs = basename(args[5])
-feature_type <- args[6]
-window_size <- args[7]
+output = args[1]
+gs = basename(args[4])
+feature_type <- args[5]
+window_size <- args[6]
 if (gs == 'FCGRs'){
-  kmer <- args[8]
+  kmer <- args[7]
 } 
 
-distance_matrix <- readRDS(args[3])
+distance_matrix <- readRDS(args[2])
 
 # MDS
 fit <- cmdscale(distance_matrix,eig=TRUE, k=2) # k is the number of dim
 data <- data.frame(MDS_1 = fit$points[,1], MDS_2 = fit$points[,2])
 
-feature = read.csv(args[4], sep = '\t', header = FALSE)
+feature = read.csv(args[3], sep = '\t', header = FALSE)
 
 # We will check how much we can round the result and still not lose significant differences:
 data$size <- feature[,2]

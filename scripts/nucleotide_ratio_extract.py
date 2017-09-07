@@ -2,7 +2,6 @@
 
 """Count different ratios of nucleotides in a sequence
 """
-# TODO: merge this with extract_feature.py
 from joblib import Parallel, delayed
 import sys
 import math
@@ -278,8 +277,9 @@ def ratios (each_CGR, window_size):
     ratio_G = nG / window_size * 100
     ratio_AG = (nA + nG) / window_size * 100
     ratio_CG = (nC + nG) / window_size * 100
+    ratio_TG = (nT + nG) / window_size * 100
 
-    every_ratio = [ratio_A, ratio_C, ratio_T, ratio_G, ratio_AG, ratio_CG]
+    every_ratio = [ratio_A, ratio_C, ratio_T, ratio_G, ratio_AG, ratio_CG, ratio_TG]
     return(every_ratio)
 
 
@@ -287,11 +287,11 @@ checking_parent(output)
 # Opening concatenated file on top level, to avoid rewriting at each record
 with open(output, 'w') as outfile:
     # Write column headers
-    header = '\t'.join(['record','A','C','T','G','AG','CG'])
+    header = '\t'.join(['record','A','C','T','G','AG','CG', 'TG'])
     outfile.write(header + '\t' + '\n')     # + '\t' to keep same number of column
 
     # Path to CGR directory
-    CGR_directory = '/'.join(['files/CGRs', str(window_size), species])
+    CGR_directory = '/'.join(['../files/CGRs', str(window_size), species])
     # Get all the different CGRs files path
     all_records = extract_path(CGR_directory + '/', '*')
     for each_record in range(len(all_records)):

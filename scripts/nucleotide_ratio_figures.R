@@ -12,17 +12,16 @@ library(ggplot2)
 # 1. path to output
 # 2. path to the distance matrix
 # 3. path to the ratio table
-# 4. feature type
-# 5. window size
-# 6. Genomic signature type
-# 7. IF USING FCGR : k-mer size
+# 4. window size
+# 5. Genomic signature type
+# 6. IF USING FCGR : k-mer size
+args <- commandArgs(trailingOnly=TRUE)
 
 output <- args[1]
-gs <- basename(args[6])
-feature_type <- args[4]
-window_size <- args[5]
+window_size <- args[4]
+gs <- basename(args[5])
 if (gs == 'FCGRs'){
-  kmer <- args[7]
+  kmer <- args[6]
 } 
 
 distance_matrix <- readRDS(args[2])
@@ -40,19 +39,55 @@ far[far_away] <- 'TRUE'
 feature$far <- far
 
 feature = melt(feature, id.vars = c("record", "far"),
-               measure.vars = c("A", "C", "T", "G", "AG", "CG"))
+               measure.vars = c("A", "C", "T", "G", "AG", "CG", "TG"))
 
-ggplot(data = feature, aes(x = variable, y = value)) + 
-  geom_boxplot(aes(fill = far), width = 1) + theme_bw()
+# To enable space at the top of the boxplots to put if significant
+py <- pretty(feature$value)
 
-by(feature, feature$variable, function (each_ratio) {
-  wilcox.test(each_ratio$value[each_ratio$far == "TRUE"], each_ratio$value[each_ratio$far == "FALSE"], paired=FALSE)
+if (gs == 'FCGRs'){
+  plot_title <- paste('Comparison of ratios of nucleotides\n',
+                      'Using ', gs, ' with k = ', kmer, ' and ', window_size, ' bp windows ', sep = '')
+} else {
+  plot_title <- paste('Comparison of ratios of nucleotides\n',
+                      'Using ', gs, ' with ', window_size, ' bp windows', sep = '')
+}
+
+
+g <- ggplot(data = feature, aes(x = variable, y = value)) + 
+  geom_boxplot(aes(fill = far), width = 1) + theme_bw() +
+  scale_y_continuous(breaks=py, limits=range(py)) + 
+  scale_fill_discrete(name="Distance to\nother windows",
+                      labels=c("Close", "Far")) + 
+  labs(title=plot_title, y = "Ratios [count/total]") +
+  theme(
+    plot.title = element_text(size = 15, face="bold"),
+    axis.title.x = element_blank(),
+    axis.text.x  = element_text(size = 12),
+    axis.title.y = element_text(size = 15),
+    axis.text.y  = element_text(size = 12),
+    legend.title = element_text(size = 15),
+    legend.text = element_text(size = 12)
+  )
+
+p_val <- as.numeric(by(feature, feature$variable, function (each_ratio) {
+  wilcox.test(each_ratio$value[each_ratio$far == "TRUE"], each_ratio$value[each_ratio$far == "FALSE"], paired=FALSE)$p.value
+}))
+significant <- which(p_val <= 0.05)
+
+good_spots <-sapply(significant, function (each_sign) {
+  each_ratio <- levels(as.factor(feature$variable))[each_sign]
+  range_ratio <- max(feature$value) - min(feature$value)
+  max_ratio <- max(feature$value[feature$variable == each_ratio])
+  good_spot <- max_ratio + (range_ratio * 0.1)
+  return(good_spot)
 })
 
-test <- feature[feature$variable == 'A']
-lol <- order(test$value)
-ggplot(data = test, aes(x = c(1:309), y = value[lol])) + 
-  geom_point(aes(col = far[lol])) + theme_bw()
+
+g <- g + annotate("text", x = significant, y = good_spots, label = rep('*', time = length(significant)), size = 8)
+
+png(output, width=700, height=500, units="px")
+print(g)
+dev.off() 
 
 
 

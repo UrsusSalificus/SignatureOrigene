@@ -279,6 +279,29 @@ confirm
 
 
 
+########### FIGURES ###########
+title="config/temp/title.txt"
+cat << "EOF" > $title
+ _______ __
+|    ___|__|.-----.--.--.----.-----.-----.
+|    ___|  ||  _  |  |  |   _|  -__|__ --|
+|___|   |__||___  |_____|__| |_____|_____|
+            |_____|
+
+EOF
+intro="Please chose among the following list which figures should be included in the analysis."
+table="../input/table_figures.txt"
+choice=fixed
+good_inputs="../input/good_figures.txt"
+abbrev="../input/abbrev_figures.txt"
+out_dir="config/figures/"
+nice="../input/all_figures.txt"
+
+
+confirm
+
+
+
 echo " ___ ___ _______ _______      ______ _______ ______ __  __ __
 |   |   |       |   |   |    |   __ \       |      |  |/  |  |
  \     /|   -   |   |   |    |      <   -   |   ---|     <|__|
@@ -300,6 +323,8 @@ cd ../features
 FEATURES=$( find * )
 cd ../kmer
 KMER=$( find * )
+cd ../figures
+FIGURES=$( find * )
 cd ../..
 
 # We will have to check the downloaded files, as they are input files and rise error in snakemake...
@@ -319,9 +344,15 @@ for each_species in $SPECIES; do
     for each_window in $WINDOWS; do
         for each_feature in $FEATURES; do
             for each_kmer in $KMER; do
-                snakemake $snakemake_arguments \
-                    files/results/$each_window\_$each_kmer\_$each_feature/$each_species\_correlation.png \
-                    files/results/$each_window\_$each_kmer\_$each_feature/$each_species\_MDS.png
+                for each_figures in $FIGURES; do
+                    if [[ $each_figures == 'ratios' ]] ; then
+                        snakemake $snakemake_arguments \
+                            files/results/$each_window\_$each_kmer\_ratios/$each_species.png
+                    else
+                        snakemake $snakemake_arguments \
+                            files/results/$each_window\_$each_kmer\_$each_feature/$each_species\_$each_figures.png
+                    fi
+                done
             done
         done
     done
