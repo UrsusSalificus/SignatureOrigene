@@ -72,9 +72,10 @@ g <- ggplot(data = feature, aes(x = variable, y = value)) +
 p_val <- as.numeric(by(feature, feature$variable, function (each_ratio) {
   wilcox.test(each_ratio$value[each_ratio$far == "TRUE"], each_ratio$value[each_ratio$far == "FALSE"], paired=FALSE)$p.value
 }))
+p_val <- p.adjust(p_val, method = 'holm')
 significant <- which(p_val <= 0.05)
 
-good_spots <-sapply(significant, function (each_sign) {
+good_spots <- sapply(significant, function (each_sign) {
   each_ratio <- levels(as.factor(feature$variable))[each_sign]
   range_ratio <- max(feature$value) - min(feature$value)
   max_ratio <- max(feature$value[feature$variable == each_ratio])
@@ -82,8 +83,18 @@ good_spots <-sapply(significant, function (each_sign) {
   return(good_spot)
 })
 
+code <- sapply(significant, function (each_sign){
+  if (p_val[each_sign] < 0.001) {
+    return('***')
+  } else if (p_val[each_sign] < 0.01) {
+    return('**')
+  } else {
+    return('*')
+  }
+})
 
-g <- g + annotate("text", x = significant, y = good_spots, label = rep('*', time = length(significant)), size = 8)
+
+g <- g + annotate("text", x = significant, y = good_spots, label = code, size = 8)
 
 png(output, width=700, height=500, units="px")
 print(g)

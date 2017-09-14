@@ -5,7 +5,6 @@
 # License : MIT
 
 # Will download whole concatenated genomes
-
 species="$1"
 output_genome="$2"
 output_table="$3"
@@ -23,17 +22,6 @@ all_accessions=(["h_sapiens"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/00
 ["e_coli"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/")
 
 accession=${all_accessions[$species]}
-
-declare -A all_non_nuclear
-all_accessions=(["h_sapiens"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.36_GRCh38.p10/"
-["m_musculus"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/635/GCF_000001635.25_GRCm38.p5/"
-["c_elegans"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/985/GCF_000002985.6_WBcel235/"
-["d_melanogaster"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/215/GCF_000001215.4_Release_6_plus_ISO1_MT/"
-["a_thaliana"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/735/GCF_000001735.3_TAIR10/"
-["s_cerevisiae"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/146/045/GCF_000146045.2_R64/"
-["e_coli"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/005/845/GCF_000005845.2_ASM584v2/")
-
-
 
 IFS='/' read -r -a array <<< $accession
 whole_genome=$( echo ${array[9]}'_genomic.fna.gz' )

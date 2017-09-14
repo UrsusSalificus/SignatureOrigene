@@ -120,13 +120,13 @@ def N_sensitive_CGR(window, outfile):
 # Fetching the genomic fasta file
 records = fetch_fasta(species_genome)
 # Will work for single record too:
-for each_sequence in records:
-    if len(each_sequence.seq) > window_size:
-        n_windows = math.floor(len(each_sequence.seq) / window_size)  # Number of windows
-        seq_directory = '/'.join(['../files/CGRs', str(window_size), species, each_sequence.id, 'CGR_region_'])
+for each_record in range(len(records)):
+    if len(records[each_record].seq) > window_size:
+        n_windows = math.floor(len(records[each_record].seq) / window_size)  # Number of windows
+        seq_directory = '/'.join(['../files/CGRs', str(window_size), species, records[each_record].id, 'CGR_region_'])
         # Parallel the CGR on n_jobs core
         Parallel(n_jobs=n_threads)(delayed(N_sensitive_CGR)
-                                   (str(each_sequence.seq[
+                                   (str(records[each_record].seq[
                                         (start * window_size):((start * window_size) + window_size)]),
                                     seq_directory + str(start))
                                    for start in range(0, n_windows))
