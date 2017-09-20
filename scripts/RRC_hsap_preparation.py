@@ -38,9 +38,6 @@ def fetch_fasta(fasta_file):
     return (records)
 
 
-# RRC, the tool used to calculate the recombination rate of the window, has specific boundaries of the
-# chromosomes from the 5.36 version of FlyBase.
-# Fetch the 5.36 version
 records = fetch_fasta(species_genome)
 n_windows = math.floor(len(records[0].seq) / window_size)  # Number of windows
 

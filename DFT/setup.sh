@@ -291,7 +291,7 @@ for each_species in $SPECIES; do
     if [[ ! -f $genome_file || ! -f $feature_file || ! -f $repeat_file ]]; then
         bash scripts/download_genomes.sh $each_species $genome_file $feature_file $repeat_file
         # Clean non-nuclear
-        python3 scripts/remove_non_nuclear.py $genome_file
+        python3 scripts/keep_wanted_records.py $genome_file
     fi
     cd $go_back
     for each_window in $WINDOWS; do
