@@ -31,13 +31,10 @@ def fetch_fasta(fasta_file):
 
 # Store all the records we which to keep
 with open("wanted_records.txt") as non_nuclear:
-    do_want = [each_id.strip() for each_id in non_nuclear]
+    do_want = [each_id.split()[0].strip() for each_id in non_nuclear]
 
 records = fetch_fasta(species_genome)
 cleaned_records = [each_record for each_record in records if each_record.id in do_want]
 
 with open(species_genome, "w") as cleaned_output:
     SeqIO.write(cleaned_records, cleaned_output, "fasta")
-
-
-
