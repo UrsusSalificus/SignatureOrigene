@@ -1,79 +1,76 @@
-NC_000001.11	h_sapiens
-NC_000002.12	h_sapiens
-NC_000003.12	h_sapiens
-NC_000004.12	h_sapiens
-NC_000005.10	h_sapiens
-NC_000006.12	h_sapiens
-NC_000007.14	h_sapiens
-NC_000008.11	h_sapiens
-NC_000009.12	h_sapiens
-NC_000010.11	h_sapiens
-NC_000011.10	h_sapiens
-NC_000012.12	h_sapiens
-NC_000013.11	h_sapiens
-NC_000014.9	h_sapiens
-NC_000015.10	h_sapiens
-NC_000016.10	h_sapiens
-NC_000017.11	h_sapiens
-NC_000018.10	h_sapiens
-NC_000019.10	h_sapiens
-NC_000020.11	h_sapiens
-NC_000021.9	h_sapiens
-NC_000022.11	h_sapiens
-NC_000023.11	h_sapiens
-NC_000024.10	h_sapiens
-NC_000067.6	m_musculus
-NC_000068.7	m_musculus
-NC_000069.6	m_musculus
-NC_000070.6	m_musculus
-NC_000071.6	m_musculus
-NC_000072.6	m_musculus
-NC_000073.6	m_musculus
-NC_000074.6	m_musculus
-NC_000075.6	m_musculus
-NC_000076.6	m_musculus
-NC_000077.6	m_musculus
-NC_000078.6	m_musculus
-NC_000079.6	m_musculus
-NC_000080.6	m_musculus
-NC_000081.6	m_musculus
-NC_000082.6	m_musculus
-NC_000083.6	m_musculus
-NC_000084.6	m_musculus
-NC_000085.6	m_musculus
-NC_000086.7	m_musculus
-NC_003279.8	c_elegans
-NC_003280.10	c_elegans
-NC_003281.10	c_elegans
-NC_003282.8	c_elegans
-NC_003283.11	c_elegans
-NC_003284.9	c_elegans
-NC_004354.4	d_melanogaster
-NT_033779.5	d_melanogaster
-NT_033778.4	d_melanogaster
-NT_037436.4	d_melanogaster
-NT_033777.3	d_melanogaster
-NC_004353.4	d_melanogaster
-NC_024512.1	d_melanogaster
-NC_003070.9	a_thaliana
-NC_003071.7	a_thaliana
-NC_003074.8	a_thaliana
-NC_003075.7	a_thaliana
-NC_003076.8	a_thaliana
-NC_001133.9	s_cerevisiae
-NC_001134.8	s_cerevisiae
-NC_001135.5	s_cerevisiae
-NC_001136.10	s_cerevisiae
-NC_001137.3	s_cerevisiae
-NC_001138.5	s_cerevisiae
-NC_001139.9	s_cerevisiae
-NC_001140.6	s_cerevisiae
-NC_001141.2	s_cerevisiae
-NC_001142.9	s_cerevisiae
-NC_001143.9	s_cerevisiae
-NC_001144.5	s_cerevisiae
-NC_001145.3	s_cerevisiae
-NC_001146.8	s_cerevisiae
-NC_001147.6	s_cerevisiae
-NC_001148.4	s_cerevisiae
-NC_000913.3	e_coli
+NC_000001.11 h_sapiens chr1
+NC_000002.12 h_sapiens chr2
+NC_000003.12 h_sapiens chr3
+NC_000004.12 h_sapiens chr4
+NC_000005.10 h_sapiens chr5
+NC_000006.12 h_sapiens chr6
+NC_000007.14 h_sapiens chr7
+NC_000008.11 h_sapiens chr8
+NC_000009.12 h_sapiens chr9
+NC_000010.11 h_sapiens chr10
+NC_000011.10 h_sapiens chr11
+NC_000012.12 h_sapiens chr12
+NC_000013.11 h_sapiens chr13
+NC_000014.9 h_sapiens chr14
+NC_000015.10 h_sapiens chr15
+NC_000016.10 h_sapiens chr16
+NC_000017.11 h_sapiens chr17
+NC_000018.10 h_sapiens chr18
+NC_000019.10 h_sapiens chr19
+NC_000020.11 h_sapiens chr20
+NC_000021.9 h_sapiens chr21
+NC_000022.11 h_sapiens chr22
+NC_000023.11 h_sapiens chrX
+NC_000067.6 m_musculus chr1
+NC_000068.7 m_musculus chr2
+NC_000069.6 m_musculus chr3
+NC_000070.6 m_musculus chr4
+NC_000071.6 m_musculus chr5
+NC_000072.6 m_musculus chr6
+NC_000073.6 m_musculus chr7
+NC_000074.6 m_musculus chr8
+NC_000075.6 m_musculus chr9
+NC_000076.6 m_musculus chr10
+NC_000077.6 m_musculus chr11
+NC_000078.6 m_musculus chr12
+NC_000079.6 m_musculus chr13
+NC_000080.6 m_musculus chr14
+NC_000081.6 m_musculus chr15
+NC_000082.6 m_musculus chr16
+NC_000083.6 m_musculus chr17
+NC_000084.6 m_musculus chr18
+NC_000085.6 m_musculus chr19
+NC_000086.7 m_musculus chrX
+NC_003279.8 c_elegans chrI
+NC_003280.10 c_elegans chrII
+NC_003281.10 c_elegans chrIII
+NC_003282.8 c_elegans chrIV
+NC_003283.11 c_elegans chrV
+NC_003284.9 c_elegans chrX
+NC_004354.4 d_melanogaster chrX
+NT_033779.5 d_melanogaster chr2L
+NT_033778.4 d_melanogaster chr2R
+NT_037436.4 d_melanogaster chr3L
+NT_033777.3 d_melanogaster chr3R
+NC_003070.9 a_thaliana 1
+NC_003071.7 a_thaliana 2
+NC_003074.8 a_thaliana 3
+NC_003075.7 a_thaliana 4
+NC_003076.8 a_thaliana 5
+NC_001133.9 s_cerevisiae 1
+NC_001134.8 s_cerevisiae 2
+NC_001135.5 s_cerevisiae 3
+NC_001136.10 s_cerevisiae 4
+NC_001137.3 s_cerevisiae 5
+NC_001138.5 s_cerevisiae 6
+NC_001139.9 s_cerevisiae 7
+NC_001140.6 s_cerevisiae 8
+NC_001141.2 s_cerevisiae 9
+NC_001142.9 s_cerevisiae 10
+NC_001143.9 s_cerevisiae 11
+NC_001144.5 s_cerevisiae 12
+NC_001145.3 s_cerevisiae 13
+NC_001146.8 s_cerevisiae 14
+NC_001147.6 s_cerevisiae 15
+NC_001148.4 s_cerevisiae 16
+NC_000913.3 e_coli 1

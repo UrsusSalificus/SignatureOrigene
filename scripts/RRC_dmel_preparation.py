@@ -56,7 +56,7 @@ with open(all_windows, 'w') as outfile:
                     outfile.write(to_write + '\n')
 
 
-subprocess.call(['bash', '../scripts/RRC.sh'])
+subprocess.call(['bash', '../scripts/RRC_dmel_computation.sh'])
 
 
 

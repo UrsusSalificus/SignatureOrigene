@@ -327,20 +327,22 @@ cd ../figures
 FIGURES=$( find * )
 cd ../..
 
-# We will have to check the downloaded files, as they are input files and rise error in snakemake...
 for each_species in $SPECIES; do
+    # We will have to check the downloaded files
     go_back=$( pwd )
     cd ..
     genome_file=data/genomes/$each_species\_genomes.fna
-    feature_file=data/genomes/$each_species\_feature_table.txt
-    repeat_file=data/genomes/$each_species\_repeats.txt
+    feature_file=data/features/genes/$each_species\_feature_table.txt
+    repeat_file=data/features/repeats/$each_species\_repeats.txt
     # If any of those is missing, download again
     if [[ ! -f $genome_file || ! -f $feature_file || ! -f $repeat_file ]]; then
         bash scripts/download_genomes.sh $each_species $genome_file $feature_file $repeat_file
-        # Clean non-nuclear
+        # Clean of unwanted records
         python3 scripts/keep_wanted_records.py $genome_file
     fi
     cd $go_back
+
+    # Launching the whole Snakemake cascade
     for each_window in $WINDOWS; do
         for each_feature in $FEATURES; do
             for each_kmer in $KMER; do

@@ -12,7 +12,7 @@ rule CGR:
 rule CDS:
     input:
         "../data/genomes/{species}_genomes.fna",
-        "../data/genomes/{species}_feature_table.txt",
+        "../data/features/genes/{species}_feature_table.txt",
     output:
         "../files/features/{windows}/{species}_CDS.txt"
     shell:
@@ -22,11 +22,21 @@ rule CDS:
 rule LCR:
     input:
         "../data/genomes/{species}_genomes.fna",
-        "../data/genomes/{species}_repeats.txt",
+        "../data/features/repeats/{species}_repeats.txt",
     output:
         "../files/features/{windows}/{species}_LCR.txt"
     shell:
         "python3 ../scripts/extract_LCR.py {input} {wildcards.windows} \
+            {output}"
+
+rule RR:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/features/recombination_rates/{species}_RR_spline.RData",
+    output:
+        "../files/features/{windows}/{species}_RR.txt"
+    shell:
+        "python3 ../scripts/extract_RR.py {input} {wildcards.windows} \
             {output}"
 
 rule ratio_extract:
@@ -53,7 +63,7 @@ rule FCGR_dist:
     input:
         "files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt"
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData"
     threads:
         99
     shell:
@@ -61,7 +71,7 @@ rule FCGR_dist:
 
 rule correlation:
     input:
-        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt",
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData",
         "../files/features/{windows}/{species}_{features}.txt"
     output:
         "files/results/{windows}_{kmer}_{features}/{species}_correlation.png"
@@ -71,7 +81,7 @@ rule correlation:
 
 rule MDS:
     input:
-        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt",
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData",
         "../files/features/{windows}/{species}_{features}.txt"
     output:
         "files/results/{windows}_{kmer}_{features}/{species}_MDS.png"
@@ -81,7 +91,7 @@ rule MDS:
 
 rule ratio_figure:
     input:
-        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.txt",
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData",
         "../files/features/{windows}_ratios/{species}.txt"
     output:
         "files/results/{windows}_{kmer}_ratios/{species}.png"

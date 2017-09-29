@@ -10,7 +10,7 @@ snakemake_arguments=$*
 
 # Copy/paste at each step which species/features/window size should be included
 # SPECIES :     h_sapiens m_musculus c_elegans d_melanogaster a_thaliana s_cerevisiae e_coli
-SPECIES="h_sapiens m_musculus"
+SPECIES="h_sapiens m_musculus c_elegans d_melanogaster a_thaliana s_cerevisiae e_coli"
 # WINDOW SIZE : e.g.    5000 15000 150000
 WINDOWS=15000
 # FEATURE TYPE :    CDS LCR

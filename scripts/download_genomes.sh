@@ -4,14 +4,24 @@
 # Copyright 2017 Titouan Laessle
 # License : MIT
 
+# Quick check if we do have the directories, if not create them
+function check_parent {
+    parent_dir=$( dirname $1 )
+    if [[ ! -d $parent_dir ]]; then
+        mkdir $parent_dir
+    fi
+}
+
 # Will download whole concatenated genomes
 species="$1"
-output_genome="$2"
-output_table="$3"
+output_genome="$2" ; check_parent $output_genome
+output_table="$3" ; check_parent $output_table
+# We already have the repeats data of E. coli:
 if [ $species != e_coli ]; then
-    output_repeats="$4"
+    output_repeats="$4" ; check_parent $output_repeats
 fi
 
+# Using hash table to find hte right accession path
 declare -A all_accessions
 all_accessions=(["h_sapiens"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.36_GRCh38.p10/"
 ["m_musculus"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/635/GCF_000001635.25_GRCm38.p5/"
@@ -23,7 +33,9 @@ all_accessions=(["h_sapiens"]="ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/00
 
 accession=${all_accessions[$species]}
 
+# Will cut the accession in array delimited by /
 IFS='/' read -r -a array <<< $accession
+# The 9th element contains the file "name", which we use to extract the files we need
 whole_genome=$( echo ${array[9]}'_genomic.fna.gz' )
 feature_table=$( echo ${array[9]}'_feature_table.txt.gz' )
 
