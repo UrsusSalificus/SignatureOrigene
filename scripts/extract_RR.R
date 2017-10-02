@@ -33,8 +33,8 @@ windows_rr <- sapply(1:length(split_coord), function(each_chrom) {
   sapply(1:nrow(chrom_windows), function (each_window) {
     window_line <- chrom_windows[each_window,]
     # If not telomeres, compute average recombination rate
-    if (window_line[3] < last_marker && window_line[3] > first_marker){
-      middle_window <- mean(c(as.numeric(window_line[2]), as.numeric(window_line[3])))
+    if (window_line$V3 < last_marker && window_line$V3  > first_marker){
+      middle_window <- mean(c(as.numeric(window_line$V2), as.numeric(window_line$V3)))
       predicted_rr <- predict(chrom_fit, middle_window)$y
       # Second level of control: if the recombination rate is < 0, mark as 0 instead
       if (predicted_rr < 0) {
@@ -52,4 +52,4 @@ windows_rr <- sapply(1:length(split_coord), function(each_chrom) {
 
 all_windows_rr <- matrix(c(coordinates$V1, unlist(windows_rr)), ncol =2)
 
-write.table(all_windows_rr, args[3], quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(all_windows_rr, args[3], quote = FALSE, row.names = FALSE, col.names = FALSE, sep = '\t')

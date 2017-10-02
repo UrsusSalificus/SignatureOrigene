@@ -54,8 +54,7 @@ def fetch_fasta(fasta_file):
     return (records)
 
 
-def extract_features (species_table, output, id_column, feature_column, feature_type, strand_column,
-                      start_column, end_column):
+def extract_features (records, species_table, output, id_column, start_column, end_column):
     # Checking parent directory of output are present
     checking_parent(output)
 
@@ -70,6 +69,11 @@ def extract_features (species_table, output, id_column, feature_column, feature_
         for each_record in range(len(records)):
             # Each element of this list represents a nucleotide
             record_proxy = [0] * len(records[each_record].seq)
+
+            # Whenever we are not already at our chromosome part -> skip until at it
+            while records[each_record].id != actual_line[id_column]:
+                actual_line = feature_table.readline().split('\t')
+
             # While repeats from the actual record, continue extracting
             try:
                 while records[each_record].id == actual_line[id_column]:
@@ -103,12 +107,8 @@ records = fetch_fasta(species_genome)
 
 # Particularities of each feature (e.g. which column (the numbers) contains what information):
 id_column = 4
-feature_column = 10     # NOT USED
-feature_type = ''       # NOT USED
-strand_column = 8       # NOT USED
 start_column = 5
 end_column = 6
 
-extract_features(species_table, output, id_column, feature_column, feature_type, strand_column,
-                 start_column, end_column)
+extract_features(records, species_table, output, id_column, start_column, end_column)
 

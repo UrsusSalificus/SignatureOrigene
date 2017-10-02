@@ -57,7 +57,7 @@ g <- ggplot(data = feature, aes(x = variable, y = value)) +
   geom_boxplot(aes(fill = far), width = 1) + theme_bw() +
   scale_y_continuous(breaks=py, limits=range(py)) + 
   scale_fill_discrete(name="Distance to\nother windows",
-                      labels=c("Close", "Far")) + 
+                      labels=c("Central", "Peripherical")) + 
   labs(title=plot_title, y = "Ratios [count/total]") +
   theme(
     plot.title = element_text(size = 15, face="bold"),

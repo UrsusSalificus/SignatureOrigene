@@ -1,6 +1,8 @@
 NA
 Homo sapiens
+Sample of Homo sapiens
 Mus musculus
+Sample of Mus musculus
 Caenorhabditis elegans
 Drosophila melanogaster
 Arabidopsis thaliana

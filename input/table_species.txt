@@ -2,9 +2,13 @@ Type their corresponding number as single block of numbers (eg. 127), then press
 [ENTER]:
 
     1. Homo sapiens (long computational time!)
-    2. Mus musculus (long computational time!)
-    3. Caenorhabditis elegans
-    4. Drosophila melanogaster
-    5. Arabidopsis thaliana
-    6. Saccharomyces cerevisiae
-    7. Escherichia coli
+    2. Homo sapiens sample (chromosome 10, computationally equivalent of D.
+        melanogaster)
+    3. Mus musculus (long computational time!)
+    4. Mus musculus sample (chromosome 10, computationally equivalent of D.
+        melanogaster)
+    5. Caenorhabditis elegans
+    6. Drosophila melanogaster
+    7. Arabidopsis thaliana
+    8. Saccharomyces cerevisiae
+    9. Escherichia coli

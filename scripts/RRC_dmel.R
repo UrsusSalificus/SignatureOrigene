@@ -8,6 +8,15 @@ library(RColorBrewer)
 library(ggplot2)
 
 ### Analyis of the Recombination Rate
+# Will input the arguments:
+# 1. path to the output image (with its name in the path)
+# 2. path to the distance matrix
+# 3. path to the feature file
+# 4. Genomic signature type
+# 5. feature type
+# 6. window size
+# 7. IF USING FCGR : k-mer size
+args <- commandArgs(trailingOnly=TRUE)
 
 output = args[1]
 gs = basename(args[4])

@@ -1,3 +1,4 @@
 NA
 Coding sequences (CDS)
 Low Complexity Regions (LCR)
+Recombination rate (RR)

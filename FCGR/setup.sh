@@ -347,9 +347,15 @@ for each_species in $SPECIES; do
         for each_feature in $FEATURES; do
             for each_kmer in $KMER; do
                 for each_figures in $FIGURES; do
+                    # If we want to have a look at the ratios only, use ratio end rule
                     if [[ $each_figures == 'ratios' ]] ; then
                         snakemake $snakemake_arguments \
                             files/results/$each_window\_$each_kmer\_ratios/$each_species.png
+                    # If feature = recombination rate, do not compute for S. cerevisiae and E. coli
+                    elif [[ $each_feature == 'RR' ]] && \
+                    ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
+                        echo "RR not computed for $each_species"
+                    # In any other case, use the wanted figure end rule
                     else
                         snakemake $snakemake_arguments \
                             files/results/$each_window\_$each_kmer\_$each_feature/$each_species\_$each_figures.png

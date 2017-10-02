@@ -1,1 +1,1 @@
-NA h_sapiens m_musculus c_elegans d_melanogaster a_thaliana s_cerevisiae e_coli
+NA h_sapiens hsap_sample m_musculus mmus_sample c_elegans d_melanogaster a_thaliana s_cerevisiae e_coli
