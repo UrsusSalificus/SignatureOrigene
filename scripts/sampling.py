@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Extract the sample chromosome out of H. sapiens or M. musculus genome
+""" Extract the sample chromosome out of H. sapiens or M. musculus genome
 """
 from Bio import SeqIO
 import sys

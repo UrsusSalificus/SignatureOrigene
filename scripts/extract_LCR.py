@@ -72,7 +72,7 @@ def extract_features (records, species_table, output, id_column, start_column, e
 
             # Whenever we are not already at our chromosome part -> skip until at it
             while records[each_record].id != actual_line[id_column]:
-                actual_line = feature_table.readline().split('\t')
+                actual_line = feature_table.readline().split()
 
             # While repeats from the actual record, continue extracting
             try:

@@ -38,7 +38,7 @@ get_all_RR <- function(all_genetic_maps, record_names) {
   return(fitted_models)
 }
 
-record_names <- read.table("wanted_records.txt")
+record_names <- read.table("data/wanted_records.txt")
 
 # We will also create the directory which will contain all these spline fits
 RR_directory <- 'data/features/recombination_rates'
@@ -63,6 +63,13 @@ split_map <- split(map, map$Chromosome)
 
 fit_spline <- lapply(split_map, function(each_map) {
   spline <- smooth.spline(each_map$`Position(bp)`, each_map$`Rate(cM/Mb)`, cv= TRUE)
+  
+  # Due to memory size problems, we will remove some element of the stored object
+  spline$data <- NULL
+  spline$lev <- NULL
+  spline$yin <- NULL
+  spline$w <- NULL
+  
   return(spline)
 })
 

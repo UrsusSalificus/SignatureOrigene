@@ -10,7 +10,7 @@ library(ggplot2)
 ### MultiDimensional Scaling (MDS) analysis of a distance matrix
 # Will input the arguments:
 # 1. path to the output image (with its name in the path)
-# 2. path to the distance matrix
+# 2. path to the fit of the distance matrix
 # 3. path to the feature file
 # 4. Genomic signature type
 # 5. feature type
@@ -26,10 +26,8 @@ if (gs == 'FCGRs'){
   kmer <- args[7]
 } 
 
-distance_matrix <- readRDS(args[2])
-
 # MDS
-fit <- cmdscale(distance_matrix,eig=TRUE, k=2) # k is the number of dim
+fit <- readRDS(args[2])
 data <- data.frame(MDS_1 = fit$points[,1], MDS_2 = fit$points[,2])
 
 feature = read.csv(args[3], sep = '\t', header = FALSE)

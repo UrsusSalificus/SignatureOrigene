@@ -17,7 +17,7 @@ pearson.dist <- function (x) {
 ### Euclidean distance computation
 # Will input the arguments:
 # 1. path to the input file = genomic signature file, each row = 1 region, which will be pariwise compared
-# 2. path to the output image (with its name in the path)
+# 2. path to the output dist object as RData (with its name in the path)
 
 args <- commandArgs(trailingOnly=TRUE)
 

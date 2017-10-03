@@ -30,8 +30,8 @@ def fetch_fasta(fasta_file):
     return (records)
 
 # Store all the records we which to keep
-with open("wanted_records.txt") as non_nuclear:
-    do_want = [each_id.split()[0].strip() for each_id in non_nuclear]
+with open("data/wanted_records.txt") as records_ids:
+    do_want = [each_id.split()[0].strip() for each_id in records_ids]
 
 records = fetch_fasta(species_genome)
 cleaned_records = [each_record for each_record in records if each_record.id in do_want]
