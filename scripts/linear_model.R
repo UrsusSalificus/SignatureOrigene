@@ -9,9 +9,13 @@ library(ggplot2)
 
 ### MultiDimensional Scaling (MDS) analysis of a distance matrix
 # Will input the arguments:
-# 1. path to the output image (with its name in the path)
-# 2. path to the distance matrix
-# 3. path to the feature file
+# 1. path to the output file containing the model and Shapiro test (with its name in the path)
+# 2. path to the output image (with its name in the path)
+# 3. path to the distance matrix
+# 4. path to the RR file
+# 5. path to the LCR file
+# 6. path to the CDS file
+
 # 4. Genomic signature type
 # 5. feature type
 # 6. window size
@@ -40,8 +44,12 @@ LCR <- read.csv(args[4], sep = '\t', header = FALSE)
 CDS <- read.csv(args[5], sep = '\t', header = FALSE)
 
 model <- lm(as.numeric(mean_dist) ~ RR$V2 + LCR$V2 + CDS$V2)
+resid <- residuals(model)
+resid_sample <- sample(resid, 5000)
+shapiro <- shapiro.test(resid_sample)
 par(mfrow=c(2,2))
 plot(model)
 summary(model)
 
+lapply(mylist, write, "test.txt", append=TRUE, ncolumns=1000)
 

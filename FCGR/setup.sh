@@ -211,22 +211,22 @@ confirm
 
 
 
-########### FEATURES ###########
+########### FACTORS ###########
 title="config/temp/title.txt"
 cat << "EOF" > $title
-     _______               __
-    |    ___|.-----.---.-.|  |_.--.--.----.-----.-----.
-    |    ___||  -__|  _  ||   _|  |  |   _|  -__|__ --|
-    |___|    |_____|___._||____|_____|__| |_____|_____|
+ _______              __
+|    ___|.---.-.----.|  |_.-----.----.-----.
+|    ___||  _  |  __||   _|  _  |   _|__ --|
+|___|    |___._|____||____|_____|__| |_____|
 
 EOF
-intro="Please chose among the following list which features should be included in the analysis."
-table="../input/table_features.txt"
+intro="Please chose among the following list which factor should be included in the analysis."
+table="../input/table_factors.txt"
 choice=fixed
-good_inputs="../input/good_features.txt"
-abbrev="../input/abbrev_features.txt"
-out_dir="config/features/"
-nice="../input/all_features.txt"
+good_inputs="../input/good_factors.txt"
+abbrev="../input/abbrev_factors.txt"
+out_dir="config/factors/"
+nice="../input/all_factors.txt"
 
 confirm
 
@@ -319,8 +319,8 @@ cd config/species
 SPECIES=$( find * )
 cd ../windows
 WINDOWS=$( find * )
-cd ../features
-FEATURES=$( find * )
+cd ../factors
+FACTORS=$( find * )
 cd ../kmer
 KMER=$( find * )
 cd ../figures
@@ -332,8 +332,8 @@ for each_species in $SPECIES; do
     go_back=$( pwd )
     cd ..
     genome_file=data/genomes/$each_species\_genomes.fna
-    feature_file=data/features/genes/$each_species\_feature_table.txt
-    repeat_file=data/features/repeats/$each_species\_repeats.txt
+    feature_file=data/factors/features/$each_species\_feature_table.txt
+    repeat_file=data/factors/repeats/$each_species\_repeats.txt
     # If any of those is missing, download again
     if [[ ! -f $genome_file || ! -f $feature_file || ! -f $repeat_file ]]; then
         bash scripts/download_genomes.sh $each_species $genome_file $feature_file $repeat_file
@@ -344,7 +344,7 @@ for each_species in $SPECIES; do
 
     # Launching the whole Snakemake cascade
     for each_window in $WINDOWS; do
-        for each_feature in $FEATURES; do
+        for each_factor in $FACTORS; do
             for each_kmer in $KMER; do
                 for each_figures in $FIGURES; do
                     # If we want to have a look at the ratios only, use ratio end rule
@@ -352,13 +352,13 @@ for each_species in $SPECIES; do
                         snakemake $snakemake_arguments \
                             files/results/$each_window\_$each_kmer\_ratios/$each_species.png
                     # If feature = recombination rate, do not compute for S. cerevisiae and E. coli
-                    elif [[ $each_feature == 'RR' ]] && \
+                    elif [[ $each_factor == 'RR' ]] && \
                     ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
                         echo "RR not computed for $each_species"
                     # In any other case, use the wanted figure end rule
                     else
                         snakemake $snakemake_arguments \
-                            files/results/$each_window\_$each_kmer\_$each_feature/$each_species\_$each_figures.png
+                            files/results/$each_window\_$each_kmer\_$each_factor/$each_species\_$each_figures.png
                     fi
                 done
             done

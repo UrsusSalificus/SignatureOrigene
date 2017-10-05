@@ -48,7 +48,7 @@ dir.create(RR_directory)
 ###################################################################################################
 
 
-# 1) H. sapiens
+# 1.1) H. sapiens
 map <- fread('tools/RRC/h_sapiens/all_genetic_maps.txt', header = TRUE)
 
 # Will remove the unwanted headers and also remove small parts of X
@@ -85,7 +85,35 @@ save(fit_spline, file = paste(RR_directory, 'h_sapiens_RR_spline.RData', sep = '
 ###################################################################################################
 
 
-# 2) M. musculus
+# 1.2) H. sapiens sample (chromosome 10)
+map <- fread('tools/RRC/h_sapiens/all_genetic_maps.txt', header = TRUE)
+
+# Will keep only the sample chromosome
+map <- map[map$Chromosome == 'chr10',]
+
+# We must keep it as a list, as it will be used as a list later on
+fit_spline <- list()
+fit_spline[[1]] <- smooth.spline(map$`Position(bp)`, map$`Rate(cM/Mb)`, cv= TRUE)
+
+# Due to memory size problems, we will remove some element of the stored object
+fit_spline[[1]]$data <- NULL
+fit_spline[[1]]$lev <- NULL
+fit_spline[[1]]$yin <- NULL
+fit_spline[[1]]$w <- NULL
+
+# Add the id of this chromosome
+chromosome_id <- record_names$V1[record_names$V2 == 'h_sapiens'][10]
+
+# Associate the id to each spline fit
+names(fit_spline) <- chromosome_id
+
+save(fit_spline, file = paste(RR_directory, 'hsap_sample_RR_spline.RData', sep = '/'))
+
+
+###################################################################################################
+
+
+# 2.1) M. musculus
 map <- read.csv('tools/RRC/m_musculus/Revised_HSmap_SNPs.csv')
 
 split_map <- split(map, map$chr)
@@ -124,6 +152,40 @@ save(fit_spline, file = paste(RR_directory, 'm_musculus_RR_spline.RData', sep = 
 
 ###################################################################################################
 
+
+# 2.2) M. musculus
+map <- read.csv('tools/RRC/m_musculus/Revised_HSmap_SNPs.csv')
+
+# Will keep only the sample chromosome
+map <- map[map$chr == '10',]
+
+# Constructing the MareyMap object
+new_map <- new("MareyMap")
+setName(new_map) <- 'm_musculus'
+markerNames(new_map) <- as.character(map$snpID)
+physicalPositions(new_map) <- as.numeric(map$build37)
+geneticDistances(new_map) <- as.numeric(map$ave_cM)
+mapName(new_map) <- as.character(map$chr[1])
+markerValidity(new_map) <- rep(TRUE, nrow(map))
+
+# Get the recombination rate
+mmus_sample_rr <- get_chrom_RR (new_map)
+map$rr <- mmus_sample_rr
+
+# We must keep it as a list, as it will be used as a list later on
+fit_spline <- list()
+fit_spline[[1]] <- smooth.spline(map$build37, map$rr, cv= TRUE)
+
+# Add the id of this chromosome
+chromosome_id <- record_names$V1[record_names$V2 == 'm_musculus'][10]
+
+# Associate the id to the spline fit
+names(fit_spline) <- chromosome_id
+
+save(fit_spline, file = paste(RR_directory, 'mmus_sample_RR_spline.RData', sep = '/'))
+
+
+###################################################################################################
 
 # 3) C. elegans (already incorporated in MareyMap) 
 map <- read.csv('tools/RRC/c_elegans/CelegansRIAILmap.csv')

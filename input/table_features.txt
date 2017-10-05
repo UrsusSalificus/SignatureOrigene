@@ -1,9 +1,0 @@
-Type their corresponding number as single block of numbers (eg. 13), then press
-[ENTER]:
-
-    1. CDS : percentage of coding sequences per windows
-    2. LCR : percentage of Low Complexity Regions (repeats) per windows
-    3. RR : recombination rate per windows
-        Note: not available for Saccharomyces cerevisiae or Escherichia coli
-            If the species were selected beforehand, will simply ignore it for
-            them.

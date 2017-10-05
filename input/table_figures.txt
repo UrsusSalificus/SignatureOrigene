@@ -1,4 +1,4 @@
-Type their corresponding number as single block of numbers (eg. 12), then press
+Type their corresponding number as single block of numbers (eg. 124), then press
 [ENTER]:
 
     1. MDS : MultiDimensional Scaling of the distance matrix, showing how does
@@ -9,6 +9,9 @@ Type their corresponding number as single block of numbers (eg. 12), then press
         windows and the percentage of feature per windows.
 
     3. Ratios : comparing different ratios of nucleotide (single nucleotide,
-        purine/pyrimidine, CG/AT and TG/AC) between windows which are the most
-        different from the others according to the distance matrix, and the one
-        much closer to each others.
+        purine/pyrimidine, CG/AT and TG/AC) between peripheral and central
+        windows  (according to the distance matrix).
+
+    4. TODO
+________________________________________________________________________________
+
