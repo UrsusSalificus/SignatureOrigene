@@ -20,8 +20,8 @@ species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 species_table = str(sys.argv[2])
 # Wanted window size:
 window_size = int(sys.argv[3])
-# Wanted feature:
-feature = str(sys.argv[4])
+# Wanted factor:
+factor = str(sys.argv[4])
 # Output path:
 output = str(sys.argv[5])
 
@@ -114,9 +114,9 @@ records = fetch_fasta(species_genome)
 id_column = 6
 feature_column = 0
 # The feature type depends on the wanted feature
-if feature == 'CDS':
+if factor == 'CDS':
     feature_type = 'CDS'
-elif feature == 'RNA':
+elif factor == 'RNA':
     feature_type = ['misc_RNA', 'ncRNA', 'rRNA', 'tRNA']
 strand_column = 9
 start_column = 7

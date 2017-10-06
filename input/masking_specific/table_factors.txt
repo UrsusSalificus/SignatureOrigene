@@ -1,0 +1,8 @@
+Type their corresponding number as single block of numbers (eg. 13), then press
+[ENTER]:
+
+    1. CDS : windows of coding sequences
+    2. RNA : windows of non-coding DNA
+    3. LCR : windows of low complexity regions
+    4. TE : windows of transposable elements
+    5. Tandem : windows of DNA tandem repeats (including satellites)

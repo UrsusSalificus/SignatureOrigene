@@ -59,6 +59,6 @@ if [ $species != e_coli ]; then
     rm $repeats
 fi
 
-if [ $species != hsap_sample ] || [ $species != mmus_sample ]; then
+if [ $species == "hsap_sample" ] || [ $species == "mmus_sample" ]; then
     python3 scripts/sampling.py $output_genome
 fi

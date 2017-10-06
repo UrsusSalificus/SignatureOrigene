@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Extract the percentage of windows' nucleotides which are Low Complexity Regions (LCR)
+"""Extract the percentage of windows' nucleotides which are the wanted repeats
 """
 from Bio import SeqIO
 import math
@@ -19,8 +19,8 @@ species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 species_table = str(sys.argv[2])
 # Wanted window size:
 window_size = int(sys.argv[3])
-# Wanted feature:
-feature = str(sys.argv[4])
+# Wanted factor:
+factor = str(sys.argv[4])
 # Output path:
 output = str(sys.argv[5])
 
@@ -65,8 +65,6 @@ def extract_features (records, species_table, output, id_column, start_column, e
         feature_table.readline()
         feature_table.readline()
         feature_table.readline()
-        # We will keep this start point:
-        start_table = feature_table.tell()
 
         # From now on, will move through the document by .readline()
         # Problem, tables have different separation type:
@@ -79,14 +77,6 @@ def extract_features (records, species_table, output, id_column, start_column, e
             # Whenever we are not already at our chromosome part -> skip until at it
             while records[each_record].id != actual_line[id_column]:
                 actual_line = feature_table.readline().split()
-                # This trick works for most genome, but for A. thaliana genome, we had to take out some
-                # records which were at the beginning (of the records order), which makes it scan the whole file
-                # In this case, we have to rescan everything (TODO: find a better way to do this)
-                try:
-                    actual_line[1]
-                except:
-                    feature_table.seek(start_table)
-                    actual_line = feature_table.readline().rsplit()
 
             # While repeats from the actual record, continue extracting
             try:
@@ -125,11 +115,11 @@ records = fetch_fasta(species_genome)
 id_column = 4
 feature_column = 10
 # The feature type depends on the wanted feature
-if feature == 'LCR':
+if factor == 'LCR':
     feature_type = 'Low_complexity'
-elif feature == 'TE':
+elif factor == 'TE':
     feature_type = ['DNA', 'LINE', 'LTR', 'SINE', 'Retroposon']
-elif feature == 'tandem':
+elif factor == 'tandem':
     feature_type = ['Satellite', 'Simple_repeat']
 start_column = 5
 end_column = 6

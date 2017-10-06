@@ -74,7 +74,7 @@ rule ratio_extract:
     output:
         "../files/factors/{windows}_ratios/{species}.txt"
     shell:
-        "python3 ../scripts/nucleotide_ratio_extract.py {input} \
+        "python3 ../scripts/extract_nucleotide_ratio.py {input} \
             {wildcards.species} {wildcards.windows} {threads} {output}"
 
 rule FCGR:

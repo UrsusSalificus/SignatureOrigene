@@ -119,11 +119,22 @@ def N_sensitive_CGR(window, outfile):
 
 # Fetching the genomic fasta file
 records = fetch_fasta(species_genome)
-# Will work for single record too:
+
+# We will know compute the CGR of all windows, in all records:
 for each_record in range(len(records)):
     if len(records[each_record].seq) > window_size:
         n_windows = math.floor(len(records[each_record].seq) / window_size)  # Number of windows
-        seq_directory = '/'.join(['../files/CGRs', str(window_size), species, records[each_record].id, 'CGR_region_'])
+
+        # The follow_up file enable us to know if we are working on "scaling" or "masking",
+        # and will change where we store the CGRs:
+        if follow_up.split('/')[0] == '..':
+            # We are in the scaling case, where we use the genome "as it is"
+            # We store CGRs in main/source directory:
+            seq_directory = '/'.join(['../files/CGRs', str(window_size), species, records[each_record].id, 'CGR_region_'])
+        else:
+            # We are in the masking case, where we used sequence of the factor only
+            # We store CGRs in the masking directory
+            seq_directory = '/'.join(['files/CGRs', str(window_size), species, records[each_record].id, 'CGR_region_'])
         # Parallel the CGR on n_jobs core
         Parallel(n_jobs=n_threads)(delayed(N_sensitive_CGR)
                                    (str(records[each_record].seq[
