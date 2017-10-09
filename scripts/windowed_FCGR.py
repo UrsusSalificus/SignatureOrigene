@@ -13,6 +13,8 @@ __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
 __license__ = "MIT"
 
+# Tracking file:
+follow_up = str(sys.argv[1])
 # Species abbreviation:
 species = str(sys.argv[2])
 # Wanted window size:
@@ -268,8 +270,18 @@ def FCGR_from_CGR(k_size, CGR, outfile):
 checking_parent(output)
 # Opening concatenated file on top level, to avoid rewriting at each record
 with open(output, 'w') as outfile:
-    # Path to CGR directory
-    CGR_directory = '/'.join(['../files/CGRs/', str(window_size), species])
+    # The follow_up file enable us to know if we are working on "scaling" or "purifying",
+    # and will change where we store the CGRs:
+    if follow_up.split('/')[0] == '..':
+        # We are in the scaling case, where we use the genome "as it is"
+        # We stored CGRs in source directory:
+        CGR_directory = '/'.join(['../files/CGRs/', str(window_size), species])
+    else:
+        # We are in the purifying case, where we used sequence of the factor only
+        # We stored CGRs directly in the purifying directory
+        factor = follow_up.split('_')[2]
+        CGR_directory = '/'.join(['files/CGRs/', str(window_size), species, factor])
+
     # Get all the different CGRs files path
     all_records = extract_path(CGR_directory + '/', '*')
     for each_record in range(len(all_records)):

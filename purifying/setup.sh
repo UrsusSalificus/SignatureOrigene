@@ -221,12 +221,12 @@ cat << "EOF" > $title
 
 EOF
 intro="Please chose among the following list which factor should be included in the analysis."
-table="../input/masking_specific/table_factors.txt"
+table="../input/purifying_specific/table_factors.txt"
 choice=fixed
-good_inputs="../input/masking_specific/good_factors.txt"
-abbrev="../input/masking_specific/abbrev_factors.txt"
+good_inputs="../input/purifying_specific/good_factors.txt"
+abbrev="../input/purifying_specific/abbrev_factors.txt"
 out_dir="config/factors/"
-nice="../input/masking_specific/all_factors.txt"
+nice="../input/purifying_specific/all_factors.txt"
 
 confirm
 
@@ -279,29 +279,6 @@ confirm
 
 
 
-########### FIGURES ###########
-title="config/temp/title.txt"
-cat << "EOF" > $title
- _______ __
-|    ___|__|.-----.--.--.----.-----.-----.
-|    ___|  ||  _  |  |  |   _|  -__|__ --|
-|___|   |__||___  |_____|__| |_____|_____|
-            |_____|
-
-EOF
-intro="Please chose among the following list which figures should be included in the analysis."
-table="../input/masking_specific/table_figures.txt"
-choice=fixed
-good_inputs="../input/masking_specific/good_figures.txt"
-abbrev="../input/masking_specific/abbrev_figures.txt"
-out_dir="config/figures/"
-nice="../input/masking_specific/all_figures.txt"
-
-
-confirm
-
-
-
 echo " ___ ___ _______ _______      ______ _______ ______ __  __ __
 |   |   |       |   |   |    |   __ \       |      |  |/  |  |
  \     /|   -   |   |   |    |      <   -   |   ---|     <|__|
@@ -323,8 +300,6 @@ cd ../factors
 FACTORS=$( find * )
 cd ../kmer
 KMER=$( find * )
-cd ../figures
-FIGURES=$( find * )
 cd ../..
 
 for each_species in $SPECIES; do
@@ -344,24 +319,23 @@ for each_species in $SPECIES; do
 
     # Launching the whole Snakemake cascade
     for each_window in $WINDOWS; do
-        for each_factor in $FACTORS; do
-            for each_kmer in $KMER; do
-                for each_figures in $FIGURES; do
-                    # If we want to have a look at the ratios only, use ratio end rule
-                    if [[ $each_figures == 'ratios' ]] ; then
-                        snakemake $snakemake_arguments \
-                            files/results/$each_window\_$each_kmer\_ratios/$each_species.png
-                    # If feature = recombination rate, do not compute for S. cerevisiae and E. coli
-                    elif [[ $each_factor == 'RR' ]] && \
-                    ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
-                        echo "RR not computed for $each_species"
-                    # In any other case, use the wanted figure end rule
-                    else
-                        snakemake $snakemake_arguments \
-                            files/results/$each_window\_$each_kmer\_$each_factor/$each_species\_$each_figures.png
-                    fi
-                done
+        for each_kmer in $KMER; do
+            for each_factor in $FACTORS; do
+                snakemake $snakemake_arguments \
+                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_dist_matrix.RData
             done
+
+            # We need the whole genome FCGR, which will be computed through the scaling snakemake
+            cd ../scaling
+            snakemake $snakemake_arguments \
+                files/distances/pearson/$each_window\_$each_kmer/$each_species\_dist_matrix.RData
+            cd $go_back
+            # The distance matrix is ready, now we only have to copy it to masking directory
+            # (If it is not already done...)
+            if [[ ! -f files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_dist_matrix.RData ]]; then
+                cp ../scaling/files/distances/pearson/$each_window\_$each_kmer/$each_species\_dist_matrix.RData \
+                files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_dist_matrix.RData
+            fi
         done
     done
 done

@@ -125,23 +125,25 @@ for each_record in range(len(records)):
     if len(records[each_record].seq) > window_size:
         n_windows = math.floor(len(records[each_record].seq) / window_size)  # Number of windows
 
-        # The follow_up file enable us to know if we are working on "scaling" or "masking",
+        # The follow_up file enable us to know if we are working on "scaling" or "purifying",
         # and will change where we store the CGRs:
         if follow_up.split('/')[0] == '..':
             # We are in the scaling case, where we use the genome "as it is"
-            # We store CGRs in main/source directory:
+            # We store CGRs in source directory:
             seq_directory = '/'.join(['../files/CGRs', str(window_size), species, records[each_record].id, 'CGR_region_'])
         else:
-            # We are in the masking case, where we used sequence of the factor only
-            # We store CGRs in the masking directory
-            seq_directory = '/'.join(['files/CGRs', str(window_size), species, records[each_record].id, 'CGR_region_'])
+            # We are in the purifying case, where we used sequence of the factor only
+            # We store CGRs directly in the purifying directory
+            factor = follow_up.split('_')[2]
+            seq_directory = '/'.join(['files/CGRs', str(window_size), species, factor,
+                                      records[each_record].id, 'CGR_region_'])
+
         # Parallel the CGR on n_jobs core
         Parallel(n_jobs=n_threads)(delayed(N_sensitive_CGR)
                                    (str(records[each_record].seq[
                                         (start * window_size):((start * window_size) + window_size)]),
                                     seq_directory + str(start))
                                    for start in range(0, n_windows))
-
 
 # Follow the progression of the analysis
 checking_parent(follow_up)

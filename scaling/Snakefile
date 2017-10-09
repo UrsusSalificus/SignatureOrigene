@@ -85,7 +85,7 @@ rule FCGR:
     threads:
         99
     shell:
-        "python3 scripts/windowed_FCGR.py {input} {wildcards.species} \
+        "python3 ../scripts/windowed_FCGR.py {input} {wildcards.species} \
             {wildcards.windows} {wildcards.kmer} {threads} {output}"
 
 rule FCGR_dist:

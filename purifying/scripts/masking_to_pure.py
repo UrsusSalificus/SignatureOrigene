@@ -13,15 +13,17 @@ __license__ = "MIT"
 
 # Wanted factor:
 factor = str(sys.argv[1])
+# Wanted window size:
+window_size = int(sys.argv[2])
 # Species genome path:
-species_genome = str(sys.argv[2])
+species_genome = str(sys.argv[3])
 # Species feature table path, depends on the type of factor:
 if factor in ['LCR', 'TE', 'tandem']:
-    species_table = str(sys.argv[3])
-elif factor in ['CDS', 'RNA']:
     species_table = str(sys.argv[4])
+elif factor in ['CDS', 'RNA']:
+    species_table = str(sys.argv[5])
 # Output path:
-output = str(sys.argv[5])
+output = str(sys.argv[6])
 
 
 ###
@@ -145,8 +147,19 @@ def extract_factor(records, factor, species_table, output, id_column, feature_co
             new_record = SeqRecord(seq = factor_only, id = records[each_record].id)
             factor_records.append(new_record)
 
-        # Write the new list of records
-        SeqIO.write(factor_records, outfile, "fasta")
+        # We might end up with records which are too small
+        # In this case, we must concatenate them:
+        if any([len(each_record) < window_size for each_record in factor_records]):
+            concatenated_seq = str()
+            for each_record in factor_records:
+                concatenated_seq += each_record
+            concatenated_records = SeqRecord(seq = concatenated_seq.seq, id = 'concatenated')
+
+            # Write the new list of records
+            SeqIO.write(concatenated_records, outfile, "fasta")
+        else:
+            # Write the new list of records
+            SeqIO.write(factor_records, outfile, "fasta")
 
 
 if factor in ['LCR', 'TE', 'tandem']:
