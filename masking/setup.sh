@@ -317,30 +317,25 @@ for each_species in $SPECIES; do
     fi
     cd $go_back
 
+    # Launching the whole Snakemake cascade
     for each_window in $WINDOWS; do
         for each_kmer in $KMER; do
-            # A) This part will compute all the FCGRs of pure sequences we need
-            for each_factor in $FACTORS; do
-                snakemake $snakemake_arguments \
-                    files/FCGRs/$each_window\_$each_kmer/$each_species\_$each_factor\_FCGRs.txt
-            done
-
-            # We need the whole genome FCGR, which will be computed through the scaling snakemake
+            # We need the whole genome distance matrix, which will be computed through the scaling snakemake
             cd ../scaling
             snakemake $snakemake_arguments \
-                files/FCGRs/$each_window\_$each_kmer/$each_species\_FCGRs.txt
+                files/distances/pearson/$each_window\_$each_kmer/$each_species\_dist_matrix.RData
             cd $go_back
-            # The FCGR is ready, now we only have to copy it to purifying directory
+            # The distance matrix is ready, now we only have to copy it to masking directory
             # (If it is not already done...)
-            if [[ ! -f files/FCGRs/$each_window\_$each_kmer/$each_species\_whole_FCGRs.txt ]]; then
-                cp ../scaling/files/FCGRs/$each_window\_$each_kmer/$each_species\_FCGRs.txt \
-                files/FCGRs/$each_window\_$each_kmer/$each_species\_whole_FCGRs.txt
+            if [[ ! -f files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_dist_matrix.RData ]]; then
+                cp ../scaling/files/distances/pearson/$each_window\_$each_kmer/$each_species\_dist_matrix.RData \
+                files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_dist_matrix.RData
             fi
 
-            # B) This part will compute from the concatenated FCGRs to the MDS of them
-            # (FCGRs -> distance matrix -> fitting -> MDS)
-            snakemake $snakemake_arguments \
-            files/results/$each_window\_$each_kmer/$each_species\_MDS_all_factors.png
+            for each_factor in $FACTORS; do
+                snakemake $snakemake_arguments \
+                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_vs_center_dist_matrix.RData
+            done
         done
     done
 done

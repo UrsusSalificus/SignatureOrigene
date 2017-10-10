@@ -79,7 +79,7 @@ ggplot(data, aes(x = MDS_1, y = MDS_2, colour = as.factor(factors), alpha = redu
     axis.text.x  = element_text(size = 15),
     axis.title.y = element_text(size = 18),
     axis.text.y  = element_text(size = 15),
-    legend.title = element_text(size=18),
+    legend.title = element_text(size=18, face = 'bold'),
     legend.text = element_text(size = 15)
   )+
   scale_colour_manual(name = 'Factors', values = colours, 

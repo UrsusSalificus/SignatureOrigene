@@ -4,10 +4,7 @@
 # Copyright 2017 Titouan Laessle
 # License : MIT
 
-library(RColorBrewer)
-library(ggplot2)
-
-### MultiDimensional Scaling (MDS) analysis of a distance matrix
+### Fitting of distance matrix
 # Will input the arguments:
 # 1. path to the distance matrix
 # 2. path to the output fit as RData (with its name in the path)
