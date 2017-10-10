@@ -144,7 +144,7 @@ def extract_factor(records, factor, species_table, output, id_column, feature_co
             for each_range in all_ranges:
                 factor_only += records[each_record].seq[each_range[0]:each_range[1]]
 
-            new_record = SeqRecord(seq = factor_only, id = records[each_record].id)
+            new_record = SeqRecord(seq = factor_only, id = '_'.join([factor, records[each_record].id]))
             factor_records.append(new_record)
 
         # We might end up with records which are too small
@@ -153,7 +153,7 @@ def extract_factor(records, factor, species_table, output, id_column, feature_co
             concatenated_seq = str()
             for each_record in factor_records:
                 concatenated_seq += each_record
-            concatenated_records = SeqRecord(seq = concatenated_seq.seq, id = 'concatenated')
+            concatenated_records = SeqRecord(seq = concatenated_seq.seq, id = factor)
 
             # Write the new list of records
             SeqIO.write(concatenated_records, outfile, "fasta")

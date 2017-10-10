@@ -53,16 +53,16 @@ if (gs == 'FCGRs'){
                       window_size, ' bp windows distance matrix', sep = '')
 }
 
-png(output, width=700, height=500, units="px")
+png(output, width=900, height=650, units="px")
 ggplot(data, aes(x = MDS_1, y = MDS_2, colour = size)) + 
   geom_point(size = 2) + 
   labs(title=plot_title, x ="Coordinate 1", y = "Coordinate 2") +
   theme(
-    plot.title = element_text(size = 15, face="bold"),
-    axis.title.x = element_text(size = 15),
-    axis.text.x  = element_text(size = 12),
-    axis.title.y = element_text(size = 15),
-    axis.text.y  = element_text(size = 12)
+    plot.title = element_text(size = 20, face="bold"),
+    axis.title.x = element_text(size = 18),
+    axis.text.x  = element_text(size = 15),
+    axis.title.y = element_text(size = 18),
+    axis.text.y  = element_text(size = 15)
   ) +
   scale_colour_gradientn(name = paste("% of", feature_type), colours = colorRampPalette(rev(brewer.pal(10, "RdYlBu")))(100))
 dev.off() 

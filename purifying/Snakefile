@@ -1,3 +1,5 @@
+ruleorder: concatenating > FCGR
+
 rule purifying:
     input:
         "../data/genomes/{species}_genomes.fna",
@@ -32,23 +34,39 @@ rule FCGR:
             {wildcards.windows} {wildcards.kmer} {threads} {output} \
             {wildcards.factors}"
 
-rule FCGR_dist:
-    input:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_FCGRs.txt"
+rule concatenating:
     output:
-        "files/distances/pearson/{windows}_{kmer}/{species}_{factors}_dist_matrix.RData"
+        "files/FCGRs/{windows}_{kmer}/{species}_concatenated_FCGRs.txt"
+    shell:
+        """
+        cat files/FCGRs/{wildcards.windows}_{wildcards.kmer}/{wildcards.species}*.txt >> {output}
+        """
+
+rule FCGRs_dist:
+    input:
+        "files/FCGRs/{windows}_{kmer}/{species}_concatenated_FCGRs.txt"
+    output:
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData"
     threads:
         99
     shell:
-        "Rscript ../scripts/pearson_distance.R {input} {output} {wildcards.factors}"
+        "Rscript ../scripts/pearson_distance.R {input} {output}"
 
-
-rule boxplots:
+rule fitting:
     input:
-        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData",
-        "../files/factors/{windows}/{species}_{factors}.txt"
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData"
     output:
-        "files/results/{windows}_{kmer}_{factors}/{species}_correlation.png"
+        "files/distances/pearson/{windows}_{kmer}/{species}_fit.RData"
+    threads:
+        99
     shell:
-        "Rscript ../scripts/cor_dist_factor.R {output} {input} FCGRs \
-            {wildcards.factors} {wildcards.windows} {wildcards.kmer}"
+        "Rscript ../scripts/fitting_dist.R {input} {output}"
+
+rule MDS:
+    input:
+        "files/distances/pearson/{windows}_{kmer}/{species}_fit.RData"
+    output:
+        "files/results/{windows}_{kmer}/{species}_MDS_all_factors.png"
+    shell:
+        "Rscript scripts/MDS_all_factors.R {output} {input} \
+            {wildcards.windows} {wildcards.kmer}"

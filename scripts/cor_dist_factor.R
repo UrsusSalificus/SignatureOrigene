@@ -46,7 +46,7 @@ if (gs == 'FCGRs'){
 }
 
 
-png(output, width=700, height=500, units="px")
+png(output, width=900, height=650, units="px")
 plot(mean_dist, feature[,2], main=plot_title, xlab='Distance to median region',
      ylab = paste('% of', feature_type), pch = 19)
 dev.off() 
