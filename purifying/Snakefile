@@ -1,4 +1,4 @@
-ruleorder: concatenating > FCGR
+ruleorder: concatenating > pure_FCGR
 
 rule purifying:
     input:
@@ -11,22 +11,22 @@ rule purifying:
         "python3 scripts/masking_to_pure.py {wildcards.factors} \
             {wildcards.windows} {input} {output}"
 
-rule CGR:
+rule pure_CGR:
     input:
         "data/genomes/{windows}/{species}_{factors}_pure.fna"
     output:
-        "data/following/CGRs/{windows}/{species}_{factors}_done.txt"
+        "data/following/CGRs/{windows}/{species}_{factors}_pure_done.txt"
     threads:
         99
     shell:
         "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
             {threads} {output} {wildcards.factors}"
 
-rule FCGR:
+rule pure_FCGR:
     input:
-        "data/following/CGRs/{windows}/{species}_{factors}_done.txt"
+        "data/following/CGRs/{windows}/{species}_{factors}_pure_done.txt"
     output:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_FCGRs.txt"
+        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_pure_FCGRs.txt"
     threads:
         99
     shell:
@@ -39,7 +39,8 @@ rule concatenating:
         "files/FCGRs/{windows}_{kmer}/{species}_concatenated_FCGRs.txt"
     shell:
         """
-        cat files/FCGRs/{wildcards.windows}_{wildcards.kmer}/{wildcards.species}*.txt >> {output}
+        cat files/FCGRs/{wildcards.windows}_{wildcards.kmer}/{wildcards.species}*.txt \
+            ../scaling/files/FCGRs/{wildcards.windows}_{wildcards.kmer}/{wildcards.species}_FCGRs.txt >> {output}
         """
 
 rule FCGRs_dist:

@@ -1,4 +1,4 @@
-ruleorder: finding_center > FCGR
+ruleorder: finding_center > masked_FCGR
 
 rule finding_center:
     input:
@@ -20,22 +20,22 @@ rule masking:
         "python3 scripts/masking_to_no_factor.py {wildcards.factors} \
             {wildcards.windows} {input} {output}"
 
-rule CGR:
+rule masked_CGR:
     input:
         "data/genomes/{windows}/{species}_{factors}_masked.fna"
     output:
-        "data/following/CGRs/{windows}/{species}_{factors}_done.txt"
+        "data/following/CGRs/{windows}/{species}_{factors}_masked_done.txt"
     threads:
         99
     shell:
         "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
             {threads} {output} {wildcards.factors}"
 
-rule FCGR:
+rule masked_FCGR:
     input:
-        "data/following/CGRs/{windows}/{species}_{factors}_done.txt"
+        "data/following/CGRs/{windows}/{species}_{factors}_masked_done.txt"
     output:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_FCGRs.txt"
+        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_masked_FCGRs.txt"
     threads:
         99
     shell:
@@ -43,20 +43,39 @@ rule FCGR:
             {wildcards.windows} {wildcards.kmer} {threads} {output} \
             {wildcards.factors}"
 
-rule concatenating:
+rule masked_concatenating:
     input:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_FCGRs.txt",
+        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_masked_FCGRs.txt",
         "files/FCGRs/{windows}_{kmer}/{species}_center_FCGRs.txt"
     output:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_vs_center_FCGRs.txt"
+        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_masked_vs_center_FCGRs.txt"
     shell:
         "cat {input} >> {output}"
 
-rule FCGRs_dist:
+rule masked_FCGRs_dist:
     input:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_vs_center_FCGRs.txt"
+        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_masked_vs_center_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/{species}_{factors}_vs_center_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{kmer}/{species}_{factors}_masked_vs_center_dist_matrix.RData"
+    threads:
+        99
+    shell:
+        "Rscript ../scripts/pearson_distance.R {input} {output}"
+
+rule pure_concatenating:
+    input:
+        "../purifying/files/FCGRs/{windows}_{kmer}/{species}_{factors}_pure_FCGRs.txt",
+        "files/FCGRs/{windows}_{kmer}/{species}_center_FCGRs.txt"
+    output:
+        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_pure_vs_center_FCGRs.txt"
+    shell:
+        "cat {input} >> {output}"
+
+rule pure_FCGRs_dist:
+    input:
+        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_pure_vs_center_FCGRs.txt"
+    output:
+        "files/distances/pearson/{windows}_{kmer}/{species}_{factors}_pure_vs_center_dist_matrix.RData"
     threads:
         99
     shell:

@@ -319,28 +319,21 @@ for each_species in $SPECIES; do
 
     for each_window in $WINDOWS; do
         for each_kmer in $KMER; do
-            # A) This part will compute all the FCGRs of pure sequences we need
+            # A) This part will compute all the FCGRs of pure sequences we need from the masking snakemake
             for each_factor in $FACTORS; do
                 snakemake $snakemake_arguments \
-                    files/FCGRs/$each_window\_$each_kmer/$each_species\_$each_factor\_FCGRs.txt
+                    files/FCGRs/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
             done
 
-            # We need the whole genome FCGR, which will be computed through the scaling snakemake
+            # B) We also need the whole genome FCGRs, which will be computed through the scaling snakemake
             cd ../scaling
             snakemake $snakemake_arguments \
                 files/FCGRs/$each_window\_$each_kmer/$each_species\_FCGRs.txt
             cd $go_back
-            # The FCGR is ready, now we only have to copy it to purifying directory
-            # (If it is not already done...)
-            if [[ ! -f files/FCGRs/$each_window\_$each_kmer/$each_species\_whole_FCGRs.txt ]]; then
-                cp ../scaling/files/FCGRs/$each_window\_$each_kmer/$each_species\_FCGRs.txt \
-                files/FCGRs/$each_window\_$each_kmer/$each_species\_whole_FCGRs.txt
-            fi
 
-            # B) This part will compute from the concatenated FCGRs to the MDS of them
+            # C) Finally, this part will compute from the concatenated FCGRs to the MDS of them
             # (FCGRs -> distance matrix -> fitting -> MDS)
-            snakemake $snakemake_arguments \
-            files/results/$each_window\_$each_kmer/$each_species\_MDS_all_factors.png
+            snakemake $snakemake_arguments files/results/$each_window\_$each_kmer/$each_species\_MDS_all_factors.png
         done
     done
 done

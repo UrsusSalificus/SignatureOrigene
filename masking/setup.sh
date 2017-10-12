@@ -27,9 +27,10 @@ echo " _______        __
 echo "________________________________________________________________________________"
 echo ""
 echo "Welcome to the setup of the analysis!"
-echo "You are about ot mask the genome to only have certain features. On this new     "
-echo "sequences, "
-echo "Representation (CGR) of a sequence)."
+echo "You are about to mask the genome to only have certain features. Both these new"
+echo "sequences (without the feature) and pure factor sequences (with only the factor)"
+echo "will then be compared to the representative of the whole genome's kmer"
+echo "frequencies (called the center)."
 echo "________________________________________________________________________________"
 echo ""
 read -n 1 -s -r -p "Press any key to continue"
@@ -320,25 +321,41 @@ for each_species in $SPECIES; do
     # Launching the whole Snakemake cascade
     for each_window in $WINDOWS; do
         for each_kmer in $KMER; do
-            # We need the whole genome distance matrix, which will be computed through the scaling snakemake
+            # A) We need the whole genome distance matrix, which will be computed through the scaling snakemake
             cd ../scaling
             snakemake $snakemake_arguments \
                 files/distances/pearson/$each_window\_$each_kmer/$each_species\_dist_matrix.RData
             cd $go_back
-            # The distance matrix is ready, now we only have to copy it to masking directory
+            # The distance matrix is ready, now we only have to create a link to it in the masking directory
             # (If it is not already done...)
-            if [[ ! -f files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_dist_matrix.RData ]]; then
-                cp ../scaling/files/distances/pearson/$each_window\_$each_kmer/$each_species\_dist_matrix.RData \
+            if [[ ! -L files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_dist_matrix.RData ]]; then
+                if [[ ! -d files/distances/pearson/$each_window\_$each_kmer ]]; then
+                    mkdir -p files/distances/pearson/$each_window\_$each_kmer
+                fi
+
+                ln -s ../scaling/files/distances/pearson/$each_window\_$each_kmer/$each_species\_dist_matrix.RData \
                 files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_dist_matrix.RData
             fi
 
+            # B) We now will compute both the masked and pure factors distance matrix VS center
             for each_factor in $FACTORS; do
+                # B.1) Masked will be done all on the masking directory
                 snakemake $snakemake_arguments \
-                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_vs_center_dist_matrix.RData
+                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_masked_vs_center_dist_matrix.RData
 
-            snakemake $snakemake_arguments \
-                    files/results/$each_window\_$each_kmer/$each_species\_boxplots_all_factors.png
+                # B.2) Pure will need the FCGRs found in the purifying directory
+                cd ../purifying
+                snakemake $snakemake_arguments \
+                    files/FCGRs/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
+                cd $go_back
+                # Which will then be used to find the pure VS center distance matrix
+                snakemake $snakemake_arguments \
+                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_vs_center_dist_matrix.RData
             done
+
+            # C) We would then be able to use both distance matrices to produces boxplots
+            #snakemake $snakemake_arguments \
+            #        files/results/$each_window\_$each_kmer/$each_species\_boxplots_all_factors.png
         done
     done
 done
