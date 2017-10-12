@@ -62,21 +62,9 @@ rule FCGRs_dist:
     shell:
         "Rscript ../scripts/pearson_distance.R {input} {output}"
 
-rule fitting:
-    input:
-        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData"
+rule boxplots:
     output:
-        "files/distances/pearson/{windows}_{kmer}/{species}_fit.RData"
-    threads:
-        99
+        "files/results/{windows}_{kmer}/{species}_boxplots_all_factors.png"
     shell:
-        "Rscript ../scripts/fitting_dist.R {input} {output}"
-
-rule MDS:
-    input:
-        "files/distances/pearson/{windows}_{kmer}/{species}_fit.RData"
-    output:
-        "files/results/{windows}_{kmer}_{factors}/{species}_MDS_all_factors.png"
-    shell:
-        "Rscript ../scripts/cor_dist_factor.R {output} {input} \
-            {wildcards.windows} {wildcards.kmer}"
+        "Rscript scripts/boxplots_factor_center.R {output} {wildcards.windows}\
+            {wildcards.kmer} {wildcards.species}"

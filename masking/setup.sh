@@ -335,6 +335,9 @@ for each_species in $SPECIES; do
             for each_factor in $FACTORS; do
                 snakemake $snakemake_arguments \
                     files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_vs_center_dist_matrix.RData
+
+            snakemake $snakemake_arguments \
+                    files/results/$each_window\_$each_kmer/$each_species\_boxplots_all_factors.png
             done
         done
     done

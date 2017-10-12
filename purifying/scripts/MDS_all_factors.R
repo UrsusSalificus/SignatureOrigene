@@ -4,7 +4,6 @@
 # Copyright 2017 Titouan Laessle
 # License : MIT
 
-library(RColorBrewer)
 library(ggplot2)
 
 ### MultiDimensional Scaling (MDS) analysis of a distance matrix
