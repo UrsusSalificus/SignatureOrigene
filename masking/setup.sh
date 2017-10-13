@@ -326,16 +326,6 @@ for each_species in $SPECIES; do
             snakemake $snakemake_arguments \
                 files/distances/pearson/$each_window\_$each_kmer/$each_species\_dist_matrix.RData
             cd $go_back
-            # The distance matrix is ready, now we only have to create a link to it in the masking directory
-            # (If it is not already done...)
-            if [[ ! -L files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_dist_matrix.RData ]]; then
-                if [[ ! -d files/distances/pearson/$each_window\_$each_kmer ]]; then
-                    mkdir -p files/distances/pearson/$each_window\_$each_kmer
-                fi
-
-                ln -s ../scaling/files/distances/pearson/$each_window\_$each_kmer/$each_species\_dist_matrix.RData \
-                files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_dist_matrix.RData
-            fi
 
             # B) We now will compute both the masked and pure factors distance matrix VS center
             for each_factor in $FACTORS; do
@@ -353,9 +343,14 @@ for each_species in $SPECIES; do
                     files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_vs_center_dist_matrix.RData
             done
 
-            # C) We would then be able to use both distance matrices to produces boxplots
-            #snakemake $snakemake_arguments \
-            #        files/results/$each_window\_$each_kmer/$each_species\_boxplots_all_factors.png
+            # C) Our control will be the whole genome VS center distance
+            snakemake $snakemake_arguments \
+                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_vs_center_dist_matrix.RData
+            # TODO: find why we have to recompute the distance this way instead of using the whole distance matrix
+
+            # D) We would finally be able to use both distance matrices to produces boxplots
+            snakemake $snakemake_arguments \
+                    files/results/$each_window\_$each_kmer/$each_species\_boxplots_all_factors.png
         done
     done
 done

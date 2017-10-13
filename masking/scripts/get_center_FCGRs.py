@@ -29,4 +29,9 @@ with open(FCGRs, 'r') as infile, open(output, 'w') as outfile:
         while i != center_indexes[each_index]:
             good_line = infile.readline()
             i += 1
-        outfile.write(good_line)
+        # Prepare the line to have the id of "center" instead of the record's id
+        good_line = good_line.split()
+        good_line[0] = 'center'
+        for each_count in good_line:
+            outfile.write(each_count + '\t')
+        outfile.write('\n')

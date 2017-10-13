@@ -81,6 +81,25 @@ rule pure_FCGRs_dist:
     shell:
         "Rscript ../scripts/pearson_distance.R {input} {output}"
 
+rule whole_concatenating:
+    input:
+        "../scaling/files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt",
+        "files/FCGRs/{windows}_{kmer}/{species}_center_FCGRs.txt"
+    output:
+        "files/FCGRs/{windows}_{kmer}/{species}_whole_vs_center_FCGRs.txt"
+    shell:
+        "cat {input} >> {output}"
+
+rule whole_FCGRs_dist:
+    input:
+        "files/FCGRs/{windows}_{kmer}/{species}_whole_vs_center_FCGRs.txt"
+    output:
+        "files/distances/pearson/{windows}_{kmer}/{species}_whole_vs_center_dist_matrix.RData"
+    threads:
+        99
+    shell:
+        "Rscript ../scripts/pearson_distance.R {input} {output}"
+
 rule boxplots:
     output:
         "files/results/{windows}_{kmer}/{species}_boxplots_all_factors.png"
