@@ -303,20 +303,7 @@ KMER=$( find * )
 cd ../..
 
 for each_species in $SPECIES; do
-    # We will have to check the downloaded files
-    go_back=$( pwd )
-    cd ..
-    genome_file=data/genomes/$each_species\_genomes.fna
-    feature_file=data/factors/features/$each_species\_feature_table.txt
-    repeat_file=data/factors/repeats/$each_species\_repeats.txt
-    # If any of those is missing, download again
-    if [[ ! -f $genome_file || ! -f $feature_file || ! -f $repeat_file ]]; then
-        bash scripts/download_genomes.sh $each_species $genome_file $feature_file $repeat_file
-        # Clean of unwanted records
-        python3 scripts/keep_wanted_records.py $genome_file
-    fi
-    cd $go_back
-
+    # Launching the whole Snakemake cascade
     for each_window in $WINDOWS; do
         for each_kmer in $KMER; do
             # A) This part will compute all the FCGRs of pure sequences we need from the masking snakemake

@@ -24,18 +24,6 @@ FIGURES="MDS correlation ratios"
 
 # We will have to check the downloaded files, as they are input files and rise error in snakemake...
 for each_species in $SPECIES; do
-    go_back=$( pwd )
-    cd ..
-    genome_file=data/genomes/$each_species\_genomes.fna
-    feature_file=data/genomes/$each_species\_feature_table.txt
-    repeat_file=data/genomes/$each_species\_repeats.txt
-    # If any of those is missing, download again
-    if [[ ! -f $genome_file || ! -f $feature_file || ! -f $repeat_file ]]; then
-        bash scripts/download_genomes.sh $each_species $genome_file $feature_file $repeat_file
-        # Clean non-nuclear
-        python3 scripts/remove_non_nuclear.py $genome_file
-    fi
-    cd $go_back
     for each_window in $WINDOWS; do
         for each_feature in $FEATURES; do
             for each_kmer in $KMER; do

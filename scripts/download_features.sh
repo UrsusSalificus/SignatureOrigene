@@ -12,13 +12,9 @@ function check_parent {
     fi
 }
 
-# Will download whole concatenated genome of the species
+# Will download the feature table of the species
 species="$1"
-output_genome="$2" ; check_parent $output_genome
-# We already have the repeats data of E. coli:
-if [ $species != e_coli ]; then
-    output_repeats="$4" ; check_parent $output_repeats
-fi
+output_table="$2" ; check_parent $output_table
 
 # Using hash table to find the right accession path
 declare -A all_accessions
@@ -37,25 +33,8 @@ accession=${all_accessions[$species]}
 # Will cut the accession in array delimited by '/'
 IFS='/' read -r -a array <<< $accession
 # The 9th element contains the file "name", which we use to extract the files we need
-whole_genome=$( echo ${array[9]}'_genomic.fna.gz' )
+feature_table=$( echo ${array[9]}'_feature_table.txt.gz' )
 
-if [ $species != e_coli ]; then
-    repeats=$( echo ${array[9]}'_rm.out.gz' )
-fi
-
-wget $accession$whole_genome
-gunzip < $whole_genome > $output_genome
-rm $whole_genome
-
-if [ $species != e_coli ]; then
-    wget $accession$repeats
-    gunzip < $repeats > $output_repeats
-    rm $repeats
-fi
-
-if [[ $species == hsap_sample || $species == mmus_sample ]]; then
-    python3 scripts/sampling.py $output_genome
-fi
-
-# Keep only wanted records
-python3 scripts/keep_wanted_records.py $output_genome
+wget $accession$feature_table
+gunzip < $feature_table > $output_table
+rm $feature_table

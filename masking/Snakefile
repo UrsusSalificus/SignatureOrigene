@@ -1,5 +1,29 @@
 ruleorder: finding_center > masked_FCGR
 
+rule download_genomes:
+    output:
+        "../data/genomes/{species}_genomes.fna"
+    shell:
+        "bash ../scripts/download_genomes.sh {wildcards.species} {output}"
+
+rule download_features:
+    output:
+        "../data/factors/features/{species}_feature_table.txt"
+    shell:
+        "bash ../scripts/download_features.sh {wildcards.species} {output}"
+
+rule download_repeats:
+    output:
+        "../data/factors/repeats/{species}_repeats.txt"
+    shell:
+        "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
+
+rule download_rr:
+    output:
+        "../data/factors/recombination_rates/{species}_RR_spline.RData"
+    shell:
+        "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
+
 rule finding_center:
     input:
         "../scaling/files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt",
