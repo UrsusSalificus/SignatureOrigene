@@ -141,6 +141,27 @@ echo "
 "
 }
 
+########### FIGURES ###########
+title="config/temp/title.txt"
+cat << "EOF" > $title
+ _______ __
+|    ___|__|.-----.--.--.----.-----.-----.
+|    ___|  ||  _  |  |  |   _|  -__|__ --|
+|___|   |__||___  |_____|__| |_____|_____|
+            |_____|
+
+EOF
+intro="Please chose among the following list which figures should be included in the analysis."
+table="../input/purifying_specific/table_figures.txt"
+choice=fixed
+good_inputs="../input/purifying_specific/good_figures.txt"
+abbrev="../input/purifying_specific/abbrev_figures.txt"
+out_dir="config/figures/"
+nice="../input/purifying_specific/all_figures.txt"
+
+confirm
+
+
 ########### SPECIES ###########
 title="config/temp/title.txt"
 cat << "EOF" > $title
@@ -292,7 +313,9 @@ cd ..
 
 
 # Do the entire analysis for each combination
-cd config/species
+cd config/figures
+FIGURES=$( find * )
+cd ../species
 SPECIES=$( find * )
 cd ../windows
 WINDOWS=$( find * )
@@ -302,8 +325,8 @@ cd ../kmer
 KMER=$( find * )
 cd ../..
 
+# Launching the whole Snakemake cascade
 for each_species in $SPECIES; do
-    # Launching the whole Snakemake cascade
     for each_window in $WINDOWS; do
         for each_kmer in $KMER; do
             # A) This part will compute all the FCGRs of pure sequences we need from the masking snakemake
@@ -313,14 +336,37 @@ for each_species in $SPECIES; do
             done
 
             # B) We also need the whole genome FCGRs, which will be computed through the scaling snakemake
+            go_back=$( pwd )
             cd ../scaling
             snakemake $snakemake_arguments \
                 files/FCGRs/$each_window\_$each_kmer/$each_species\_FCGRs.txt
             cd $go_back
+        done
+    done
+done
 
-            # C) Finally, this part will compute from the concatenated FCGRs to the MDS of them
-            # (FCGRs -> distance matrix -> fitting -> MDS)
-            snakemake $snakemake_arguments files/results/$each_window\_$each_kmer/$each_species\_MDS_all_factors.png
+# C) Figures: varies in between figure type:
+for each_species in $SPECIES; do
+    # Launching the whole Snakemake cascade
+    for each_window in $WINDOWS; do
+        for each_kmer in $KMER; do
+            for each_figure in $FIGURES; do
+                if [[ $each_figure == 'MDS' ]] ; then
+                    # From the concatenated FCGRs of all factors in each species, to the MDS these factors
+                    # (concatenating FCGRs of factor + whole -> distance matrix -> fitting -> MDS)
+                    snakemake $snakemake_arguments files/results/$each_window\_$each_kmer/$each_species\_MDS_all_factors.png
+                elif [[ $each_figure == 'PC' ]] ; then
+                    # Comparing the concatenated FCGRs of all factors between species
+                    # Only fo this if it doesn't already exist (reverse order of species/comparison)
+                    for each_comparison in $SPECIES; do
+                        if [[ $each_comparison != $each_species ]] && \
+                            [[ ! -f files/distances/pearson/$each_window\_$each_kmer/pairwise_concatenated/$each_comparison\_vs_$each_species\_fit.RData ]] ; then
+                            snakemake $snakemake_arguments \
+                            files/distances/pearson/$each_window\_$each_kmer/pairwise_concatenated/$each_species\_vs_$each_comparison\_fit.RData
+                        fi
+                    done
+                fi
+            done
         done
     done
 done

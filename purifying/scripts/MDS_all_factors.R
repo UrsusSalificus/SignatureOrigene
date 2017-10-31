@@ -25,13 +25,13 @@ fit <- readRDS(args[2])
 all_names <- row.names(fit$points)
 factors <- unname(sapply(all_names, function(each_line) {
   if (length(strsplit(each_line, '_')[[1]]) == 1){
-    # First case, when split we only get one result (no '_') = concatenated factor
+    # First case, when split we only get one result (no '_') = concatenated factor from multiple windows
     return(each_line)
   } else if (length(strsplit(each_line, '_')[[1]]) == 2) {
     # Second case, when split we get 2 result = whole genome (only the record name)
     return('whole')
   } else {
-    # Third case, when split we get 3 result = pure non-concatenated
+    # Third case, when split we get 3 result = pure non-concatenated, from a specific window
     return(strsplit(each_line, '_')[[1]][1])
   }
 }))
@@ -40,19 +40,6 @@ factors <- unname(sapply(all_names, function(each_line) {
 all_colours <- c("#53b125", "#0057d2", "#d99b24", "#d940ad", "#cf290e")
 # We want the whole genome to be black, so we pick the number of non-whole colour, then add black at the end
 colours <- c(all_colours[1:(nlevels(as.factor(factors))-1)], 'black')
-
-factors <- unname(sapply(all_names, function(each_line) {
-  if (length(strsplit(each_line, '_')[[1]]) == 1){
-    # First case, when split we only get one result (no '_') = concatenated factor
-    return(each_line)
-  } else if (length(strsplit(each_line, '_')[[1]]) == 2) {
-    # Second case, when split we get 2 result = whole genome (only the record name)
-    return('whole')
-  } else {
-    # Third case, when split we get 3 result = pure non-concatenated
-    return(strsplit(each_line, '_')[[1]][1])
-  }
-}))
 
 # We will reduce visibility of the whole genome points:
 reduced_vis <- unname(sapply(factors, function (each_line) {

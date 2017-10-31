@@ -1,5 +1,3 @@
-ruleorder: concatenating > pure_FCGR
-
 rule download_genomes:
     output:
         "../data/genomes/{species}_genomes.fna"
@@ -58,38 +56,95 @@ rule pure_FCGR:
             {wildcards.windows} {wildcards.kmer} {threads} {output} \
             {wildcards.factors}"
 
-rule concatenating:
+
+
+rule concatenating_each:
     output:
-        "files/FCGRs/{windows}_{kmer}/{species}_concatenated_FCGRs.txt"
+        "files/FCGRs/{windows}_{kmer}/each_concatenated/{species}_FCGRs.txt"
     shell:
         """
         cat files/FCGRs/{wildcards.windows}_{wildcards.kmer}/{wildcards.species}*.txt \
             ../scaling/files/FCGRs/{wildcards.windows}_{wildcards.kmer}/{wildcards.species}_FCGRs.txt >> {output}
         """
 
-rule FCGRs_dist:
+rule FCGRs_dist_each:
     input:
-        "files/FCGRs/{windows}_{kmer}/{species}_concatenated_FCGRs.txt"
+        "files/FCGRs/{windows}_{kmer}/each_concatenated/{species}_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_dist_matrix.RData"
     threads:
         99
     shell:
         "Rscript ../scripts/pearson_distance.R {input} {output}"
 
-rule fitting:
+rule fitting_each:
     input:
-        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_dist_matrix.RData"
     output:
-        "files/distances/pearson/{windows}_{kmer}/{species}_fit.RData"
+        "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_fit.RData"
     threads:
         99
     shell:
         "Rscript ../scripts/fitting_dist.R {input} {output}"
 
-rule MDS:
+rule MDS_each:
     input:
-        "files/distances/pearson/{windows}_{kmer}/{species}_fit.RData"
+        "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_fit.RData"
+    output:
+        "files/results/{windows}_{kmer}/{species}_MDS_all_factors.png"
+    shell:
+        "Rscript scripts/MDS_all_factors.R {output} {input} \
+            {wildcards.windows} {wildcards.kmer}"
+
+
+
+rule concatenating_pairwise:
+    output:
+        "files/FCGRs/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_FCGRs.txt"
+    shell:
+        """
+        mkdir temp
+        # Copy everything to temp directory, adding the species abbreviation
+        all_actual_species=$( find files/FCGRs/{wildcards.windows}_{wildcards.kmer}/{wildcards.species}*.txt )
+        for each_actual in $all_actual_species; do
+            file_name_only=$( basename $each_actual )
+            sed -e 's/^/{wildcards.species}_/' $each_actual > temp/$file_name_only
+        done
+
+        all_comparison=$( find files/FCGRs/{wildcards.windows}_{wildcards.kmer}/{wildcards.comparison}*.txt )
+        for each_comparison in $all_comparison; do
+            file_name_only=$( basename $each_comparison )
+            sed -e 's/^/{wildcards.comparison}_/' $each_comparison > temp/$file_name_only
+        done
+
+        # Now, can concatenate everything in one file
+        cat temp/{wildcards.species}*.txt temp/{wildcards.comparison}*.txt >> {output}
+        rm -r temp
+        """
+
+rule FCGRs_dist_pairwise:
+    input:
+        "files/FCGRs/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_FCGRs.txt"
+    output:
+        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_dist_matrix.RData"
+    threads:
+        99
+    shell:
+        "Rscript ../scripts/pearson_distance.R {input} {output}"
+
+rule fitting_pairwise:
+    input:
+        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_dist_matrix.RData"
+    output:
+        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_fit.RData"
+    threads:
+        99
+    shell:
+        "Rscript ../scripts/fitting_dist.R {input} {output}"
+
+rule MDS_pairwise:
+    input:
+        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_fit.RData"
     output:
         "files/results/{windows}_{kmer}/{species}_MDS_all_factors.png"
     shell:
