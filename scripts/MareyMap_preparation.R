@@ -45,7 +45,7 @@ get_all_RR <- function(all_genetic_maps, record_names) {
   return(fitted_models)
 }
 
-record_names <- read.table("../data/wanted_records.txt")
+record_names <- read.table("../input/wanted_records.txt")
 
 
 ###################################################################################################
