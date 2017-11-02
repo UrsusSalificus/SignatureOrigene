@@ -124,8 +124,3 @@ end_column = 8
 
 extract_CDS(records, species_table, output, id_column, feature_column, feature_type, strand_column,
             start_column, end_column)
-
-
-test = 'CDS'
-if test in feature_type:
-    print('yep')
