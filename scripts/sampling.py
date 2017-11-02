@@ -13,8 +13,8 @@ __license__ = "MIT"
 # Species genome path:
 species_genome = str(sys.argv[1])
 
-# Here we have both H. sapiens or M. musculus (respectively) chromosome 10 ids
-chrom10_ids = ('NC_000010.11', 'NC_000076.6')
+# Here we will take H. sapiens or M. musculus (respectively) chromosome 10 as sample chromosome
+chrom_sample_id = ('NC_000010.11', 'NC_000076.6')
 
 ###
 # Fetch a fasta file, and clean it (remove N or n, which stands for "any nucleotides)
@@ -33,17 +33,14 @@ def fetch_fasta(fasta_file):
 
 records = fetch_fasta(species_genome)
 
-chrom10 = [each_record for each_record in records if each_record.id in chrom10_ids]
+# Extract the wanted chromosome sample
+chrom_sample = [each_record for each_record in records if each_record.id in chrom_sample_id]
 
+# Rewrite the species genome file to only contain the wanted chromosome.
+# The only index remaining will be of the wanted sample thus ensuring
+# proper extraction of factors later on.
 with open(species_genome, "w") as outfile:
-    SeqIO.write(chrom10, outfile, "fasta")
+    SeqIO.write(chrom_sample, outfile, "fasta")
 
-
-all_chr10 = list()
-with open('/home/titouan/PycharmProjects/Master/Main/FCGR/files/FCGRs/15000_7/h_sapiens_FCGRs.txt', 'r') as infile:
-    for each_line in infile:
-        line = each_line.split()
-        if [line[0] == 'NC_000010.11']:
-            all_chr10.append(line)
 
 
