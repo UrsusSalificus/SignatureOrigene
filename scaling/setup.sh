@@ -221,12 +221,12 @@ cat << "EOF" > $title
 
 EOF
 intro="Please chose among the following list which factor should be included in the analysis."
-table="../input/table_factors.txt"
+table="../input/scaling_specific/table_factors.txt"
 choice=fixed
-good_inputs="../input/good_factors.txt"
+good_inputs="../input/scaling_specific/good_factors.txt"
 abbrev="../input/abbrev_factors.txt"
-out_dir="config/factors/"
-nice="../input/all_factors.txt"
+out_dir="config/scaling_specific/factors/"
+nice="../input/scaling_specific/all_factors.txt"
 
 confirm
 
@@ -290,12 +290,12 @@ cat << "EOF" > $title
 
 EOF
 intro="Please chose among the following list which figures should be included in the analysis."
-table="../input/table_figures.txt"
+table="../input/scaling_specific/table_figures.txt"
 choice=fixed
-good_inputs="../input/good_figures.txt"
-abbrev="../input/abbrev_figures.txt"
+good_inputs="../input/scaling_specific/good_figures.txt"
+abbrev="../input/scaling_specific/abbrev_figures.txt"
 out_dir="config/figures/"
-nice="../input/all_figures.txt"
+nice="../input/scaling_specific/all_figures.txt"
 
 
 confirm
