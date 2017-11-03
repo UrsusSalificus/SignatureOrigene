@@ -23,8 +23,11 @@ accession=$( bash ../input/accessions.sh $species )
 # Will cut the accession in array delimited by '/'
 IFS='/' read -r -a array <<< $accession
 # The 9th element contains the file "name", which we use to extract the files we need
-feature_table=$( echo ${array[9]}'_feature_table.txt.gz' )
+feature_table=$( echo ${array[9]}'_genomic.gff.gz' )
 
 wget $accession$feature_table
-gunzip < $feature_table > $output_table
+# We will add the UTR using NCBI python code
+python ../scripts/add_utrs_to_gff.py $feature_table > temp
+mv temp $output_table
 rm $feature_table
+rm temp

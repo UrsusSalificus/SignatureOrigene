@@ -21,7 +21,7 @@ rule download_rr:
         "../data/factors/recombination_rates/{species}_RR_spline.RData"
     shell:
         "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
-        
+
 rule CGR:
     input:
         "../data/genomes/{species}_genomes.fna"
@@ -42,6 +42,26 @@ rule CDS_extract:
     shell:
         "python3 ../scripts/extract_feature.py {input} {wildcards.windows} \
             CDS {output}"
+
+rule intron_extract:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/factors/features/{species}_feature_table.txt",
+    output:
+        "../files/factors/{windows}/{species}_intron.txt"
+    shell:
+        "python3 ../scripts/extract_feature.py {input} {wildcards.windows} \
+            intron {output}"
+
+rule UTR_extract:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/factors/features/{species}_feature_table.txt",
+    output:
+        "../files/factors/{windows}/{species}_UTR.txt"
+    shell:
+        "python3 ../scripts/extract_feature.py {input} {wildcards.windows} \
+            UTR {output}"
 
 rule RNA_extract:
     input:

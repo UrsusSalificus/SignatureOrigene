@@ -56,7 +56,7 @@ def fetch_fasta(fasta_file):
     return (records)
 
 
-def extract_features (records, species_table, output, id_column, start_column, end_column):
+def extract_features (records, species_table, output, id_column, start_column, end_column, window_size):
     # Checking parent directory of output are present
     checking_parent(output)
 
@@ -124,5 +124,5 @@ elif factor == 'tandem':
 start_column = 5
 end_column = 6
 
-extract_features(records, species_table, output, id_column, start_column, end_column)
+extract_features(records, species_table, output, id_column, start_column, end_column, window_size)
 

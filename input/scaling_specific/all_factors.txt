@@ -1,5 +1,7 @@
 NA
 Coding sequences (CDS)
+Introns (intron)
+UnTranslated Regions (UTR)
 Non-coding RNA (RNA)
 Low Complexity Regions (LCR)
 Transposable Elements (TE)

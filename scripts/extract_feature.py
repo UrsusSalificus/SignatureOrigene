@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """ Extract the percentage of windows' nucleotides which are composed of the wanted feature
-(out of the feature table of the species)
+(out of the gff file of the species)
 """
 from Bio import SeqIO
 import math
@@ -57,17 +57,18 @@ def fetch_fasta(fasta_file):
     return (records)
 
 
-def extract_CDS(records, species_table, output, id_column, feature_column, feature_type, strand_column,
-                start_column, end_column):
+def extract_feature(records, species_table, output, id_column, feature_column, feature_type, strand_column,
+                start_column, end_column, window_size):
     # Checking parent directory of output are present
     checking_parent(output)
 
     with open(species_table, 'r') as feature_table, open(output, 'w') as outfile:
-        # Must skip the header:
-        feature_table.readline()
+        line = feature_table.readline()
+        # Must skip the headers (varying length)
+        while line.startswith('#'):
+            line = feature_table.readline()
         # From now on, will move through the document by .readline()
-        # Problem, tables have different separation type:
-        actual_line = feature_table.readline().split('\t')
+        actual_line = line.split('\t')
         for each_record in range(len(records)):
             # Each element of this list represents a nucleotide
             record_proxy = [0] * len(records[each_record].seq)
@@ -81,9 +82,26 @@ def extract_CDS(records, species_table, output, id_column, feature_column, featu
                 while records[each_record].id == actual_line[id_column]:
                     # If it is the wanted feature and on the positive strand
                     if actual_line[feature_column] in feature_type and actual_line[strand_column] == '+':
-                        # For each nucleotide from start to end of the CDS:
-                        for each_nucleotide in range(int(actual_line[start_column]), int(actual_line[end_column])):
-                            record_proxy[each_nucleotide] = 1
+                        # Here, will now depend whether it is introns we are extracting or any other factor
+                        if feature_type == 'exon':
+                            # For introns, we need the next line
+                            next_line = feature_table.readline().split('\t')
+                            # We need the next line to also be exon, indicating an intron between them
+                            # We use a while when there is multiple exons
+                            while next_line[feature_column] in feature_type:
+                                # Mark the nucleotide as factor in the proxy,
+                                # by looking at end of first exon to start of the second one
+                                for each_nucleotide in range(int(actual_line[end_column])+1,int(next_line[start_column])-1):
+                                    record_proxy[each_nucleotide] = 1
+                                # Move to the next line
+                                actual_line = next_line
+                                next_line = feature_table.readline().split('\t')
+                        else:
+                            # For all other factors, each line containing the right factor is added to the proxy
+                            # For each nucleotide from start to end of the factor:
+                            for each_nucleotide in range(int(actual_line[start_column]), int(actual_line[end_column])):
+                                record_proxy[each_nucleotide] = 1
+                    # Continue the search:
                     actual_line = feature_table.readline().split('\t')
                     # If we get at the last line, actual_line only have one empty entry, which can be detected by
                     # calling the second element ([1])
@@ -98,12 +116,11 @@ def extract_CDS(records, species_table, output, id_column, feature_column, featu
                         # If any character in the sequence is NOT a standard nucleotides (including unknown nucleotides)
                         # do NOT compute:
                         if not any([c not in 'ATCGatcg' for c in window]):
-                            region_CDS = sum(record_proxy[(start * window_size):((start * window_size) + window_size)])
+                            region_introns = sum(record_proxy[(start * window_size):((start * window_size) + window_size)])
                             outfile.write(records[each_record].id + '\t')
-                            outfile.write(str((region_CDS / window_size) * 100) + '\n')
+                            outfile.write(str((region_introns / window_size) * 100) + '\n')
             except:
                 print("Extracting stopped at record " + str(each_record) + "/" + str(len(records)))
-                print("If near the end, may come from the fact that RepeatMasker was not done on mitochondrion!")
                 break
 
 
@@ -111,16 +128,21 @@ def extract_CDS(records, species_table, output, id_column, feature_column, featu
 records = fetch_fasta(species_genome)
 
 # Particularities of the feature table (e.g. which column contains what information):
-id_column = 6
-feature_column = 0
+id_column = 0
+feature_column = 2
 # The feature type depends on the wanted feature
 if factor == 'CDS':
     feature_type = 'CDS'
 elif factor == 'RNA':
     feature_type = ['misc_RNA', 'ncRNA', 'rRNA', 'tRNA']
-strand_column = 9
-start_column = 7
-end_column = 8
+elif factor == 'intron':
+    feature_type = 'exon'
+    # Indeed, introns are not directly annotated, but can be infered through exons
+elif factor == 'UTR':
+    feature_type = ['five_prime_UTR', 'three_prime_UTR']
+strand_column = 6
+start_column = 3
+end_column = 4
 
-extract_CDS(records, species_table, output, id_column, feature_column, feature_type, strand_column,
-            start_column, end_column)
+extract_feature(records, species_table, output, id_column, feature_column, feature_type, strand_column,
+            start_column, end_column, window_size)
