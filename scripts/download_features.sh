@@ -29,5 +29,9 @@ wget $accession$feature_table
 # We will add the UTR using NCBI python code
 python ../scripts/add_utrs_to_gff.py $feature_table > temp
 mv temp $output_table
+# We will also add the introns using own code
+python3 ../scripts/add_introns_to_gff.py $output_table temp
+mv temp $output_table
+# Clean everything
 rm $feature_table
 rm temp
