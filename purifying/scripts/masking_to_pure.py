@@ -20,8 +20,10 @@ species_genome = str(sys.argv[3])
 # Species feature table path, depends on the type of factor:
 if factor in ['LCR', 'TE', 'tandem']:
     species_table = str(sys.argv[4])
-elif factor in ['CDS', 'RNA']:
+    factor_type = 'repeats'
+elif factor in ['CDS', 'RNA', 'intron', 'UTR']:
     species_table = str(sys.argv[5])
+    factor_type = 'features'
 # Output path:
 output = str(sys.argv[6])
 
@@ -57,21 +59,21 @@ def fetch_fasta(fasta_file):
     return (records)
 
 
-def reading_line(factor, feature_table):
-    if factor in ['LCR', 'TE', 'tandem']:
+def reading_line(factor_type, feature_table):
+    if factor_type == 'repeats':
         return feature_table.readline().rsplit()
-    elif factor in ['CDS', 'RNA']:
+    else:
         return feature_table.readline().split('\t')
 
 
-def True_if_right_factor_strand(factor, actual_line, feature_column, feature_type, strand_column):
-    if factor in ['LCR', 'TE', 'tandem']:
+def True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
+    if factor_type == 'repeats':
         return actual_line[feature_column].split('/')[0].strip('?') in feature_type
-    elif factor in ['CDS', 'RNA']:
+    else:
         return actual_line[feature_column] in feature_type and actual_line[strand_column] == '+'
 
 
-def extract_factor(records, factor, species_table, output, id_column, feature_column, feature_type, strand_column,
+def extract_factor(records, factor, factor_type, species_table, output, id_column, feature_column, feature_type, strand_column,
                 start_column, end_column):
     # Checking parent directory of output are present
     checking_parent(output)
@@ -81,15 +83,17 @@ def extract_factor(records, factor, species_table, output, id_column, feature_co
 
     with open(species_table, 'r') as feature_table, open(output, 'w') as outfile:
         # Must skip the header (which differs in between feature_table and repeats:
-        if factor in ['LCR', 'TE', 'tandem']:
+        if factor_type == 'repeats':
             feature_table.readline()
             feature_table.readline()
             feature_table.readline()
-        elif factor in ['CDS', 'RNA']:
-            feature_table.readline()
-
-        # From now on, will move through the document by .readline()
-        actual_line = reading_line(factor, feature_table)
+            actual_line = reading_line(factor_type, feature_table)
+        else:
+            line = feature_table.readline()
+            # Must skip the headers (varying length)
+            while line.startswith('#'):
+                line = feature_table.readline()
+            actual_line = line.split('\t')
 
         for each_record in range(len(records)):
             # This string will contain all the nucleotide of the record which are coding
@@ -97,41 +101,41 @@ def extract_factor(records, factor, species_table, output, id_column, feature_co
 
             # Whenever we are not already at our chromosome part -> skip until at it
             while records[each_record].id != actual_line[id_column]:
-                actual_line = reading_line(factor, feature_table)
+                actual_line = reading_line(factor_type, feature_table)
 
             # We also have to find the first time the wanted feature appears
-            while not True_if_right_factor_strand(factor, actual_line, feature_column, feature_type, strand_column):
-                actual_line = reading_line(factor, feature_table)
+            while not True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
+                actual_line = reading_line(factor_type, feature_table)
 
             # This line will be the first result
             all_ranges.append([int(actual_line[start_column]),int(actual_line[end_column])])
 
             # It now become the precedent line
             precedent_line = actual_line
-            actual_line = reading_line(factor, feature_table)
+            actual_line = reading_line(factor_type, feature_table)
 
             # While from the actual record, continue extracting
             while records[each_record].id == actual_line[id_column]:
                 # Only do this for wanted feature
-                if True_if_right_factor_strand(factor, actual_line, feature_column, feature_type, strand_column):
+                if True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
                     # We must check if there is an overlap
                     # 1) If there is overlap, we must cut the intersection out
                     if int(actual_line[start_column]) <= int(precedent_line[end_column]):
-                        # 1.2) Now, it may be that a small CDS may be inside a bigger CDS (thus passing the if).
-                        # We will check for this and only store the CDS range if it is not the case
+                        # 1.2) Now, it may be that a small factor may be inside a bigger factor (thus passing the if).
+                        # We will check for this and only store the factor range if it is not the case
                         if int(actual_line[end_column]) > int(precedent_line[end_column]):
                             precedent_range = set(range(int(precedent_line[start_column]),
                                                         int(precedent_line[end_column])))
                             actual_range = set(range(int(actual_line[start_column]), int(actual_line[end_column])))
                             upper_part = actual_range - precedent_range
                             all_ranges.append([min(upper_part), max(upper_part)])
-                    # 2) If no overlap, simply store the CDS range
+                    # 2) If no overlap, simply store the factor range
                     else:
                         all_ranges.append([int(actual_line[start_column]), int(actual_line[end_column])])
                     # It now become the precedent line
                     precedent_line = actual_line
                 # Continue to next line
-                actual_line = reading_line(factor, feature_table)
+                actual_line = reading_line(factor_type, feature_table)
                 # If we get at the last line, actual_line only have one empty entry, which can be detected by
                 # calling the second element ([1])
                 try:
@@ -158,11 +162,11 @@ def extract_factor(records, factor, species_table, output, id_column, feature_co
             # Write the new list of records
             SeqIO.write(concatenated_records, outfile, "fasta")
         else:
-            # Write the new list of records
+            # No need to concatenate -> directly write the new list of records
             SeqIO.write(factor_records, outfile, "fasta")
 
 
-if factor in ['LCR', 'TE', 'tandem']:
+if factor_type == 'repeats':
     id_column = 4
     feature_column = 10
     # The feature type depends on the wanted feature
@@ -175,20 +179,24 @@ if factor in ['LCR', 'TE', 'tandem']:
     strand_column = False   # NOT USED
     start_column = 5
     end_column = 6
-elif factor in ['CDS', 'RNA']:
-    id_column = 6
-    feature_column = 0
+else:
+    id_column = 0
+    feature_column = 2
     # The feature type depends on the wanted feature
     if factor == 'CDS':
         feature_type = 'CDS'
     elif factor == 'RNA':
         feature_type = ['misc_RNA', 'ncRNA', 'rRNA', 'tRNA']
-    strand_column = 9
-    start_column = 7
-    end_column = 8
+    elif factor == 'intron':
+        feature_type = 'intron'
+    elif factor == 'UTR':
+        feature_type = ['five_prime_UTR', 'three_prime_UTR']
+    strand_column = 6
+    start_column = 3
+    end_column = 4
 
 # Fetch all the records from this species fasta
 records = fetch_fasta(species_genome)
 
-extract_factor(records, factor, species_table, output, id_column, feature_column, feature_type, strand_column,
+extract_factor(records, factor, factor_type, species_table, output, id_column, feature_column, feature_type, strand_column,
                 start_column, end_column)

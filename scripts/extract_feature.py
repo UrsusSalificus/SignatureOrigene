@@ -82,25 +82,10 @@ def extract_feature(records, species_table, output, id_column, feature_column, f
                 while records[each_record].id == actual_line[id_column]:
                     # If it is the wanted feature and on the positive strand
                     if actual_line[feature_column] in feature_type and actual_line[strand_column] == '+':
-                        # Here, will now depend whether it is introns we are extracting or any other factor
-                        if feature_type == 'exon':
-                            # For introns, we need the next line
-                            next_line = feature_table.readline().split('\t')
-                            # We need the next line to also be exon, indicating an intron between them
-                            # We use a while when there is multiple exons
-                            while next_line[feature_column] in feature_type:
-                                # Mark the nucleotide as factor in the proxy,
-                                # by looking at end of first exon to start of the second one
-                                for each_nucleotide in range(int(actual_line[end_column])+1,int(next_line[start_column])-1):
-                                    record_proxy[each_nucleotide] = 1
-                                # Move to the next line
-                                actual_line = next_line
-                                next_line = feature_table.readline().split('\t')
-                        else:
-                            # For all other factors, each line containing the right factor is added to the proxy
-                            # For each nucleotide from start to end of the factor:
-                            for each_nucleotide in range(int(actual_line[start_column]), int(actual_line[end_column])):
-                                record_proxy[each_nucleotide] = 1
+                        # Each line containing the right factor is added to the proxy.
+                        # For each nucleotide from start to end of the factor:
+                        for each_nucleotide in range(int(actual_line[start_column]), int(actual_line[end_column])):
+                            record_proxy[each_nucleotide] = 1
                     # Continue the search:
                     actual_line = feature_table.readline().split('\t')
                     # If we get at the last line, actual_line only have one empty entry, which can be detected by
@@ -136,8 +121,7 @@ if factor == 'CDS':
 elif factor == 'RNA':
     feature_type = ['misc_RNA', 'ncRNA', 'rRNA', 'tRNA']
 elif factor == 'intron':
-    feature_type = 'exon'
-    # Indeed, introns are not directly annotated, but can be infered through exons
+    feature_type = 'intron'
 elif factor == 'UTR':
     feature_type = ['five_prime_UTR', 'three_prime_UTR']
 strand_column = 6

@@ -34,4 +34,3 @@ python3 ../scripts/add_introns_to_gff.py $output_table temp
 mv temp $output_table
 # Clean everything
 rm $feature_table
-rm temp
