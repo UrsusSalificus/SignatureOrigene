@@ -226,14 +226,24 @@ cd ../kmer
 KMER=$( find * )
 cd ../..
 
+# Remember where we are :
+go_back=$( pwd )
+
 # Launching the whole Snakemake cascade
 for each_species in $SPECIES; do
     for each_window in $WINDOWS; do
         for each_kmer in $KMER; do
             # A) This part will compute all the FCGRs of pure sequences we need from the masking snakemake
+
             for each_factor in $FACTORS; do
-                snakemake $snakemake_arguments \
-                    files/FCGRs/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
+                # If feature = UTR, do not compute for S. cerevisiae and E. coli
+                if [[ $each_factor == 'UTR' ]] && \
+                    ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
+                    echo "RR not computed for $each_species"
+                else
+                    snakemake $snakemake_arguments \
+                        files/FCGRs/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
+                fi
             done
 
             # B) We also need the whole genome FCGRs, which will be computed through the scaling snakemake

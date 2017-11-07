@@ -204,6 +204,9 @@ cd ../kmer
 KMER=$( find * )
 cd ../..
 
+# Remember where we are :
+go_back=$( pwd )
+
 for each_species in $SPECIES; do
     # Launching the whole Snakemake cascade
     for each_window in $WINDOWS; do
@@ -216,18 +219,24 @@ for each_species in $SPECIES; do
 
             # B) We now will compute both the masked and pure factors distance matrix VS center
             for each_factor in $FACTORS; do
-                # B.1) Masked will be done all on the masking directory
-                snakemake $snakemake_arguments \
-                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_masked_vs_center_dist_matrix.RData
+                # If feature = UTR, do not compute for S. cerevisiae and E. coli
+                if [[ $each_factor == 'UTR' ]] && \
+                    ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
+                    echo "RR not computed for $each_species"
+                else
+                    # B.1) Masked will be done all on the masking directory
+                    snakemake $snakemake_arguments \
+                        files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_masked_vs_center_dist_matrix.RData
 
-                # B.2) Pure will need the FCGRs found in the purifying directory
-                cd ../purifying
-                snakemake $snakemake_arguments \
-                    files/FCGRs/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
-                cd $go_back
-                # Which will then be used to find the pure VS center distance matrix
-                snakemake $snakemake_arguments \
-                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_vs_center_dist_matrix.RData
+                    # B.2) Pure will need the FCGRs found in the purifying directory
+                    cd ../purifying
+                    snakemake $snakemake_arguments \
+                        files/FCGRs/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
+                    cd $go_back
+                    # Which will then be used to find the pure VS center distance matrix
+                    snakemake $snakemake_arguments \
+                        files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_vs_center_dist_matrix.RData
+                fi
             done
 
             # C) Our control will be the whole genome VS center distance

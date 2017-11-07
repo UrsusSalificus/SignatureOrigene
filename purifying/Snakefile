@@ -146,7 +146,7 @@ rule MDS_pairwise:
     input:
         "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_fit.RData"
     output:
-        "files/results/{windows}_{kmer}/{species}_MDS_all_factors.png"
+        "files/results/{windows}_{kmer}/{species}_MDS_pairwise.png"
     shell:
         "Rscript scripts/MDS_all_factors.R {output} {input} \
             {wildcards.windows} {wildcards.kmer}"

@@ -24,6 +24,7 @@ rule download_rr:
     shell:
         "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
 
+
 rule finding_center:
     input:
         "../scaling/files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt",
@@ -66,6 +67,7 @@ rule masked_FCGR:
         "python3 ../scripts/windowed_FCGR.py {input} {wildcards.species} \
             {wildcards.windows} {wildcards.kmer} {threads} {output} \
             {wildcards.factors}"
+
 
 rule masked_concatenating:
     input:

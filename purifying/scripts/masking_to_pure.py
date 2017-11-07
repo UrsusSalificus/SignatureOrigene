@@ -67,10 +67,16 @@ def reading_line(factor_type, feature_table):
 
 
 def True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
-    if factor_type == 'repeats':
-        return actual_line[feature_column].split('/')[0].strip('?') in feature_type
+    # Watch out for commentaries (thus length 1)
+    if len(actual_line) > 1:
+        # If bigger than one -> feature line
+        if factor_type == 'repeats':
+            return actual_line[feature_column].split('/')[0].strip('?') in feature_type
+        else:
+            return actual_line[feature_column] in feature_type and actual_line[strand_column] == '+'
     else:
-        return actual_line[feature_column] in feature_type and actual_line[strand_column] == '+'
+        # Else we know it is a commentary = not the right factor...
+        return False
 
 
 def extract_factor(records, factor, factor_type, species_table, output, id_column, feature_column, feature_type, strand_column,
