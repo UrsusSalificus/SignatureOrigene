@@ -106,7 +106,7 @@ def extract_factor(records, factor, factor_type, species_table, output, id_colum
             record_length = len(records[each_record].seq)
 
             # This string will contain all the nucleotide of the record which are coding
-            all_factor_ranges = list()
+            all_ranges = list()
 
             # Whenever we are not already at our chromosome part -> skip until at it
             while records[each_record].id != actual_line[id_column]:
@@ -117,54 +117,93 @@ def extract_factor(records, factor, factor_type, species_table, output, id_colum
                 actual_line = reading_line(factor_type, feature_table)
 
             # This line will be the first result
-            all_factor_ranges.append([int(actual_line[start_column]), int(actual_line[end_column])])
+            all_ranges.append([int(actual_line[start_column]),int(actual_line[end_column])])
+            # Always keep track of the last range added to the list
+            last_added_range = all_ranges[-1]
 
-            # It now become the precedent line (used to avoid overlaps of factor following each others)
-            precedent_line = actual_line
+            # Continue the search
             actual_line = reading_line(factor_type, feature_table)
 
             # While from the actual record, continue extracting
             while records[each_record].id == actual_line[id_column]:
                 # Only do this for wanted feature
                 if True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
-                    # We must check if there is an overlap
-                    # 1) If there is overlap, we must cut the intersection out
-                    if int(actual_line[start_column]) <= int(precedent_line[end_column]):
-                        # 1.2) Now, it may be that a small factor may be inside a bigger factor (thus passing the if).
-                        # We will check for this and only store the factor range if it is not the case
-                        if int(actual_line[end_column]) > int(precedent_line[end_column]):
-                            precedent_range = set(range(int(precedent_line[start_column]),
-                                                        int(precedent_line[end_column])))
+                    # 1) To detect splicing (which lead to duplicates):
+                    if int(actual_line[start_column]) < last_added_range[0] \
+                            and int(actual_line[end_column]) < last_added_range[0]:
+                        end_of_splicing = last_added_range[0]
+                        while int(actual_line[start_column]) <= end_of_splicing:
+                            # We must check each range to see if we do not miss some parts
+                            each_previous_range_end = 1  # Phony first range end
+                            for each_range in all_ranges:
+                                # 1.1) We look for part missing in between the ranges
+                                # This is the no-problem case -> just add this new range
+                                if int(actual_line[end_column]) < each_range[0] and int(actual_line[start_column]) > \
+                                        each_previous_range_end:
+                                    all_ranges.append([int(actual_line[start_column]), int(actual_line[end_column])])
+                                # 1.2) Then we look for overlapping range
+                                # By comparing direct neighbour ranges to our spliced range
+                                elif int(actual_line[end_column]) > each_range[0] > int(actual_line[start_column]) > \
+                                        each_previous_range_end:
+                                    missing_range = [int(actual_line[start_column]), each_range[0] - 1]
+                                    # We will mark the fact that we added some parts in the wrong order
+                                    spliced = True
+                                    all_ranges.append(missing_range)
+                                    # Always keep track of the last range added to the list
+                                    last_added_range = all_ranges[-1]
+                                # Always keep track of the last range for the splicing for
+                                each_previous_range_end = each_range[1]
+                            # Continue searching
+                            actual_line = reading_line(factor_type, feature_table)
+                            # If we get at the last line, actual_line only have one empty entry
+                            if not actual_line[0]:
+                                break
+                    # 2.1) To detect overlap of this range vs last added one:
+                    # If there is one, we must cut the intersection out
+                    elif int(actual_line[start_column]) <= last_added_range[1]:
+                        # 2.2) Now, it may be that a small factor may be inside a bigger factor (thus passing the if).
+                        # We will only store the factor range if it is not the case
+                        # (if actual end is bigger than the last one)
+                        if int(actual_line[end_column]) > last_added_range[1]:
+                            precedent_range = set(range(last_added_range[0],last_added_range[1]))
                             actual_range = set(range(int(actual_line[start_column]), int(actual_line[end_column])))
                             upper_part = actual_range - precedent_range
-                            all_factor_ranges.append([min(upper_part), max(upper_part)])
-                    # 2) If no overlap, simply store the CDS range
+                            all_ranges.append([min(upper_part) + 1, max(upper_part)])
+                            # Always keep track of the last range added to the list
+                            last_added_range = all_ranges[-1]
+                        # Continue searching
+                        actual_line = reading_line(factor_type, feature_table)
+                    # 3) If no overlap, simply store the factor range
                     else:
-                        all_factor_ranges.append([int(actual_line[start_column]),int(actual_line[end_column])])
-                    # It now become the precedent line
-                    precedent_line = actual_line
-                # Continue to next line
-                actual_line = reading_line(factor_type, feature_table)
-                # If we get at the last line, actual_line only have one empty entry, which can be detected by
-                # calling the second element ([1])
-                try:
-                    actual_line[1]
-                except:
-                    break
+                        all_ranges.append([int(actual_line[start_column]), int(actual_line[end_column])])
+                        # Always keep track of the last range added to the list
+                        last_added_range = all_ranges[-1]
+                        # Continue searching
+                        actual_line = reading_line(factor_type, feature_table)
+                # If it is not our factor, just continue the search
+                else:
+                    actual_line = reading_line(factor_type, feature_table)
+                # If we get at the last line, actual_line only have one empty entry
+                if not actual_line:
+                        break
 
             # We can now find which are the INTERMEDIATE (= masked) ranges using the factor ranges:
             all_non_factor_ranges = list()
             follow_up = 0
+            # In the case of splicing, we will end up with ranges unordered -> need to sort it
+            if spliced:
+                all_ranges.sort()
+
             # Here, we compute all the intermediate ranges by looking at the minimum/max value of each range
-            for each_range in range(len(all_factor_ranges)):
+            for each_range in range(len(all_ranges)):
                 # Start of intermediate = simply where we are (follow_up)
                 start_non_factor = follow_up
                 # End of the intermediate range -> the minimum value of the factor range
-                end_non_factor = min(all_factor_ranges[each_range]) - 1
+                end_non_factor = min(all_ranges[each_range]) - 1
                 all_non_factor_ranges.append([start_non_factor, end_non_factor])
 
                 # Now to keep track at where we are
-                follow_up = max(all_factor_ranges[each_range]) + 1
+                follow_up = max(all_ranges[each_range]) + 1
             # Finally, add the last range (from last factor range to end of sequence)
             if follow_up != record_length:
                 all_non_factor_ranges.append([follow_up, record_length])

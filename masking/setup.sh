@@ -222,7 +222,9 @@ for each_species in $SPECIES; do
                 # If feature = UTR, do not compute for S. cerevisiae and E. coli
                 if [[ $each_factor == 'UTR' ]] && \
                     ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
-                    echo "RR not computed for $each_species"
+                    echo "$each_factor not computed for $each_species"
+                elif [[ $each_factor == 'intron' && $each_species == 'e_coli' ]] ; then
+                    echo "$each_factor not computed for $each_species"
                 else
                     # B.1) Masked will be done all on the masking directory
                     snakemake $snakemake_arguments \
@@ -250,3 +252,4 @@ for each_species in $SPECIES; do
         done
     done
 done
+

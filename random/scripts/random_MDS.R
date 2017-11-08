@@ -7,14 +7,6 @@
 library(data.table)
 library(RColorBrewer)
 library(ggplot2)
-pearson.dist <- function (x) {
-  x <- as.matrix(x)
-  x <- x - rowMeans(x)
-  x <- x/sqrt(rowSums(x^2))
-  x <- tcrossprod(x)
-  x <- as.dist(x)
-  return (0.5 - x/2)
-}   # Taken from : hyperSpec package
 
 # Importing both species name and abbreviation:
 full <- read.table("../input/all_species.txt", sep = "\t", header = FALSE)[-1,1]
@@ -46,7 +38,7 @@ for (each_gs in 1:length(GS)) {
   # Plot title, output file and distance used varies between type of genomic signature used
   gs_type <- names(GS)[each_gs]
   if (gs_type == 'FCGRs') {
-    distance_matrix <- pearson.dist(gs_table[,2:(ncol(gs_table)-1)])
+    distance_matrix <- dist(gs_table[,2:(ncol(gs_table)-1)], method = 'manhattan')
     plot_title <- paste("Comparison of", sample_size, "x", window_size, 
                         "bp windows per species\nGenomic signature used:", 
                         gs_type,  "with k-mer = ", kmer)

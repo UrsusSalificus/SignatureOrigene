@@ -71,17 +71,17 @@ rule FCGRs_dist_each:
     input:
         "files/FCGRs/{windows}_{kmer}/each_concatenated/{species}_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_dist_matrix.RData"
+        "files/distances/manhattan/{windows}_{kmer}/each_concatenated/{species}_dist_matrix.RData"
     threads:
         99
     shell:
-        "Rscript ../scripts/pearson_distance.R {input} {output}"
+        "Rscript ../scripts/manhattan_distance.R {input} {output}"
 
 rule fitting_each:
     input:
-        "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_dist_matrix.RData"
+        "files/distances/manhattan/{windows}_{kmer}/each_concatenated/{species}_dist_matrix.RData"
     output:
-        "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_fit.RData"
+        "files/distances/manhattan/{windows}_{kmer}/each_concatenated/{species}_fit.RData"
     threads:
         99
     shell:
@@ -89,7 +89,7 @@ rule fitting_each:
 
 rule MDS_each:
     input:
-        "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_fit.RData"
+        "files/distances/manhattan/{windows}_{kmer}/each_concatenated/{species}_fit.RData"
     output:
         "files/results/{windows}_{kmer}/{species}_MDS_all_factors.png"
     shell:
@@ -126,17 +126,17 @@ rule FCGRs_dist_pairwise:
     input:
         "files/FCGRs/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_dist_matrix.RData"
+        "files/distances/manhattan/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_dist_matrix.RData"
     threads:
         99
     shell:
-        "Rscript ../scripts/pearson_distance.R {input} {output}"
+        "Rscript ../scripts/manhattan_distance.R {input} {output}"
 
 rule fitting_pairwise:
     input:
-        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_dist_matrix.RData"
+        "files/distances/manhattan/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_dist_matrix.RData"
     output:
-        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_fit.RData"
+        "files/distances/manhattan/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_fit.RData"
     threads:
         99
     shell:
@@ -144,7 +144,7 @@ rule fitting_pairwise:
 
 rule MDS_pairwise:
     input:
-        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_fit.RData"
+        "files/distances/manhattan/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_fit.RData"
     output:
         "files/results/{windows}_{kmer}/{species}_MDS_pairwise.png"
     shell:

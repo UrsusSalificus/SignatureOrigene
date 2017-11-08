@@ -101,11 +101,11 @@ rule pure_FCGRs_dist:
     input:
         "files/FCGRs/{windows}_{kmer}/{species}_{factors}_pure_vs_center_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/{species}_{factors}_pure_vs_center_dist_matrix.RData"
+        "files/distances/manhattan/{windows}_{kmer}/{species}_{factors}_pure_vs_center_dist_matrix.RData"
     threads:
         99
     shell:
-        "Rscript ../scripts/pearson_distance.R {input} {output}"
+        "Rscript ../scripts/manhattan_distance.R {input} {output}"
 
 rule whole_concatenating:
     input:
@@ -120,11 +120,11 @@ rule whole_FCGRs_dist:
     input:
         "files/FCGRs/{windows}_{kmer}/{species}_whole_vs_center_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/{species}_whole_vs_center_dist_matrix.RData"
+        "files/distances/manhattan/{windows}_{kmer}/{species}_whole_vs_center_dist_matrix.RData"
     threads:
         99
     shell:
-        "Rscript ../scripts/pearson_distance.R {input} {output}"
+        "Rscript ../scripts/manhattan_distance.R {input} {output}"
 
 rule boxplots:
     output:
