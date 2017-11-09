@@ -214,7 +214,7 @@ for each_species in $SPECIES; do
             # A) We need the whole genome distance matrix, which will be computed through the scaling snakemake
             cd ../scaling
             snakemake $snakemake_arguments \
-                files/distances/pearson/$each_window\_$each_kmer/$each_species\_dist_matrix.RData
+                files/distances/manhattan/$each_window\_$each_kmer/$each_species\_dist_matrix.RData
             cd $go_back
 
             # B) We now will compute both the masked and pure factors distance matrix VS center
@@ -228,7 +228,7 @@ for each_species in $SPECIES; do
                 else
                     # B.1) Masked will be done all on the masking directory
                     snakemake $snakemake_arguments \
-                        files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_masked_vs_center_dist_matrix.RData
+                        files/distances/manhattan/$each_window\_$each_kmer/$each_species\_$each_factor\_masked_vs_center_dist_matrix.RData
 
                     # B.2) Pure will need the FCGRs found in the purifying directory
                     cd ../purifying
@@ -237,13 +237,13 @@ for each_species in $SPECIES; do
                     cd $go_back
                     # Which will then be used to find the pure VS center distance matrix
                     snakemake $snakemake_arguments \
-                        files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_vs_center_dist_matrix.RData
+                        files/distances/manhattan/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_vs_center_dist_matrix.RData
                 fi
             done
 
             # C) Our control will be the whole genome VS center distance
             snakemake $snakemake_arguments \
-                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_vs_center_dist_matrix.RData
+                    files/distances/manhattan/$each_window\_$each_kmer/$each_species\_whole_vs_center_dist_matrix.RData
             # TODO: find why we have to recompute the distance this way instead of using the whole distance matrix
 
             # D) We would finally be able to use both distance matrices to produces boxplots
@@ -252,4 +252,3 @@ for each_species in $SPECIES; do
         done
     done
 done
-

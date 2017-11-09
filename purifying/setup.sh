@@ -233,7 +233,7 @@ go_back=$( pwd )
 for each_species in $SPECIES; do
     for each_window in $WINDOWS; do
         for each_kmer in $KMER; do
-            # A) This part will compute all the FCGRs of pure sequences we need from the masking snakemake
+            # A) This part will compute all the FCGRs of pure sequences we need from the purifying snakemake
 
             for each_factor in $FACTORS; do
                 # If feature = UTR, do not compute for S. cerevisiae and E. coli
@@ -273,9 +273,9 @@ for each_species in $SPECIES; do
                     # Only fo this if it doesn't already exist (reverse order of species/comparison)
                     for each_comparison in $SPECIES; do
                         if [[ $each_comparison != $each_species ]] && \
-                            [[ ! -f files/distances/pearson/$each_window\_$each_kmer/pairwise_concatenated/$each_comparison\_vs_$each_species\_fit.RData ]] ; then
+                            [[ ! -f files/distances/manhattan/$each_window\_$each_kmer/pairwise_concatenated/$each_comparison\_vs_$each_species\_fit.RData ]] ; then
                             snakemake $snakemake_arguments \
-                            files/distances/pearson/$each_window\_$each_kmer/pairwise_concatenated/$each_species\_vs_$each_comparison\_fit.RData
+                            files/distances/manhattan/$each_window\_$each_kmer/pairwise_concatenated/$each_species\_vs_$each_comparison\_fit.RData
                         fi
                     done
                 fi

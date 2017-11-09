@@ -13,41 +13,51 @@ snakemake_arguments=$*
 SPECIES="hsap_sample mmus_sample c_elegans d_melanogaster a_thaliana s_cerevisiae e_coli"
 # WINDOW SIZE : e.g.    5000 15000 150000
 WINDOWS=15000
-# FEATURE TYPE :    CDS RNA LCR TE tandem
-FEATURES="CDS RNA LCR TE tandem"
+# FEATURE TYPE :    CDS intron UTR RNA LCR TE tandem
+FEATURES="CDS intron UTR RNA LCR TE tandem"
 # KMER : e.g.       4 7
 KMER="7"
 
+#Know where we are
+go_back=$( pwd )
 
 for each_species in $SPECIES; do
-  # Launching the whole Snakemake cascade
+    # Launching the whole Snakemake cascade
     for each_window in $WINDOWS; do
         for each_kmer in $KMER; do
             # A) We need the whole genome distance matrix, which will be computed through the scaling snakemake
             cd ../scaling
             snakemake $snakemake_arguments \
-                files/distances/pearson/$each_window\_$each_kmer/$each_species\_dist_matrix.RData
+                files/distances/manhattan/$each_window\_$each_kmer/$each_species\_dist_matrix.RData
             cd $go_back
 
             # B) We now will compute both the masked and pure factors distance matrix VS center
             for each_factor in $FACTORS; do
-                # B.1) Masked will be done all on the masking directory
-                snakemake $snakemake_arguments \
-                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_masked_vs_center_dist_matrix.RData
+                # If feature = UTR, do not compute for S. cerevisiae and E. coli
+                if [[ $each_factor == 'UTR' ]] && \
+                    ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
+                    echo "$each_factor not computed for $each_species"
+                elif [[ $each_factor == 'intron' && $each_species == 'e_coli' ]] ; then
+                    echo "$each_factor not computed for $each_species"
+                else
+                    # B.1) Masked will be done all on the masking directory
+                    snakemake $snakemake_arguments \
+                        files/distances/manhattan/$each_window\_$each_kmer/$each_species\_$each_factor\_masked_vs_center_dist_matrix.RData
 
-                # B.2) Pure will need the FCGRs found in the purifying directory
-                cd ../purifying
-                snakemake $snakemake_arguments \
-                    files/FCGRs/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
-                cd $go_back
-                # Which will then be used to find the pure VS center distance matrix
-                snakemake $snakemake_arguments \
-                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_vs_center_dist_matrix.RData
+                    # B.2) Pure will need the FCGRs found in the purifying directory
+                    cd ../purifying
+                    snakemake $snakemake_arguments \
+                        files/FCGRs/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
+                    cd $go_back
+                    # Which will then be used to find the pure VS center distance matrix
+                    snakemake $snakemake_arguments \
+                        files/distances/manhattan/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_vs_center_dist_matrix.RData
+                fi
             done
 
             # C) Our control will be the whole genome VS center distance
             snakemake $snakemake_arguments \
-                    files/distances/pearson/$each_window\_$each_kmer/$each_species\_whole_vs_center_dist_matrix.RData
+                    files/distances/manhattan/$each_window\_$each_kmer/$each_species\_whole_vs_center_dist_matrix.RData
             # TODO: find why we have to recompute the distance this way instead of using the whole distance matrix
 
             # D) We would finally be able to use both distance matrices to produces boxplots
