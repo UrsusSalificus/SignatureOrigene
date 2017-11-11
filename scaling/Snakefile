@@ -136,17 +136,17 @@ rule FCGR_dist:
     input:
         "files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt"
     output:
-        "files/distances/manhattan/{windows}_{kmer}/{species}_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData"
     threads:
         99
     shell:
-        "Rscript ../scripts/manhattan_distance.R {input} {output}"
+        "Rscript ../scripts/pearson_distance.R {input} {output}"
 
 rule fitting:
     input:
-        "files/distances/manhattan/{windows}_{kmer}/{species}_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData"
     output:
-        "files/distances/manhattan/{windows}_{kmer}/{species}_fit.RData"
+        "files/distances/pearson/{windows}_{kmer}/{species}_fit.RData"
     threads:
         99
     shell:
@@ -154,7 +154,7 @@ rule fitting:
 
 rule correlation:
     input:
-        "files/distances/manhattan/{windows}_{kmer}/{species}_dist_matrix.RData",
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData",
         "../files/factors/{windows}/{species}_{factors}.txt"
     output:
         "files/results/{windows}_{kmer}_{factors}/{species}_correlation.png"
@@ -164,7 +164,7 @@ rule correlation:
 
 rule MDS:
     input:
-        "files/distances/manhattan/{windows}_{kmer}/{species}_fit.RData",
+        "files/distances/pearson/{windows}_{kmer}/{species}_fit.RData",
         "../files/factors/{windows}/{species}_{factors}.txt"
     output:
         "files/results/{windows}_{kmer}_{factors}/{species}_MDS.png"
@@ -174,7 +174,7 @@ rule MDS:
 
 rule ratio_figure:
     input:
-        "files/distances/manhattan/{windows}_{kmer}/{species}_dist_matrix.RData",
+        "files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData",
         "../files/factors/{windows}_ratios/{species}.txt"
     output:
         "files/results/{windows}_{kmer}_ratios/{species}.png"
@@ -184,7 +184,7 @@ rule ratio_figure:
 
 rule linear_model:
     input:
-        "files/distances/manhattan/{windows}_{kmer}/{species}_fit.RData",
+        "files/distances/pearson/{windows}_{kmer}/{species}_fit.RData",
         "../files/factors/{windows}/{species}_RR.txt",
         "../files/factors/{windows}/{species}_LCR.txt",
         "../files/factors/{windows}/{species}_CDS.txt"
