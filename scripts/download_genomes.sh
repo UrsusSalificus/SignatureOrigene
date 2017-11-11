@@ -34,7 +34,7 @@ gunzip < $whole_genome > $output_genome
 rm $whole_genome
 
 if [[ $species == hsap_sample || $species == mmus_sample ]]; then
-    python3 scripts/sampling.py $output_genome
+    python3 scripts/sampling_chromosomes.py $output_genome
 fi
 
 # Keep only wanted records
