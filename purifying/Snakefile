@@ -22,22 +22,31 @@ rule download_rr:
     shell:
         "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
 
+rule sampling:
+    input:
+        "../data/genomes/{species}_genomes.fna"
+    output:
+        "../data/samples/{windows}_{n_samples}/{species}_sample.fna"
+    shell:
+        "python3 ../scripts/sampling_windows.py {input} {wildcards.n_samples} \
+            {wildcards.windows} {output}"
+
 rule purifying:
     input:
-        "../data/genomes/{species}_genomes.fna",
+        "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
         "../data/factors/repeats/{species}_repeats.txt",
         "../data/factors/features/{species}_feature_table.txt"
     output:
-        "data/genomes/{windows}/{species}_{factors}_pure.fna"
+        "data/genomes/{windows}_{n_samples}/{species}_{factors}_pure.fna"
     shell:
         "python3 scripts/masking_to_pure.py {wildcards.factors} \
             {wildcards.windows} {input} {output}"
 
 rule pure_CGR:
     input:
-        "data/genomes/{windows}/{species}_{factors}_pure.fna"
+        "data/genomes/{windows}_{n_samples}/{species}_{factors}_pure.fna"
     output:
-        "data/following/CGRs/{windows}/{species}_{factors}_pure_done.txt"
+        "data/following/CGRs/{windows}_{n_samples}/{species}_{factors}_pure_done.txt"
     threads:
         99
     shell:
@@ -46,9 +55,9 @@ rule pure_CGR:
 
 rule pure_FCGR:
     input:
-        "data/following/CGRs/{windows}/{species}_{factors}_pure_done.txt"
+        "data/following/CGRs/{windows}_{n_samples}/{species}_{factors}_pure_done.txt"
     output:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_pure_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_{factors}_pure_FCGRs.txt"
     threads:
         99
     shell:
@@ -60,7 +69,7 @@ rule pure_FCGR:
 
 rule concatenating_each:
     output:
-        "files/FCGRs/{windows}_{kmer}/each_concatenated/{species}_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/each_concatenated/{species}_FCGRs.txt"
     shell:
         """
         cat files/FCGRs/{wildcards.windows}_{wildcards.kmer}/{wildcards.species}*.txt \
@@ -69,9 +78,9 @@ rule concatenating_each:
 
 rule FCGRs_dist_each:
     input:
-        "files/FCGRs/{windows}_{kmer}/each_concatenated/{species}_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/each_concatenated/{species}_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{n_samples}_{kmer}/each_concatenated/{species}_dist_matrix.RData"
     threads:
         99
     shell:
@@ -79,9 +88,9 @@ rule FCGRs_dist_each:
 
 rule fitting_each:
     input:
-        "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{n_samples}_{kmer}/each_concatenated/{species}_dist_matrix.RData"
     output:
-        "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_fit.RData"
+        "files/distances/pearson/{windows}_{n_samples}_{kmer}/each_concatenated/{species}_fit.RData"
     threads:
         99
     shell:
@@ -91,7 +100,7 @@ rule MDS_each:
     input:
         "files/distances/pearson/{windows}_{kmer}/each_concatenated/{species}_fit.RData"
     output:
-        "files/results/{windows}_{kmer}/{species}_MDS_all_factors.png"
+        "files/results/{windows}_{n_samples}_{kmer}/{species}_MDS_all_factors.png"
     shell:
         "Rscript scripts/MDS_all_factors.R {output} {input} \
             {wildcards.windows} {wildcards.kmer}"
@@ -100,7 +109,7 @@ rule MDS_each:
 
 rule concatenating_pairwise:
     output:
-        "files/FCGRs/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_FCGRs.txt"
     shell:
         """
         mkdir temp
@@ -124,9 +133,9 @@ rule concatenating_pairwise:
 
 rule FCGRs_dist_pairwise:
     input:
-        "files/FCGRs/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{n_samples}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_dist_matrix.RData"
     threads:
         99
     shell:
@@ -134,9 +143,9 @@ rule FCGRs_dist_pairwise:
 
 rule fitting_pairwise:
     input:
-        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{n_samples}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_dist_matrix.RData"
     output:
-        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_fit.RData"
+        "files/distances/pearson/{windows}_{n_samples}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_fit.RData"
     threads:
         99
     shell:
@@ -144,9 +153,9 @@ rule fitting_pairwise:
 
 rule MDS_pairwise:
     input:
-        "files/distances/pearson/{windows}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_fit.RData"
+        "files/distances/pearson/{windows}_{n_samples}_{kmer}/pairwise_concatenated/{species}_vs_{comparison}_fit.RData"
     output:
-        "files/results/{windows}_{kmer}/{species}_MDS_pairwise.png"
+        "files/results/{windows}_{n_samples}_{kmer}/{species}_MDS_pairwise.png"
     shell:
         "Rscript scripts/MDS_all_factors.R {output} {input} \
             {wildcards.windows} {wildcards.kmer}"

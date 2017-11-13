@@ -111,6 +111,40 @@ EOF
 confirm
 
 
+########### SAMPLE SIZE ###########
+title="config/temp/title.txt"
+cat << "EOF" > $title
+     _______                        __                    __
+    |     __|.---.-.--------.-----.|  |.-----.    .-----.|__|.-----.-----.
+    |__     ||  _  |        |  _  ||  ||  -__|    |__ --||  ||-- __|  -__|
+    |_______||___._|__|__|__|   __||__||_____|    |_____||__||_____|_____|
+                            |__|
+EOF
+intro="Please chose the sample size (number of windows per species)"
+table="config/temp/table.txt"
+cat << "EOF" > $table
+________________________________________________________________________________
+Type sample size (eg. 500 1000 for both 500 and 1000 windows per species), then press
+[ENTER]:
+Note: if a species genome is not big enough for the wanted number of sample windows
+the whole genome is taken instead.
+EOF
+choice=free
+good_inputs=1234567890
+abbrev="config/temp/abbrev.txt"
+cat << "EOF" > $abbrev
+free
+EOF
+out_dir="config/samples/"
+nice="config/temp/nice.txt"
+cat << "EOF" > $nice
+Windows per species =
+EOF
+
+confirm
+
+
+
 
 ########### FACTORS ###########
 title="config/temp/title.txt"
@@ -218,6 +252,8 @@ cd ..
 # Do the entire analysis for each combination
 cd config/species
 SPECIES=$( find * )
+cd ../samples
+SAMPLES=$( find * )
 cd ../windows
 WINDOWS=$( find * )
 cd ../factors
@@ -228,25 +264,27 @@ cd ../figures
 FIGURES=$( find * )
 cd ../..
 
+# Launching the whole Snakemake cascade
 for each_species in $SPECIES; do
-    # Launching the whole Snakemake cascade
-    for each_window in $WINDOWS; do
-        for each_factor in $FACTORS; do
-            for each_kmer in $KMER; do
-                for each_figures in $FIGURES; do
-                    # If we want to have a look at the ratios only, use ratio end rule
-                    if [[ $each_figures == 'ratios' ]] ; then
-                        snakemake $snakemake_arguments \
-                            files/results/$each_window\_$each_kmer\_ratios/$each_species.png
-                    # If feature = recombination rate, do not compute for S. cerevisiae and E. coli
-                    elif [[ $each_factor == 'RR' ]] && \
-                    ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
-                        echo "RR not computed for $each_species"
-                    # In any other case, use the wanted figure end rule
-                    else
-                        snakemake $snakemake_arguments \
-                            files/results/$each_window\_$each_kmer\_$each_factor/$each_species\_$each_figures.png
-                    fi
+    for each_sample in $SAMPLES; do
+        for each_window in $WINDOWS; do
+            for each_factor in $FACTORS; do
+                for each_kmer in $KMER; do
+                    for each_figures in $FIGURES; do
+                        # If we want to have a look at the ratios only, use ratio end rule
+                        if [[ $each_figures == 'ratios' ]] ; then
+                            snakemake $snakemake_arguments \
+                                files/results/$each_window\_$each_sample\_$each_kmer\_ratios/$each_species.png
+                        # If feature = recombination rate, do not compute for S. cerevisiae and E. coli
+                        elif [[ $each_factor == 'RR' ]] && \
+                        ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
+                            echo "RR not computed for $each_species"
+                        # In any other case, use the wanted figure end rule
+                        else
+                            snakemake $snakemake_arguments \
+                                files/results/$each_window\_$each_sample\_$each_kmer\_$each_factor/$each_species\_$each_figures.png
+                        fi
+                    done
                 done
             done
         done

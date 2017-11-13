@@ -133,6 +133,40 @@ confirm
 
 
 
+########### SAMPLE SIZE ###########
+title="config/temp/title.txt"
+cat << "EOF" > $title
+     _______                        __                    __
+    |     __|.---.-.--------.-----.|  |.-----.    .-----.|__|.-----.-----.
+    |__     ||  _  |        |  _  ||  ||  -__|    |__ --||  ||-- __|  -__|
+    |_______||___._|__|__|__|   __||__||_____|    |_____||__||_____|_____|
+                            |__|
+EOF
+intro="Please chose the sample size (number of windows per species)"
+table="config/temp/table.txt"
+cat << "EOF" > $table
+________________________________________________________________________________
+Type sample size (eg. 500 1000 for both 500 and 1000 windows per species), then press
+[ENTER]:
+Note: if a species genome is not big enough for the wanted number of sample windows
+the whole genome is taken instead.
+EOF
+choice=free
+good_inputs=1234567890
+abbrev="config/temp/abbrev.txt"
+cat << "EOF" > $abbrev
+free
+EOF
+out_dir="config/samples/"
+nice="config/temp/nice.txt"
+cat << "EOF" > $nice
+Windows per species =
+EOF
+
+confirm
+
+
+
 ########### FACTORS ###########
 title="config/temp/title.txt"
 cat << "EOF" > $title
@@ -218,6 +252,8 @@ cd config/figures
 FIGURES=$( find * )
 cd ../species
 SPECIES=$( find * )
+cd ../samples
+SAMPLES=$( find * )
 cd ../windows
 WINDOWS=$( find * )
 cd ../factors
@@ -231,29 +267,31 @@ go_back=$( pwd )
 
 # Launching the whole Snakemake cascade
 for each_species in $SPECIES; do
-    for each_window in $WINDOWS; do
-        for each_kmer in $KMER; do
-            # A) This part will compute all the FCGRs of pure sequences we need from the purifying snakemake
+    for each_sample in $SAMPLES; do
+        for each_window in $WINDOWS; do
+            for each_kmer in $KMER; do
+                # A) This part will compute all the FCGRs of pure sequences we need from the purifying snakemake
 
-            for each_factor in $FACTORS; do
-                # If feature = UTR, do not compute for S. cerevisiae and E. coli
-                if [[ $each_factor == 'UTR' ]] && \
-                    ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
-                    echo "$each_factor not computed for $each_species"
-                elif [[ $each_factor == 'intron' && $each_species == 'e_coli' ]] ; then
-                    echo "$each_factor not computed for $each_species"
-                else
-                    snakemake $snakemake_arguments \
-                        files/FCGRs/$each_window\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
-                fi
+                for each_factor in $FACTORS; do
+                    # If feature = UTR, do not compute for S. cerevisiae and E. coli
+                    if [[ $each_factor == 'UTR' ]] && \
+                        ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
+                        echo "$each_factor not computed for $each_species"
+                    elif [[ $each_factor == 'intron' && $each_species == 'e_coli' ]] ; then
+                        echo "$each_factor not computed for $each_species"
+                    else
+                        snakemake $snakemake_arguments \
+                            files/FCGRs/$each_window\_$each_sample\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
+                    fi
+                done
+
+                # B) We also need the whole genome FCGRs, which will be computed through the scaling snakemake
+                go_back=$( pwd )
+                cd ../scaling
+                snakemake $snakemake_arguments \
+                    files/FCGRs/$each_window\_$each_sample\_$each_kmer/$each_species\_FCGRs.txt
+                cd $go_back
             done
-
-            # B) We also need the whole genome FCGRs, which will be computed through the scaling snakemake
-            go_back=$( pwd )
-            cd ../scaling
-            snakemake $snakemake_arguments \
-                files/FCGRs/$each_window\_$each_kmer/$each_species\_FCGRs.txt
-            cd $go_back
         done
     done
 done

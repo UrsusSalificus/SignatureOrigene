@@ -24,32 +24,40 @@ rule download_rr:
     shell:
         "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
 
+rule sampling:
+    input:
+        "../data/genomes/{species}_genomes.fna"
+    output:
+        "../data/samples/{windows}_{n_samples}/{species}_sample.fna"
+    shell:
+        "python3 ../scripts/sampling_windows.py {input} {wildcards.n_samples} \
+            {wildcards.windows} {output}"
 
 rule finding_center:
     input:
-        "../scaling/files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt",
-        "../scaling/files/distances/pearson/{windows}_{kmer}/{species}_dist_matrix.RData"
+        "../scaling/files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_FCGRs.txt",
+        "../scaling/files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData"
     output:
-        "files/FCGRs/{windows}_{kmer}/{species}_center_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_center_FCGRs.txt"
     shell:
         "python3 scripts/get_center_FCGRs.py {input} {output}"
 
 rule masking:
     input:
-        "../data/genomes/{species}_genomes.fna",
+        "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
         "../data/factors/repeats/{species}_repeats.txt",
         "../data/factors/features/{species}_feature_table.txt"
     output:
-        "data/genomes/{windows}/{species}_{factors}_masked.fna"
+        "data/genomes/{windows}_{n_samples}/{species}_{factors}_masked.fna"
     shell:
         "python3 scripts/masking_to_no_factor.py {wildcards.factors} \
             {wildcards.windows} {input} {output}"
 
 rule masked_CGR:
     input:
-        "data/genomes/{windows}/{species}_{factors}_masked.fna"
+        "data/genomes/{windows}_{n_samples}/{species}_{factors}_masked.fna"
     output:
-        "data/following/CGRs/{windows}/{species}_{factors}_masked_done.txt"
+        "data/following/CGRs/{windows}_{n_samples}/{species}_{factors}_masked_done.txt"
     threads:
         99
     shell:
@@ -58,9 +66,9 @@ rule masked_CGR:
 
 rule masked_FCGR:
     input:
-        "data/following/CGRs/{windows}/{species}_{factors}_masked_done.txt"
+        "data/following/CGRs/{windows}_{n_samples}/{species}_{factors}_masked_done.txt"
     output:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_masked_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_{factors}_masked_FCGRs.txt"
     threads:
         99
     shell:
@@ -71,18 +79,18 @@ rule masked_FCGR:
 
 rule masked_concatenating:
     input:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_masked_FCGRs.txt",
-        "files/FCGRs/{windows}_{kmer}/{species}_center_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_{factors}_masked_FCGRs.txt",
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_center_FCGRs.txt"
     output:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_masked_vs_center_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_{factors}_masked_vs_center_FCGRs.txt"
     shell:
         "cat {input} >> {output}"
 
 rule masked_FCGRs_dist:
     input:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_masked_vs_center_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_{factors}_masked_vs_center_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/{species}_{factors}_masked_vs_center_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_{factors}_masked_vs_center_dist_matrix.RData"
     threads:
         99
     shell:
@@ -90,18 +98,18 @@ rule masked_FCGRs_dist:
 
 rule pure_concatenating:
     input:
-        "../purifying/files/FCGRs/{windows}_{kmer}/{species}_{factors}_pure_FCGRs.txt",
-        "files/FCGRs/{windows}_{kmer}/{species}_center_FCGRs.txt"
+        "../purifying/files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_{factors}_pure_FCGRs.txt",
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_center_FCGRs.txt"
     output:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_pure_vs_center_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_{factors}_pure_vs_center_FCGRs.txt"
     shell:
         "cat {input} >> {output}"
 
 rule pure_FCGRs_dist:
     input:
-        "files/FCGRs/{windows}_{kmer}/{species}_{factors}_pure_vs_center_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_{factors}_pure_vs_center_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/{species}_{factors}_pure_vs_center_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_{factors}_pure_vs_center_dist_matrix.RData"
     threads:
         99
     shell:
@@ -109,18 +117,18 @@ rule pure_FCGRs_dist:
 
 rule whole_concatenating:
     input:
-        "../scaling/files/FCGRs/{windows}_{kmer}/{species}_FCGRs.txt",
-        "files/FCGRs/{windows}_{kmer}/{species}_center_FCGRs.txt"
+        "../scaling/files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_FCGRs.txt",
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_center_FCGRs.txt"
     output:
-        "files/FCGRs/{windows}_{kmer}/{species}_whole_vs_center_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_whole_vs_center_FCGRs.txt"
     shell:
         "cat {input} >> {output}"
 
 rule whole_FCGRs_dist:
     input:
-        "files/FCGRs/{windows}_{kmer}/{species}_whole_vs_center_FCGRs.txt"
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_whole_vs_center_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{kmer}/{species}_whole_vs_center_dist_matrix.RData"
+        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_whole_vs_center_dist_matrix.RData"
     threads:
         99
     shell:
@@ -128,7 +136,7 @@ rule whole_FCGRs_dist:
 
 rule boxplots:
     output:
-        "files/results/{windows}_{kmer}/{species}_boxplots_all_factors.png"
+        "files/results/{windows}_{n_samples}_{kmer}/{species}_boxplots_all_factors.png"
     shell:
         "Rscript scripts/boxplots_factor_center.R {output} {wildcards.windows}\
             {wildcards.kmer} {wildcards.species}"
