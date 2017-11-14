@@ -135,7 +135,10 @@ def sample_windows(records, n_samples, window_size, outfile):
                 if sample_id == each_id:
                     id_records.append(each_sample)
             id_records.sort(key=lambda r: int(r.id.split('_')[2]))
-            ordered_all_samples_records.append(id_records)
+            for each_record in range(len(id_records)):
+                ordered_all_samples_records.append(id_records[each_record])
+
+        all_sample_records = ordered_all_samples_records
 
     # Else, we will take all the available windows
     else:
