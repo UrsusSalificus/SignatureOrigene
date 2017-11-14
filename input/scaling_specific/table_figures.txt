@@ -12,6 +12,3 @@ Type their corresponding number as single block of numbers (eg. 124), then press
         purine/pyrimidine, CG/AT and TG/AC) between peripheral and central
         windows  (according to the distance matrix).
 
-    4. TODO
-________________________________________________________________________________
-
