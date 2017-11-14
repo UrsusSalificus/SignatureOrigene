@@ -1,6 +1,6 @@
 rule download_genomes:
     output:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna"
+        "../data/genomes/{species}_genomes.fna"
     shell:
         "bash ../scripts/download_genomes.sh {wildcards.species} {output}"
 
@@ -24,7 +24,7 @@ rule download_rr:
 
 rule sampling:
     input:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna"
+        "../data/genomes/{species}_genomes.fna"
     output:
         "../data/samples/{windows}_{n_samples}/{species}_sample.fna"
     shell:
@@ -42,92 +42,26 @@ rule CGR:
         "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
             {threads} {output}"
 
-rule CDS_extract:
+rule factor_extract:
     input:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
-        "../data/factors/features/{species}_feature_table.txt",
-    output:
-        "../files/factors/{windows}_{n_samples}/{species}_CDS.txt"
-    shell:
-        "python3 ../scripts/extract_feature.py {input} {wildcards.windows} \
-            CDS {output}"
-
-rule intron_extract:
-    input:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
-        "../data/factors/features/{species}_feature_table.txt",
-    output:
-        "../files/factors/{windows}_{n_samples}/{species}_intron.txt"
-    shell:
-        "python3 ../scripts/extract_feature.py {input} {wildcards.windows} \
-            intron {output}"
-
-rule UTR_extract:
-    input:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
-        "../data/factors/features/{species}_feature_table.txt",
-    output:
-        "../files/factors/{windows}_{n_samples}/{species}_UTR.txt"
-    shell:
-        "python3 ../scripts/extract_feature.py {input} {wildcards.windows} \
-            UTR {output}"
-
-rule RNA_extract:
-    input:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
-        "../data/factors/features/{species}_feature_table.txt",
-    output:
-        "../files/factors/{windows}_{n_samples}/{species}_RNA.txt"
-    shell:
-        "python3 ../scripts/extract_feature.py {input} {wildcards.windows} \
-            RNA {output}"
-
-rule LCR_extract:
-    input:
+        "../data/genomes/{species}_genomes.fna",
         "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
         "../data/factors/repeats/{species}_repeats.txt",
+        "../data/factors/features/{species}_feature_table.txt",
+        "../data/factors/recombination_rates/{species}_RR_spline.RData"
     output:
-        "../files/factors/{windows}_{n_samples}/{species}_LCR.txt"
+        "files/factors/{windows}_{n_samples}/{species}_{factors}.txt"
     shell:
-        "python3 ../scripts/extract_repeats.py {input} {wildcards.windows} \
-            LCR {output}"
-
-rule TE_extract:
-    input:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
-        "../data/factors/repeats/{species}_repeats.txt",
-    output:
-        "../files/factors/{windows}_{n_samples}/{species}_TE.txt"
-    shell:
-        "python3 ../scripts/extract_repeats.py {input} {wildcards.windows} \
-            TE {output}"
-
-rule tandem_extract:
-    input:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
-        "../data/factors/repeats/{species}_repeats.txt",
-    output:
-        "../files/factors/{windows}_{n_samples}/{species}_tandem.txt"
-    shell:
-        "python3 ../scripts/extract_repeats.py {input} {wildcards.windows} \
-            tandem {output}"
-rule RR_extract:
-    input:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
-        "../data/factors/recombination_rates/{species}_RR_spline.RData",
-    output:
-        "../files/factors/{windows}_{n_samples}/{species}_RR.txt"
-    shell:
-        "python3 ../scripts/extract_RR.py {input} {wildcards.windows} \
-            {output}"
+        "bash scripts/factor_type.sh {wildcards.factors} {wildcards.windows} \
+            {input} {output}"
 
 rule ratio_extract:
     input:
         "../data/following/CGRs/{windows}_{n_samples}/{species}_done.txt"
     output:
-        "../files/factors/{windows}_ratios/{species}.txt"
+        "files/factors/{windows}_{n_samples}/ratios/{species}.txt"
     shell:
-        "python3 ../scripts/extract_nucleotide_ratio.py {input} \
+        "python3 scripts/extract_nucleotide_ratios.py {input} \
             {wildcards.species} {wildcards.windows} {threads} {output}"
 
 rule FCGR:
@@ -164,43 +98,29 @@ rule fitting:
 rule correlation:
     input:
         "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData",
-        "../files/factors/{windows}_{n_samples}/{species}_{factors}.txt"
+        "files/factors/{windows}_{n_samples}/{species}_{factors}.txt"
     output:
         "files/results/{windows}_{n_samples}_{kmer}_{factors}/{species}_correlation.png"
     shell:
-        "Rscript ../scripts/cor_dist_factor.R {output} {input} FCGRs \
+        "Rscript scripts/cor_dist_factor.R {output} {input} FCGRs \
             {wildcards.factors} {wildcards.windows} {wildcards.kmer}"
 
 rule MDS:
     input:
         "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_fit.RData",
-        "../files/factors/{windows}_{n_samples}/{species}_{factors}.txt"
+        "files/factors/{windows}_{n_samples}/{species}_{factors}.txt"
     output:
         "files/results/{windows}_{n_samples}_{kmer}_{factors}/{species}_MDS.png"
     shell:
-        "Rscript ../scripts/MDS_dist_factor.R {output} {input} FCGRs \
+        "Rscript scripts/MDS_dist_factor.R {output} {input} FCGRs \
             {wildcards.factors} {wildcards.windows} {wildcards.kmer}"
 
 rule ratio_figure:
     input:
         "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData",
-        "../files/factors/{windows}_ratios/{species}.txt"
+        "files/factors/{windows}_{n_samples}/ratios/{species}.txt"
     output:
-        "files/results/{windows}_{n_samples}_{kmer}_ratios/{species}.png"
+        "files/results/{windows}_{n_samples}_{kmer}/{species}_ratios.png"
     shell:
-        "Rscript ../scripts/nucleotide_ratio_figures.R {output} {input} \
+        "Rscript scripts/nucleotide_ratio_figures.R {output} {input} \
             {wildcards.windows} FCGRs {wildcards.kmer}"
-
-rule linear_model:
-    input:
-        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_fit.RData",
-        "../files/factors/{windows}_{n_samples}/{species}_RR.txt",
-        "../files/factors/{windows}_{n_samples}/{species}_LCR.txt",
-        "../files/factors/{windows}_{n_samples}/{species}_CDS.txt"
-    output:
-        "files/results/{windows}_{n_samples}_{kmer}_LM/{species}_model.txt",
-        "files/results/{windows}_{n_samples}_{kmer}_LM/{species}_plot.png"
-
-    shell:
-        "Rscript ../scripts/MDS_dist_factor.R {output} {input} FCGRs \
-            {wildcards.factors} {wildcards.windows} {wildcards.kmer}"

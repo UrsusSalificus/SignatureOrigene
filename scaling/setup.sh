@@ -159,8 +159,8 @@ intro="Please chose among the following list which factor should be included in 
 table="../input/scaling_specific/table_factors.txt"
 choice=fixed
 good_inputs="../input/scaling_specific/good_factors.txt"
-abbrev="../input/abbrev_factors.txt"
-out_dir="config/scaling_specific/factors/"
+abbrev="../input/scaling_specific/abbrev_factors.txt"
+out_dir="config/factors/"
 nice="../input/scaling_specific/all_factors.txt"
 
 confirm
@@ -274,7 +274,7 @@ for each_species in $SPECIES; do
                         # If we want to have a look at the ratios only, use ratio end rule
                         if [[ $each_figures == 'ratios' ]] ; then
                             snakemake $snakemake_arguments \
-                                files/results/$each_window\_$each_sample\_$each_kmer\_ratios/$each_species.png
+                                files/results/$each_window\_$each_sample\_$each_kmer/$each_species\_ratios.png
                         # If feature = recombination rate, do not compute for S. cerevisiae and E. coli
                         elif [[ $each_factor == 'RR' ]] && \
                         ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
