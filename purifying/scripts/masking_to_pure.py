@@ -6,6 +6,7 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 import sys
 import os
+import numpy as np
 
 __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
@@ -59,6 +60,9 @@ def fetch_fasta(fasta_file):
     return (records)
 
 
+###
+# Reading line varies in between species table (repeats vs features)
+###
 def reading_line(factor_type, feature_table):
     if factor_type == 'repeats':
         return feature_table.readline().rsplit()
@@ -66,6 +70,10 @@ def reading_line(factor_type, feature_table):
         return feature_table.readline().split('\t')
 
 
+###
+# Will output True if the line contain the right factor (and on the + strand for feature table)
+# Will work differently depending on whether working on repeats or features
+###
 def True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
     # Watch out for commentaries (thus length 1)
     if len(actual_line) > 1:
@@ -79,16 +87,26 @@ def True_if_right_factor_strand(factor_type, actual_line, feature_column, featur
         return False
 
 
-def extract_factor(records, factor, factor_type, species_table, output, id_column, feature_column, feature_type,
-                   strand_column,
-                   start_column, end_column):
-    # Checking parent directory of output are present
-    checking_parent(output)
+###
+# Compute a proxy of each records composed of 0 (nucleotide != factor) and 1 (nucleotide == factor)
+# Inputs:
+#   - records : fetched sequence (fasta) of the species whole genome
+#   - factor_type : indicating if wants factor that are either repeats or features
+#   - feature_type : what are the pattern to look for in the factor/gene column
+#   - species_table : file containing the wanted factor (either RepeatMasker output or gff file)
+#   - *_column : various information related to the internal structure of the species_table file
+# Output:
+#   - A numpy array of n (number of different records in records) proxies
+#       - Each proxy contain m (number of nucleotides in the i record) values
+#       - Each value is either 0 to indicate that this factor is not involved in the wanted factor
+#           or 1 to indicate that this factor is linked to the wanted factor
+###
+def extract_factor(records, factor_type, feature_type, species_table, id_column, feature_column,
+                   strand_column, start_column, end_column):
+    # We will store the proxies of records in this list
+    proxies_records = list()
 
-    # We will store the records in this list
-    factor_records = list()
-
-    with open(species_table, 'r') as feature_table, open(output, 'w') as outfile:
+    with open(species_table, 'r') as feature_table:
         # Must skip the header (which differs in between feature_table and repeats:
         if factor_type == 'repeats':
             feature_table.readline()
@@ -142,44 +160,40 @@ def extract_factor(records, factor, factor_type, species_table, output, id_colum
                 for each_nucleotide in range(each_range[0], each_range[1]):
                     record_proxy[each_nucleotide] = 1
 
-            # We will find all non-overlapping ranges of the pure factors:
-            factor_only = str()
-            no_overlap_ranges = list()
-            i = 0
-            # Until the end of record
-            while True:
-                # We will catch any "index out of range" error -> end of document = break the while
-                try:
-                    while not record_proxy[i]:
-                        i += 1
-                    start = i
-                    # This will raise an error when at the end of record -> except -> break
-                    while record_proxy[i]:
-                        i += 1
-                    end = i
-                    no_overlap_ranges.append([start, end])
-                except IndexError:
-                    break
+            # Translate it to numpy array
+            record_proxy = np.asarray(record_proxy)
 
-            for each_range in no_overlap_ranges:
-                factor_only += records[each_record].seq[each_range[0]:each_range[1]]
+            # Add the proxy of factor to the list
+            proxies_records.append(record_proxy)
+    return proxies_records
 
-            new_record = SeqRecord(seq=factor_only, id='_'.join([factor, records[each_record].id]))
-            factor_records.append(new_record)
 
-        # We might end up with records which are too small
-        # In this case, we must concatenate them:
-        if any([len(each_record) < window_size for each_record in factor_records]):
-            concatenated_seq = str()
-            for each_record in factor_records:
-                concatenated_seq += each_record
-            concatenated_records = SeqRecord(seq=concatenated_seq.seq, id=factor)
+###
+# Extract from the proxy all the nucleotide that are from the wanted factor
+# Inputs:
+#   - records : fetched sequence (fasta) of the species whole genome
+#   - proxies_records : list of proxies obtained through the extract_factor function
+#   - factor : name/abbreviation of the wanted factor
+# Output:
+#   - A list of SeqRecords of pure factor
+###
+def extract_pure_ranges(records, proxies_records, factor):
+    # We will store the pure nucleotides records
+    factor_records = list()
 
-            # Write the new list of records
-            SeqIO.write(concatenated_records, outfile, "fasta")
-        else:
-            # No need to concatenate -> directly write the new list of records
-            SeqIO.write(factor_records, outfile, "fasta")
+    for each_proxy in range(len(proxies_records)):
+        # We will find all non-overlapping ranges of the pure factors:
+        # Only difference with masked -> == 1
+        no_overlap_ranges = np.where(proxies_records[each_proxy] == 1)
+
+        # Translate the record in numpy array
+        record_array = np.array(list(str(records[each_proxy].seq)))
+        factor_only = ''.join(record_array[no_overlap_ranges])
+
+        new_record = SeqRecord(seq=factor_only, id=factor)
+        factor_records.append(new_record)
+
+    return factor_records
 
 
 if factor_type == 'repeats':
@@ -214,5 +228,28 @@ else:
 # Fetch all the records from this species fasta
 records = fetch_fasta(species_genome)
 
-extract_factor(records, factor, factor_type, species_table, output, id_column, feature_column, feature_type,
-               strand_column, start_column, end_column)
+# Compute factor proxy of records
+proxies = extract_factor(records, factor_type, feature_type, species_table, id_column, feature_column,
+                         strand_column, start_column, end_column)
+
+# Compute records composed of only the factor's nucleotides
+pure_records = extract_pure_ranges(records, proxies, factor)
+
+# Checking parent directory of output are present
+checking_parent(output)
+
+# Writing the fasta file
+with open(output, 'w') as outfile:
+    # We might end up with records which are too small
+    # In this case, we must concatenate them:
+    if any([len(each_record) < window_size for each_record in pure_records]):
+        concatenated_seq = str()
+        for each_record in pure_records:
+            concatenated_seq += each_record
+        concatenated_records = SeqRecord(seq=concatenated_seq.seq, id=factor)
+
+        # Write the new list of records
+        SeqIO.write(concatenated_records, outfile, "fasta")
+    else:
+        # No need to concatenate -> directly write the new list of records
+        SeqIO.write(pure_records, outfile, "fasta")
