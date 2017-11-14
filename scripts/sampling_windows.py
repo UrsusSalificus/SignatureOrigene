@@ -120,6 +120,23 @@ def sample_windows(records, n_samples, window_size, outfile):
                     all_sample_records.append(each_resample)
                     to_resample = n_samples - len(all_sample_records)
 
+        # Must sort the records to be in the right order of both id and starting position
+        all_sample_ids = set()
+        for each_sample in all_sample_records:
+            sample_id = '_'.join([each_sample.id.split('_')[0], each_sample.id.split('_')[1]])
+            all_sample_ids.add(sample_id)
+        right_order_ids = [records[each].id for each in range(len(records)) if records[each].id in all_sample_ids]
+
+        ordered_all_samples_records = list()
+        for each_id in right_order_ids:
+            id_records = list()
+            for each_sample in all_sample_records:
+                sample_id = '_'.join([each_sample.id.split('_')[0], each_sample.id.split('_')[1]])
+                if sample_id == each_id:
+                    id_records.append(each_sample)
+            id_records.sort(key=lambda r: int(r.id.split('_')[2]))
+            ordered_all_samples_records.append(id_records)
+
     # Else, we will take all the available windows
     else:
         all_sample_records = list()

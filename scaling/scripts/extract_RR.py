@@ -54,7 +54,7 @@ def fetch_fasta(fasta_file):
     except:
         print("Cannot open %s, check path!" % fasta_file)
         sys.exit()
-    return (records)
+    return records
 
 
 ###
@@ -67,7 +67,7 @@ def fetch_fasta(fasta_file):
 #   - A BED file, each row corresponds to a window, and on each row one can find the record ids and
 #       boundaries of the window.
 ###
-def all_coordinates_BED (records, window_size, species_temp):
+def all_coordinates_BED(records, window_size, species_temp):
     with open(species_temp, 'w') as outfile:
         for each_record in range(len(records)):
             if len(records[each_record].seq) > window_size:
@@ -81,14 +81,14 @@ def all_coordinates_BED (records, window_size, species_temp):
                         to_write = '\t'.join([records[each_record].id, str(start), str(end)])
                         outfile.write(to_write + '\n')
 
+
 # Fetch all the records from this species fasta
 records = fetch_fasta(species_genome)
 
 all_coordinates_BED(records, window_size, species_temp)
 
 # Actual averaging of the spline fit of the recombination rates, for each windows
-subprocess.call(['Rscript', '../scripts/extract_RR.R', species_temp, species_RR, output])
+subprocess.call(['Rscript', 'scripts/extract_RR.R', species_temp, species_RR, output])
 
 # Will remove the temp file
 os.remove(species_temp)
-
