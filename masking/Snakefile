@@ -1,5 +1,9 @@
 ruleorder: finding_center > masked_FCGR
 
+################################################################################
+### Part 0) Downloading part
+################################################################################
+
 rule download_genomes:
     output:
         "../data/genomes/{species}_genomes.fna"
@@ -24,19 +28,14 @@ rule download_rr:
     shell:
         "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
 
-rule sampling:
-    input:
-        "../data/genomes/{species}_genomes.fna"
-    output:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna"
-    shell:
-        "python3 ../scripts/sampling_windows.py {input} {wildcards.n_samples} \
-            {wildcards.windows} {output}"
+################################################################################
+### Part A) From whole genome to masked factor vs center distance matrix
+################################################################################
 
 rule finding_center:
     input:
         "../scaling/files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_FCGRs.txt",
-        "../scaling/files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData"
+        "../scaling/files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData"
     output:
         "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_center_FCGRs.txt"
     shell:
@@ -44,25 +43,34 @@ rule finding_center:
 
 rule masking:
     input:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
+        "../data/genomes/{species}_genomes.fna",
         "../data/factors/repeats/{species}_repeats.txt",
         "../data/factors/features/{species}_feature_table.txt"
     output:
-        "data/genomes/{windows}_{n_samples}/{species}_{factors}_masked.fna"
+        "data/genomes/{windows}/{species}_{factors}_masked.fna"
     shell:
         "python3 scripts/masking_to_no_factor.py {wildcards.factors} \
             {wildcards.windows} {input} {output}"
 
+rule sampling:
+    input:
+        "data/genomes/{windows}/{species}_{factors}_masked.fna"
+    output:
+        "data/samples/{windows}_{n_samples}/{species}_{factors}_masked.fna"
+    shell:
+        "python3 ../scripts/sampling_windows.py {input} {wildcards.n_samples} \
+            {wildcards.windows} purifying {output}"
+
 rule masked_CGR:
     input:
-        "data/genomes/{windows}_{n_samples}/{species}_{factors}_masked.fna"
+        "data/samples/{windows}_{n_samples}/{species}_{factors}_masked.fna"
     output:
         "data/following/CGRs/{windows}_{n_samples}/{species}_{factors}_masked_done.txt"
     threads:
         99
     shell:
         "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
-            {threads} {output} {wildcards.factors}"
+            {wildcards.n_samples} {threads} {output}"
 
 rule masked_FCGR:
     input:
@@ -73,9 +81,8 @@ rule masked_FCGR:
         99
     shell:
         "python3 ../scripts/windowed_FCGR.py {input} {wildcards.species} \
-            {wildcards.windows} {wildcards.kmer} {threads} {output} \
-            {wildcards.factors}"
-
+            {wildcards.windows} {wildcards.kmer} {wildcards.n_samples} \
+            {threads} {output}"
 
 rule masked_concatenating:
     input:
@@ -90,11 +97,15 @@ rule masked_FCGRs_dist:
     input:
         "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_{factors}_masked_vs_center_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_{factors}_masked_vs_center_dist_matrix.RData"
+        "files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_{factors}_masked_vs_center_dist_matrix.RData"
     threads:
         99
     shell:
-        "Rscript ../scripts/pearson_distance.R {input} {output}"
+        "Rscript ../scripts/manhattan_distance.R {input} {output}"
+
+################################################################################
+### Part B) From pure factor FCGRs to pure factor vs center distance matrix
+################################################################################
 
 rule pure_concatenating:
     input:
@@ -109,11 +120,15 @@ rule pure_FCGRs_dist:
     input:
         "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_{factors}_pure_vs_center_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_{factors}_pure_vs_center_dist_matrix.RData"
+        "files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_{factors}_pure_vs_center_dist_matrix.RData"
     threads:
         99
     shell:
-        "Rscript ../scripts/pearson_distance.R {input} {output}"
+        "Rscript ../scripts/manhattan_distance.R {input} {output}"
+
+################################################################################
+### Part C) From sample FCGRs to sample vs sample center distance matrix
+################################################################################
 
 rule whole_concatenating:
     input:
@@ -128,11 +143,15 @@ rule whole_FCGRs_dist:
     input:
         "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_whole_vs_center_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_whole_vs_center_dist_matrix.RData"
+        "files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_whole_vs_center_dist_matrix.RData"
     threads:
         99
     shell:
-        "Rscript ../scripts/pearson_distance.R {input} {output}"
+        "Rscript ../scripts/manhattan_distance.R {input} {output}"
+
+################################################################################
+### Part D) Using all the distance matrices to produce figure
+################################################################################
 
 rule boxplots:
     output:

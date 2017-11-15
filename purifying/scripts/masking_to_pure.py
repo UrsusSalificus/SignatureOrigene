@@ -4,6 +4,7 @@
 """
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
 import sys
 import os
 import numpy as np
@@ -189,8 +190,9 @@ def extract_pure_ranges(records, proxies_records, factor):
         # Translate the record in numpy array
         record_array = np.array(list(str(records[each_proxy].seq)))
         factor_only = ''.join(record_array[no_overlap_ranges])
+        seq_factor = Seq(factor_only)
 
-        new_record = SeqRecord(seq=factor_only, id=factor)
+        new_record = SeqRecord(seq=seq_factor, id=factor)
         factor_records.append(new_record)
 
     return factor_records

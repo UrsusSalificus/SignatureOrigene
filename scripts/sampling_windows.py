@@ -18,8 +18,10 @@ species_genome = str(sys.argv[1])
 n_samples = int(sys.argv[2])
 # Wanted window size:
 window_size = int(sys.argv[3])
+# Type of analysis:
+analysis = str(sys.argv[4])
 # Output path:
-output = str(sys.argv[4])
+output = str(sys.argv[5])
 
 
 ###
@@ -36,6 +38,7 @@ def fetch_fasta(fasta_file):
         print("Cannot open %s, check path!" % fasta_file)
         sys.exit()
     return records
+
 
 ###
 # Given a list of start of windows, will fetch the sequences
@@ -81,11 +84,10 @@ def find_right_sample(records, window_size, sample_windows):
 #   - records : fetched sequence (fasta)
 #   - n_samples : number of sample windows
 #   - window_size : size of the wanted sample windows
-#   - outfile : path ot the output file
 # Output:
-#   - A fasta file containing all the windows in separate records
+#   - A SeqRecord full of the sample windows
 ###
-def sample_windows(records, n_samples, window_size, outfile):
+def sample_windows(records, n_samples, window_size):
     # How many windows can we fit into this genome
     max_number_windows = int(sum([math.floor(len(each.seq) / window_size) for each in records]))
 
@@ -99,7 +101,7 @@ def sample_windows(records, n_samples, window_size, outfile):
         sample_windows.sort()
 
         # We will remove these sampled windows from the available windows
-        # Easy case, sample_windows are diectly the indexes
+        # Easy case, sample_windows are directly the indexes
         all_windows_set = np.delete(all_windows_set, sample_windows)
 
         all_sample_records = find_right_sample(records, window_size, sample_windows)
@@ -120,25 +122,27 @@ def sample_windows(records, n_samples, window_size, outfile):
                     all_sample_records.append(each_resample)
                     to_resample = n_samples - len(all_sample_records)
 
-        # Must sort the records to be in the right order of both id and starting position
-        all_sample_ids = set()
-        for each_sample in all_sample_records:
-            sample_id = '_'.join([each_sample.id.split('_')[0], each_sample.id.split('_')[1]])
-            all_sample_ids.add(sample_id)
-        right_order_ids = [records[each].id for each in range(len(records)) if records[each].id in all_sample_ids]
-
-        ordered_all_samples_records = list()
-        for each_id in right_order_ids:
-            id_records = list()
+        # If we are scaling, we will have to match factor later on to each windows = must sort them
+        if analysis == 'scaling':
+            # Must sort the records to be in the right order of both id and starting position
+            all_sample_ids = set()
             for each_sample in all_sample_records:
                 sample_id = '_'.join([each_sample.id.split('_')[0], each_sample.id.split('_')[1]])
-                if sample_id == each_id:
-                    id_records.append(each_sample)
-            id_records.sort(key=lambda r: int(r.id.split('_')[2]))
-            for each_record in range(len(id_records)):
-                ordered_all_samples_records.append(id_records[each_record])
+                all_sample_ids.add(sample_id)
+            right_order_ids = [records[each].id for each in range(len(records)) if records[each].id in all_sample_ids]
 
-        all_sample_records = ordered_all_samples_records
+            ordered_all_samples_records = list()
+            for each_id in right_order_ids:
+                id_records = list()
+                for each_sample in all_sample_records:
+                    sample_id = '_'.join([each_sample.id.split('_')[0], each_sample.id.split('_')[1]])
+                    if sample_id == each_id:
+                        id_records.append(each_sample)
+                id_records.sort(key=lambda r: int(r.id.split('_')[2]))
+                for each_record in range(len(id_records)):
+                    ordered_all_samples_records.append(id_records[each_record])
+
+            all_sample_records = ordered_all_samples_records
 
     # Else, we will take all the available windows
     else:
@@ -156,11 +160,13 @@ def sample_windows(records, n_samples, window_size, outfile):
                     window_sample_record = SeqRecord(seq=window_sample_seq, id=record_id + '_' + str(start))
                     all_sample_records.append(window_sample_record)
 
-    # Write these new records of window sample as a fasta file
-    SeqIO.write(all_sample_records, outfile, "fasta")
+    return all_sample_records
 
 
 # Fetch the whole genome records
 records = fetch_fasta(species_genome)
 
-sample_windows(records, n_samples, window_size, output)
+all_sample_records = sample_windows(records, n_samples, window_size)
+
+# Write these new records of window sample as a fasta file
+SeqIO.write(all_sample_records, output, "fasta")

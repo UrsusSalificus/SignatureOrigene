@@ -272,7 +272,7 @@ for each_species in $SPECIES; do
                         snakemake $snakemake_arguments \
                             files/FCGRs/$each_window\_$each_sample\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
                         cd $go_back
-                        # Which will then be used to find the pure VS center distance matrix
+                        # B.3) Which will then be used to find the pure VS center distance matrix
                         snakemake $snakemake_arguments \
                             files/distances/manhattan/$each_window\_$each_sample\_$each_kmer/$each_species\_$each_factor\_pure_vs_center_dist_matrix.RData
                     fi

@@ -145,7 +145,6 @@ EOF
 intro="Please chose the sample size (number of windows per species)"
 table="config/temp/table.txt"
 cat << "EOF" > $table
-________________________________________________________________________________
 Type sample size (eg. 500 1000 for both 500 and 1000 windows per species), then press
 [ENTER]:
 Note: if a species genome is not big enough for the wanted number of sample windows
@@ -200,7 +199,6 @@ EOF
 intro="Please chose the size of the word (k-mer) for the FCGR computation"
 table="config/temp/table.txt"
 cat << "EOF" > $table
-________________________________________________________________________________
 Type k size (eg. 4 7 for both k=4 and k=7), then press [ENTER]:
 Here are displayed the minimum window size, for each to have at least a chance
 to see each k-mer once:
@@ -305,15 +303,16 @@ for each_species in $SPECIES; do
                 if [[ $each_figure == 'MDS' ]] ; then
                     # From the concatenated FCGRs of all factors in each species, to the MDS these factors
                     # (concatenating FCGRs of factor + whole -> distance matrix -> fitting -> MDS)
-                    snakemake $snakemake_arguments files/results/$each_window\_$each_kmer/$each_species\_MDS_all_factors.png
+                    snakemake $snakemake_arguments \
+                        files/results/$each_window\_$each_sample\_$each_kmer/$each_species\_MDS_all_factors.png
                 elif [[ $each_figure == 'PC' ]] ; then
                     # Comparing the concatenated FCGRs of all factors between species
                     # Only fo this if it doesn't already exist (reverse order of species/comparison)
                     for each_comparison in $SPECIES; do
                         if [[ $each_comparison != $each_species ]] && \
-                            [[ ! -f files/distances/manhattan/$each_window\_$each_kmer/pairwise_concatenated/$each_comparison\_vs_$each_species\_fit.RData ]] ; then
+                            [[ ! -f files/distances/manhattan/$each_window\_$each_sample\_$each_kmer/pairwise_concatenated/$each_comparison\_vs_$each_species\_fit.RData ]] ; then
                             snakemake $snakemake_arguments \
-                            files/distances/manhattan/$each_window\_$each_kmer/pairwise_concatenated/$each_species\_vs_$each_comparison\_fit.RData
+                            files/distances/manhattan/$each_window\_$each_sample\_$each_kmer/pairwise_concatenated/$each_species\_vs_$each_comparison\_fit.RData
                         fi
                     done
                 fi
