@@ -123,7 +123,6 @@ EOF
 intro="Please chose the sample size (number of windows per species)"
 table="config/temp/table.txt"
 cat << "EOF" > $table
-________________________________________________________________________________
 Type sample size (eg. 500 1000 for both 500 and 1000 windows per species), then press
 [ENTER]:
 Note: if a species genome is not big enough for the wanted number of sample windows
@@ -179,7 +178,6 @@ EOF
 intro="Please chose the size of the word (k-mer) for the FCGR computation"
 table="config/temp/table.txt"
 cat << "EOF" > $table
-________________________________________________________________________________
 Type k size (eg. 4 7 for both k=4 and k=7), then press [ENTER]:
 Here are displayed the minimum window size, for each to have at least a chance
 to see each k-mer once:
@@ -274,7 +272,7 @@ for each_species in $SPECIES; do
                         # If we want to have a look at the ratios only, use ratio end rule
                         if [[ $each_figures == 'ratios' ]] ; then
                             snakemake $snakemake_arguments \
-                                files/results/$each_window\_$each_sample\_$each_kmer/$each_species\_ratios.png
+                                files/results/ratios/$each_window\_$each_sample\_$each_kmer/$each_species\.png
                         # If feature = recombination rate, do not compute for S. cerevisiae and E. coli
                         elif [[ $each_factor == 'RR' ]] && \
                         ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then

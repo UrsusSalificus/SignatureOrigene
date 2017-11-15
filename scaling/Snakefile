@@ -40,7 +40,7 @@ rule CGR:
         99
     shell:
         "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
-            {threads} {output}"
+            {wildcards.n_samples} {threads} {output}"
 
 rule factor_extract:
     input:
@@ -59,10 +59,11 @@ rule ratio_extract:
     input:
         "../data/following/CGRs/{windows}_{n_samples}/{species}_done.txt"
     output:
-        "files/factors/{windows}_{n_samples}/ratios/{species}.txt"
+        "files/ratios/{windows}_{n_samples}/{species}_ratios.txt"
     shell:
         "python3 scripts/extract_nucleotide_ratios.py {input} \
-            {wildcards.species} {wildcards.windows} {threads} {output}"
+            {wildcards.species} {wildcards.windows} {wildcards.n_samples} \
+            {threads} {output}"
 
 rule FCGR:
     input:
@@ -73,23 +74,24 @@ rule FCGR:
         99
     shell:
         "python3 ../scripts/windowed_FCGR.py {input} {wildcards.species} \
-            {wildcards.windows} {wildcards.kmer} {threads} {output}"
+            {wildcards.windows} {wildcards.kmer} {wildcards.n_samples} \
+            {threads} {output}"
 
 rule FCGR_dist:
     input:
         "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_FCGRs.txt"
     output:
-        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData"
+        "files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData"
     threads:
         99
     shell:
-        "Rscript ../scripts/pearson_distance.R {input} {output}"
+        "Rscript ../scripts/manhattan_distance.R {input} {output}"
 
 rule fitting:
     input:
-        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData"
+        "files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData"
     output:
-        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_fit.RData"
+        "files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_fit.RData"
     threads:
         99
     shell:
@@ -97,30 +99,32 @@ rule fitting:
 
 rule correlation:
     input:
-        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData",
+        "files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData",
         "files/factors/{windows}_{n_samples}/{species}_{factors}.txt"
     output:
         "files/results/{windows}_{n_samples}_{kmer}_{factors}/{species}_correlation.png"
     shell:
         "Rscript scripts/cor_dist_factor.R {output} {input} FCGRs \
-            {wildcards.factors} {wildcards.windows} {wildcards.kmer}"
+            {wildcards.factors} {wildcards.windows} {wildcards.n_samples} \
+            {wildcards.species} {wildcards.kmer}"
 
 rule MDS:
     input:
-        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_fit.RData",
+        "files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_fit.RData",
         "files/factors/{windows}_{n_samples}/{species}_{factors}.txt"
     output:
         "files/results/{windows}_{n_samples}_{kmer}_{factors}/{species}_MDS.png"
     shell:
         "Rscript scripts/MDS_dist_factor.R {output} {input} FCGRs \
-            {wildcards.factors} {wildcards.windows} {wildcards.kmer}"
+            {wildcards.factors} {wildcards.windows} {wildcards.n_samples} \
+            {wildcards.species} {wildcards.kmer}"
 
 rule ratio_figure:
     input:
-        "files/distances/pearson/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData",
-        "files/factors/{windows}_{n_samples}/ratios/{species}.txt"
+        "files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData",
+        "files/ratios/{windows}_{n_samples}/{species}_ratios.txt"
     output:
-        "files/results/{windows}_{n_samples}_{kmer}/{species}_ratios.png"
+        "files/results/ratios/{windows}_{n_samples}_{kmer}/{species}.png"
     shell:
         "Rscript scripts/nucleotide_ratio_figures.R {output} {input} \
             {wildcards.windows} FCGRs {wildcards.kmer}"

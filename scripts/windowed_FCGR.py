@@ -21,10 +21,12 @@ species = str(sys.argv[2])
 window_size = int(sys.argv[3])
 # Wanted k-mer size:
 k_size = int(sys.argv[4])
+# Sample size:
+sample_size = int(sys.argv[5])
 # Wanted number of threads at the same time:
-n_threads = int(sys.argv[5])
+n_threads = int(sys.argv[6])
 # Output file:
-output = str(sys.argv[6])
+output = str(sys.argv[7])
 
 
 ###
@@ -273,12 +275,12 @@ def which_directory(follow_up, window_size, species):
     if follow_up.split('/')[0] == '..':
         # We are in the scaling case, where we use the genome "as it is"
         # We store CGRs in source directory:
-        seq_directory = '/'.join(['../files/CGRs', str(window_size), species])
+        seq_directory = '/'.join(['../files/CGRs', '_'.join([str(window_size), str(sample_size)]), species])
     else:
         # We are in the masking/purifying case, where we used sequence of the factor only
         # We store CGRs directly in the purifying directory
         factor = follow_up.split('_')[2]
-        seq_directory = '/'.join(['files/CGRs', str(window_size), species, factor])
+        seq_directory = '/'.join(['files/CGRs', '_'.join([str(window_size), str(sample_size)]), species, factor])
     return seq_directory
 
 
@@ -287,11 +289,16 @@ checking_parent(output)
 with open(output, 'w') as outfile:
     # Get all the different CGRs files path
     all_records = extract_path(which_directory(follow_up, window_size, species) + '/', '*')
+    # Maintain the initial order of sampling (important for the linked factors)
+    all_records.sort(key=lambda r: int(r.split('_')[-1]))
     FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
                                        (k_size, all_records[each_record], '')
                                        for each_record in range(len(all_records)))
     # Take all the records names from the file paths
-    record_names = [os.path.basename(each) for each in all_records]
+    record_names = list()
+    for each_record in all_records:
+        file_name = os.path.basename(each_record).split('_')
+        record_names.append('_'.join([file_name[0], file_name[1], file_name[2]]))
 
     # Write each region's genomic signature in a single file:
     for each_record in range(len(FCGRs)):
