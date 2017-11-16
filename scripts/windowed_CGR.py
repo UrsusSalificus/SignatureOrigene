@@ -3,7 +3,6 @@
 """This script compute CGR of all windows of a certain size, in all species
 """
 from Bio import SeqIO
-import math
 import sys
 import os
 from joblib import Parallel, delayed

@@ -4,9 +4,11 @@
 """
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
 import sys
 import math
 import numpy as np
+import re
 
 __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
@@ -46,11 +48,12 @@ def fetch_fasta(fasta_file):
 #   - records : fetched sequence (fasta)
 #   - window_size : size of the wanted sample windows
 #   - sample_windows : Numpy array of start of windows randomly sampled
+#   - analysis : type fo analysis currently doing
 # Output:
 #   - A list of Bio.SeqRecord, as long as the specific window only contains ACTG
 #   - May thus yield an empty list if all the sample_windows point to windows with N for example
 ###
-def find_right_sample(records, window_size, sample_windows):
+def find_right_sample(records, window_size, sample_windows, analysis):
     # This list will be fill by the window sample records
     all_sample_records = list()
 
@@ -66,10 +69,16 @@ def find_right_sample(records, window_size, sample_windows):
         try:
             while sample_windows[i] < record_n_windows + sum_n_windows:
                 start = (sample_windows[i] - sum_n_windows) * window_size
+                # If scaling, need both the record name + the start of the window for the factor extraction
+                if analysis == 'scaling':
+                    sample_id = record_id + '_' + str(start)
+                # Otherwise, the record id will be the name of the factor anyway -> no difference anymore
+                else:
+                    sample_id = record_id
                 window_sample_seq = records[each_record].seq[start:start + window_size]
                 # We must make sure there is only ATCG in this sequence:
                 if not any([c not in 'ATCGatcg' for c in window_sample_seq]):
-                    window_sample_record = SeqRecord(seq=window_sample_seq, id=record_id + '_' + str(start))
+                    window_sample_record = SeqRecord(seq=window_sample_seq, id=sample_id)
                     all_sample_records.append(window_sample_record)
                 i += 1
         except IndexError:
@@ -104,12 +113,17 @@ def sample_windows(records, n_samples, window_size):
         # Easy case, sample_windows are directly the indexes
         all_windows_set = np.delete(all_windows_set, sample_windows)
 
-        all_sample_records = find_right_sample(records, window_size, sample_windows)
+        all_sample_records = find_right_sample(records, window_size, sample_windows, analysis)
         to_resample = n_samples - len(all_sample_records)
 
         while to_resample != 0:
-            resample_windows = np.random.choice(all_windows_set, size=to_resample, replace=False)
-            resample_windows.sort()
+            # As we delete windows with unknown nucleotides, we may end up with an empty set of remaining windows
+            if len(all_windows_set) >= to_resample:
+                resample_windows = np.random.choice(all_windows_set, size=to_resample, replace=False)
+                resample_windows.sort()
+            # If it is the case, we must keep what we already have and return the incomplete records
+            else:
+                break
 
             # We will remove these re-sampled windows from the available windows
             # More complicated case: must now find to which index the resample_windows correspond to
@@ -148,16 +162,29 @@ def sample_windows(records, n_samples, window_size):
     else:
         all_sample_records = list()
         for each_record in range(len(records)):
-            record_id = records[each_record].id
+            # How many window for this specific record?
             n_windows = int(math.floor(len(records[each_record].seq) / window_size))
+            # Now we need id fo the record to be: record_id_start_of_the_window
             names = [records[each_record].id] * n_windows
             windows = np.arange(0, n_windows * window_size, window_size)
+            # Paste the two
             ids = [m + '_' + str(n) for m, n in zip(names, windows)]
             for each_sample in ids:
-                start = int(each_sample.split('_')[2])
+                # The last element is the start of the window
+                start = int(each_sample.split('_')[-1])
                 window_sample_seq = records[each_record].seq[start:start + window_size]
-                if not any([c not in 'ATCGatcg' for c in window_sample_seq]):
-                    window_sample_record = SeqRecord(seq=window_sample_seq, id=record_id + '_' + str(start))
+                # If using scaling, must be sure to keep the record as it is + not unknown nucleotides
+                if analysis == 'scaling':
+                    if not any([c not in 'ATCGatcg' for c in window_sample_seq]):
+                        window_sample_record = SeqRecord(seq=window_sample_seq, id=each_sample)
+                        all_sample_records.append(window_sample_record)
+                # Else we already created many random new k-mer by copy-pasting:
+                # creating some more by removing N is not a problem anymore
+                else:
+                    window_sample_seq = re.sub('[^ATCGatcg]', '', str(window_sample_seq))
+                    window_sample_seq = Seq(window_sample_seq)
+                    sample_id = each_sample.split('_')[0]
+                    window_sample_record = SeqRecord(seq=window_sample_seq, id=sample_id)
                     all_sample_records.append(window_sample_record)
 
     return all_sample_records
