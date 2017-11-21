@@ -62,7 +62,7 @@ def checking_parent(file_path):
 #           Note: if empty, will return the FCGR instead of writing a file.
 # Output:
 #   - Either a file, where each k-mer frequencies are separated by \t
-#   - Or the k-mer frequencies stocked ias a list
+#   - Or the k-mer frequencies stocked as a list
 ###
 def FCGR_from_CGR(k_size, CGR, outfile):
     #####################
@@ -298,7 +298,8 @@ with open(output, 'w') as outfile:
     record_names = list()
     for each_record in all_records:
         file_name = os.path.basename(each_record).split('_')
-        record_names.append('_'.join([file_name[0], file_name[1], file_name[2]]))
+        # Remove the last bit (used to know the CGR files order, not useful in the FCGRs file)
+        record_names.append('_'.join(file_name[:-1]))
 
     # Write each region's genomic signature in a single file:
     for each_record in range(len(FCGRs)):

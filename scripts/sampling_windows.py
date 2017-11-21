@@ -130,7 +130,7 @@ def sample_windows(records, n_samples, window_size):
             for each in resample_windows:
                 all_windows_set = np.delete(all_windows_set, np.where(all_windows_set == each))
 
-            resample_records = find_right_sample(records, window_size, resample_windows)
+            resample_records = find_right_sample(records, window_size, resample_windows, analysis)
             if resample_records:
                 for each_resample in resample_records:
                     all_sample_records.append(each_resample)
