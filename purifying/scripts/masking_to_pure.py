@@ -87,7 +87,7 @@ def build_proxy(record_ranges, factor_only_length):
     with open(record_ranges, 'r') as range_file:
         for each_range in range_file:
             line_range = range(int(each_range.split()[0]), int(each_range.split()[1]) + 1)
-            # For each nucleotide from start to end of the CDS:
+            # For each nucleotide from start to end of the factor:
             for index, item in enumerate(line_range):
                 record_proxy[index + end_previous] = item
             end_previous += len(line_range)
@@ -117,7 +117,7 @@ def count_pure_record_length(record, proxies_directory):
 #   - records : fetched sequence (fasta)
 #   - window_size : size of the wanted sample windows
 #   - sample_windows : Numpy array of start of windows randomly sampled
-#   - analysis : type fo analysis currently doing
+#   - factor_record_lengths : length of all the factor only records
 # Output:
 #   - A list of Bio.SeqRecord, as long as the specific window only contains ACTG
 #   - May thus yield an empty list if all the sample_windows point to windows with N for example
@@ -168,11 +168,12 @@ def find_right_sample(records, window_size, sample_windows, factor_record_length
 ###
 # Extract from the proxy all the nucleotide that are from the wanted factor
 # Inputs:
-#   - numpy_record : the record nucleotide sequence as numpy array
-#   - record_proxy : proxy obtained through the build_proxy function
-#   - factor : name/abbreviation of the wanted factor
+#   - records : fetched sequence (fasta)
+#   - proxies_directory : directory of the proxies obtained through the factor_proxies script
+#   - window_size : size of the wanted sample windows
+#   - n_samples : wantted number of sample windows
 # Output:
-#   - A SeqRecord of pure factor
+#   - A list of n samples as SeqRecords pure factor
 ###
 def sampling_using_proxies(records, proxies_directory, window_size, n_samples):
     # Find all the pure record total lengths, before any sampling
@@ -250,7 +251,7 @@ def sampling_using_proxies(records, proxies_directory, window_size, n_samples):
             factor_seq = str(''.join([c for c in factor_seq if c in 'ATCGatcg']))
 
             # How many window for this specific record?
-            record_n_windows = math.floor(len(factor_seq) / window_size)
+            record_n_windows = int(math.floor(len(masked_seq) / window_size))
 
             # For each sample, extract the right nucleotides and append it
             for each_sample in range(record_n_windows):

@@ -116,6 +116,7 @@ def True_if_right_factor_strand(factor_type, actual_line, feature_column, featur
 ###
 def extract_factor(records, factor_type, feature_type, species_table, id_column, feature_column,
                    strand_column, start_column, end_column, output):
+    # Note: we always add -1 to make it compatible the pythonic start of counting at 0!
     if not output:
         # We will store the proxies of records in this list
         proxies_records = list()
@@ -145,7 +146,7 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
                     actual_line = each_line.split('\t')
                     if True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type,strand_column) \
                             and records[each_record].id == actual_line[id_column]:
-                        all_ranges.add((int(actual_line[start_column]), int(actual_line[end_column])))
+                        all_ranges.add((int(actual_line[start_column]) - 1, int(actual_line[end_column]) - 1))
             # Any other factor than than UTR does not have this problem -> slightly faster version:
             else:
                 # Whenever we are not already at our chromosome part -> skip until at it
@@ -158,7 +159,7 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
                     actual_line = reading_line(factor_type, feature_table)
 
                 # This line will be the first result
-                all_ranges.add((int(actual_line[start_column]), int(actual_line[end_column])))
+                all_ranges.add((int(actual_line[start_column]) - 1, int(actual_line[end_column]) - 1))
 
                 # Continue the search
                 actual_line = reading_line(factor_type, feature_table)
@@ -167,7 +168,7 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
                 while records[each_record].id == actual_line[id_column]:
                     # Only do this for wanted feature
                     if True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
-                        all_ranges.add((int(actual_line[start_column]), int(actual_line[end_column])))
+                        all_ranges.add((int(actual_line[start_column]) - 1, int(actual_line[end_column]) - 1))
                         # Continue searching
                         actual_line = reading_line(factor_type, feature_table)
                     # If it is not our factor, just continue the search

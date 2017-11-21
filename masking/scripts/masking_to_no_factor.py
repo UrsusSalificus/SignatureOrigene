@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""This script compute k-mer frequencies using CGR of all windows of a certain size
+""" Masking to have nucleotides NOT composed of the wanted factor
 """
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
@@ -8,6 +8,8 @@ from Bio.Seq import Seq
 import sys
 import os
 import numpy as np
+import math
+import itertools
 
 __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
@@ -17,17 +19,21 @@ __license__ = "MIT"
 factor = str(sys.argv[1])
 # Wanted window size:
 window_size = int(sys.argv[2])
+# Sample size:
+n_samples = int(sys.argv[3])
 # Species genome path:
-species_genome = str(sys.argv[3])
+species_genome = str(sys.argv[5])
+# Species abbreviation:
+species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Species feature table path, depends on the type of factor:
 if factor in ['LCR', 'TE', 'tandem']:
-    species_table = str(sys.argv[4])
+    species_table = str(sys.argv[6])
     factor_type = 'repeats'
 elif factor in ['CDS', 'RNA', 'intron', 'UTR']:
-    species_table = str(sys.argv[5])
+    species_table = str(sys.argv[7])
     factor_type = 'features'
-# Output path:
-output = str(sys.argv[6])
+# Output file path
+output = str(sys.argv[8])
 
 
 ###
@@ -61,190 +67,229 @@ def fetch_fasta(fasta_file):
     return (records)
 
 
-def reading_line(factor_type, feature_table):
-    if factor_type == 'repeats':
-        return feature_table.readline().rsplit()
-    else:
-        return feature_table.readline().split('\t')
-
-
-def True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
-    # Watch out for commentaries (thus length 1)
-    if len(actual_line) > 1:
-        # If bigger than one -> feature line
-        if factor_type == 'repeats':
-            return actual_line[feature_column].split('/')[0].strip('?') in feature_type
-        else:
-            return actual_line[feature_column] in feature_type and actual_line[strand_column] == '+'
-    else:
-        # Else we know it is a commentary = not the right factor...
-        return False
+###
+# Translate a list of integers into a list of all the ranges found in this list of integers
+###
+def as_ranges(list_of_integers):
+    for p in itertools.groupby(enumerate(list_of_integers), lambda x_y: x_y[1]-x_y[0]):
+        b = list(p[1])
+        yield b[0][1], b[-1][1]
 
 
 ###
-# Compute a proxy of each records composed of 0 (nucleotide != factor) and 1 (nucleotide == factor)
+# Build a numpy proxy record of all the indexes where there is NOT the wanted factor, using the record ranges
+###
+def build_proxy(record_ranges, masked_only_length):
+    # This list will contain all the indexes of nucleotide that are within a factor
+    record_proxy = np.zeros(masked_only_length, dtype=np.int64)
+
+    end_previous_range = 0
+    keep_track = 0
+    with open(record_ranges, 'r') as range_file:
+        for each_range in range_file:
+            line_range = [int(each_range.split()[0]), int(each_range.split()[1]) + 1]
+
+            if end_previous_range == 0:
+                start = 0
+            else:
+                start = end_previous_range
+            end = line_range[0] - 1
+            non_factor_range = range(start, end)
+
+            # For each nucleotide from start to end of the factor:
+            for index, item in enumerate(non_factor_range):
+                record_proxy[index + keep_track] = item
+            end_previous_range = line_range[1]
+            keep_track += len(non_factor_range)
+
+    # We probably don't have factors ranging up to the end of the record sequence -> must add this last range
+    if keep_track < masked_only_length:
+        last_range = range(keep_track, masked_only_length)
+        for index, item in enumerate(last_range):
+            record_proxy[index + keep_track] = item
+
+    return record_proxy
+
+
+###
+# Count all the masked factor record length
+###
+def count_masked_record_length(record, proxies_directory):
+    record_ranges = proxies_directory + '/' + record.id
+
+    length_masked_factor = 0
+    with open(record_ranges, 'r') as all_ranges:
+        for each_range in all_ranges:
+            line_range = each_range.strip().split()
+            # Add the range length
+            length_masked_factor += len(range(int(line_range[0]), int(line_range[1]) + 1))
+
+    # We want the number of nucleotides which are NOT within the factor
+    length_masked_factor = len(record.seq) - length_masked_factor
+
+    return length_masked_factor
+
+
+###
+# Given a list of start of windows, will fetch the sequences
 # Inputs:
-#   - records : fetched sequence (fasta) of the species whole genome
-#   - factor_type : indicating if wants factor that are either repeats or features
-#   - feature_type : what are the pattern to look for in the factor/gene column
-#   - species_table : file containing the wanted factor (either RepeatMasker output or gff file)
-#   - *_column : various information related to the internal structure of the species_table file
+#   - records : fetched sequence (fasta)
+#   - window_size : size of the wanted sample windows
+#   - sample_windows : Numpy array of start of windows randomly sampled
+#   - factor_record_lengths : length of all the masked factor records
 # Output:
-#   - A numpy array of n (number of different records in records) proxies
-#       - Each proxy contain m (number of nucleotides in the i record) values
-#       - Each value is either 0 to indicate that this factor is not involved in the wanted factor
-#           or 1 to indicate that this factor is linked to the wanted factor
+#   - A list of Bio.SeqRecord, as long as the specific window only contains ACTG
+#   - May thus yield an empty list if all the sample_windows point to windows with N for example
 ###
-def extract_factor(records, factor_type, feature_type, species_table, id_column, feature_column,
-                   strand_column, start_column, end_column):
-    # We will store the proxies of records in this list
-    proxies_records = list()
+def find_right_sample(records, window_size, sample_windows, factor_record_lengths):
+    # This list will be fill by the window sample records
+    all_sample_records = list()
 
-    with open(species_table, 'r') as feature_table:
-        # Must skip the header (which differs in between feature_table and repeats:
-        if factor_type == 'repeats':
-            feature_table.readline()
-            feature_table.readline()
-            feature_table.readline()
-            actual_line = reading_line(factor_type, feature_table)
-        else:
-            line = feature_table.readline()
-            # Must skip the headers (varying length)
-            while line.startswith('#'):
-                line = feature_table.readline()
-            actual_line = line.split('\t')
+    i = 0  # keep track of at which window sample we are
+    sum_n_windows = 0  # keep track of the number of windows we went through
+    # Find the window which were randomly sampled in each record
+    for each_record in range(len(records)):
+        record = records[each_record]
+        record_ranges = proxies_directory + '/' + record.id
 
+        # Extract the indexes of nucleotide within the factor
+        masked_only_length = factor_record_lengths[each_record]
+        masked_only = build_proxy(record_ranges, masked_only_length)
+
+        record_n_windows = math.floor(len(masked_only) / window_size)
+        # We will catch any "index out of range" error -> end of document = break the while
+        try:
+            # While the sample windows are in this record
+            while sample_windows[i] < record_n_windows + sum_n_windows:
+                start = (sample_windows[i] - sum_n_windows) * window_size
+                sample_id = record.id
+
+                # Find the right index ranges of this sample window
+                sample_masked_only = masked_only[start:start + window_size]
+                sample_factor_only_ranges = list(as_ranges(sample_masked_only))
+
+                # For each of these index ranges -> find the nucleotide associated with
+                sample_seq = str()
+                for each_range in sample_factor_only_ranges:
+                    sample_seq += record.seq[each_range[0]:each_range[1]+1]
+
+                # We must make sure there is only ATCG in this sequence:
+                if not any([c not in 'ATCGatcg' for c in sample_seq]):
+                    window_sample_record = SeqRecord(seq=sample_seq, id=sample_id)
+                    all_sample_records.append(window_sample_record)
+                i += 1
+        except IndexError:
+            break
+        sum_n_windows += record_n_windows
+    return all_sample_records
+
+
+###
+# Extract from the proxy all the nucleotide that are from the wanted factor
+# Inputs:
+#   - records : fetched sequence (fasta)
+#   - proxies_directory : directory of the proxies obtained through the factor_proxies script
+#   - window_size : size of the wanted sample windows
+#   - n_samples : wantted number of sample windows
+# Output:
+#   - A list of n samples as SeqRecords of masked factor
+###
+def sampling_using_proxies(records, proxies_directory, window_size, n_samples):
+    # Find all the masked record total lengths, before any sampling
+    factor_record_lengths = list()
+    for each_record in range(len(records)):
+        factor_record_lengths.append(count_masked_record_length(records[each_record], proxies_directory))
+
+    # Find the maximum number of sample windows we can get out of these masked record
+    max_number_windows = int(sum([math.floor(each / window_size) for each in factor_record_lengths]))
+
+    # Check if big enough to have the wanted number of sample windows
+    # But if really big = some memory issues with these big sequences of masked factor
+    # As such, we will not create it, but use the ranges to sample inside this sequences of masked factor
+    if max_number_windows > n_samples:
+        # Set of all available windows
+        all_windows_set = np.array(range(max_number_windows))
+
+        # Randomly sampling among all the possible windows of the whole genome
+        sample_windows = np.random.choice(all_windows_set, size=n_samples, replace=False)
+        sample_windows.sort()
+
+        # We will remove these sampled windows from the available windows
+        # Easy case, sample_windows are directly the indexes
+        all_windows_set = np.delete(all_windows_set, sample_windows)
+
+        # Use the find_right_sample to extract the right sequence using this set of sample windows
+        all_sample_records = find_right_sample(records, window_size, sample_windows, factor_record_lengths)
+        # After finding the records, we must check if we did not lost some due to unknown nucleotide
+        to_resample = n_samples - len(all_sample_records)
+
+        # If it is the case, we must try while we still have some sample windows at hand
+        while to_resample != 0:
+            # As we delete windows with unknown nucleotides, we may end up with an empty set of remaining windows
+            if len(all_windows_set) >= to_resample:
+                resample_windows = np.random.choice(all_windows_set, size=to_resample, replace=False)
+                resample_windows.sort()
+            # If it is the case, we must keep what we already have and return the incomplete sample records
+            else:
+                break
+
+            # We will remove these re-sampled windows from the available windows
+            # More complicated case: must now find to which index the resample_windows correspond to
+            for each in resample_windows:
+                all_windows_set = np.delete(all_windows_set, np.where(all_windows_set == each))
+
+            resample_records = find_right_sample(records, window_size, resample_windows, factor_record_lengths)
+            # If did found some new sample windows, append it to the main list, else continue the search
+            if resample_records:
+                for each_resample in resample_records:
+                    all_sample_records.append(each_resample)
+                    to_resample = n_samples - len(all_sample_records)
+    # Else, the records are quite small, we will thus take all the available windows
+    # As size is not a problem anymore, we can easily build the sequences of masked factor
+    else:
+        # This list will contain all the sample records
+        all_sample_records = list()
+
+        # We will process the factor from all records
         for each_record in range(len(records)):
-            # Each element of this list represents a nucleotide
-            record_proxy = [0] * len(records[each_record].seq)
-            # This set will contain all the ranges of our wanted factor
-            all_ranges = set()
+            record = records[each_record]
+            record_ranges = proxies_directory + '/' + record.id
 
-            # Whenever we are not already at our chromosome part -> skip until at it
-            while records[each_record].id != actual_line[id_column]:
-                actual_line = reading_line(factor_type, feature_table)
+            # We need the indexes of all nucleotide that are within the wanted factor
+            masked_only_length = factor_record_lengths[each_record]
+            masked_only = build_proxy(record_ranges, masked_only_length)
 
-            # We also have to find the first time the wanted feature appears
-            while not True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type,
-                                                  strand_column):
-                actual_line = reading_line(factor_type, feature_table)
+            # We translate the whole genome sequence of this record as a numpy array to use with the indexes
+            numpy_seq = np.asarray([c for c in record.seq])
 
-            # This line will be the first result
-            all_ranges.add((int(actual_line[start_column]), int(actual_line[end_column])))
+            # Extract the sequence of nucleotides which are within the wanted factor
+            masked_seq = numpy_seq[masked_only]
 
-            # Continue the search
-            actual_line = reading_line(factor_type, feature_table)
+            # We already created many random new k-mer by copy-pasting:
+            # creating some more by removing N is not a problem anymore
+            masked_seq = str(''.join([c for c in masked_seq if c in 'ATCGatcg']))
 
-            # While from the actual record, continue extracting
-            while records[each_record].id == actual_line[id_column]:
-                # Only do this for wanted feature
-                if True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
-                    all_ranges.add((int(actual_line[start_column]), int(actual_line[end_column])))
-                    # Continue searching
-                    actual_line = reading_line(factor_type, feature_table)
-                # If it is not our factor, just continue the search
-                else:
-                    actual_line = reading_line(factor_type, feature_table)
-                # If we get at the last line, actual_line only have one empty entry
-                if not actual_line:
-                    break
+            # How many window for this specific record?
+            record_n_windows = int(math.floor(len(masked_seq) / window_size))
 
-            for each_range in all_ranges:
-                # For each nucleotide from start to end of the CDS:
-                for each_nucleotide in range(each_range[0], each_range[1]):
-                    record_proxy[each_nucleotide] = 1
+            # For each sample, extract the right nucleotides and append it
+            for each_sample in range(record_n_windows):
+                start = each_sample * window_size
 
-            # Translate it to numpy array
-            record_proxy = np.asarray(record_proxy)
+                sample_seq = Seq(masked_seq[start:start + window_size])
 
-            # Add the proxy of factor to the list
-            proxies_records.append(record_proxy)
-    return proxies_records
+                all_sample_records.append(SeqRecord(seq=sample_seq, id =record.id))
 
+    return all_sample_records
 
-###
-# Extract from the proxy all the nucleotide that are NOT from the wanted factor
-# Inputs:
-#   - records : fetched sequence (fasta) of the species whole genome
-#   - proxies_records : numpy array of proxies obtained through the extract_factor function
-#   - factor : name/abbreviation of the wanted factor
-# Output:
-#   - A list of SeqRecords of masked factor
-###
-def extract_masked_ranges(records, proxies_records, factor):
-    # We will store the masked nucleotides records
-    factor_records = list()
-
-    for each_proxy in range(len(proxies_records)):
-        # We will find all non-overlapping ranges of the masked factors:
-        # Only difference with pure -> == 0
-        no_overlap_ranges = np.where(proxies_records[each_proxy] == 0)
-
-        # Translate the record in numpy array
-        record_array = np.array(list(str(records[each_proxy].seq)))
-        factor_only = ''.join(record_array[no_overlap_ranges])
-        seq_factor = Seq(factor_only)
-
-        new_record = SeqRecord(seq=seq_factor, id=factor)
-        factor_records.append(new_record)
-
-    return factor_records
-
-
-if factor_type == 'repeats':
-    id_column = 4
-    feature_column = 10
-    # The feature type depends on the wanted feature
-    if factor == 'LCR':
-        feature_type = 'Low_complexity'
-    elif factor == 'TE':
-        feature_type = ['DNA', 'LINE', 'LTR', 'SINE', 'Retroposon']
-    elif factor == 'tandem':
-        feature_type = ['Satellite', 'Simple_repeat']
-    strand_column = False  # NOT USED
-    start_column = 5
-    end_column = 6
-else:
-    id_column = 0
-    feature_column = 2
-    # The feature type depends on the wanted feature
-    if factor == 'CDS':
-        feature_type = 'CDS'
-    elif factor == 'RNA':
-        feature_type = ['misc_RNA', 'ncRNA', 'rRNA', 'tRNA']
-    elif factor == 'intron':
-        feature_type = 'intron'
-    elif factor == 'UTR':
-        feature_type = ['five_prime_UTR', 'three_prime_UTR']
-    strand_column = 6
-    start_column = 3
-    end_column = 4
 
 # Fetch all the records from this species fasta
 records = fetch_fasta(species_genome)
 
-# Compute factor proxy of records
-proxies = extract_factor(records, factor_type, feature_type, species_table, id_column, feature_column,
-                         strand_column, start_column, end_column)
+# Directory containing all the ranges in all the different files
+proxies_directory = '/'.join(['../files/factor_proxies', str(window_size), species, factor])
 
-# Compute records composed of only the factor's nucleotides
-masked_records = extract_masked_ranges(records, proxies, factor)
+all_windows_samples = sampling_using_proxies(records, proxies_directory, window_size, n_samples)
 
-# Checking parent directory of output are present
-checking_parent(output)
-
-# Writing the fasta file
-with open(output, 'w') as outfile:
-    # We might end up with records which are too small
-    # In this case, we must concatenate them:
-    if any([len(each_record) < window_size for each_record in masked_records]):
-        concatenated_seq = str()
-        for each_record in masked_records:
-            concatenated_seq += each_record
-        concatenated_records = SeqRecord(seq=concatenated_seq.seq, id=factor)
-
-        # Write the new list of records
-        SeqIO.write(concatenated_records, outfile, "fasta")
-    else:
-        # No need to concatenate -> directly write the new list of records
-        SeqIO.write(masked_records, outfile, "fasta")
+# Writing the record as fasta file
+SeqIO.write(all_windows_samples, output, "fasta")

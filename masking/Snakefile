@@ -41,25 +41,28 @@ rule finding_center:
     shell:
         "python3 scripts/get_center_FCGRs.py {input} {output}"
 
-rule masking:
+rule factor_proxies:
     input:
         "../data/genomes/{species}_genomes.fna",
         "../data/factors/repeats/{species}_repeats.txt",
         "../data/factors/features/{species}_feature_table.txt"
     output:
-        "data/genomes/{windows}/{species}_{factors}_masked.fna"
+        "../data/following/factor_proxies/{windows}/{species}_{factors}_proxies_done.txt"
     shell:
-        "python3 scripts/masking_to_no_factor.py {wildcards.factors} \
+        "python3 ../scripts/factor_proxies.py {wildcards.factors} \
             {wildcards.windows} {input} {output}"
 
-rule sampling:
+rule masking:
     input:
-        "data/genomes/{windows}/{species}_{factors}_masked.fna"
+        "../data/following/factor_proxies/{windows}/{species}_{factors}_proxies_done.txt",
+        "../data/genomes/{species}_genomes.fna",
+        "../data/factors/repeats/{species}_repeats.txt",
+        "../data/factors/features/{species}_feature_table.txt"
     output:
         "data/samples/{windows}_{n_samples}/{species}_{factors}_masked.fna"
     shell:
-        "python3 ../scripts/sampling_windows.py {input} {wildcards.n_samples} \
-            {wildcards.windows} purifying {output}"
+        "python3 scripts/masking_to_no_factor.py {wildcards.factors} \
+            {wildcards.windows} {wildcards.n_samples} {input} {output}"
 
 rule masked_CGR:
     input:
