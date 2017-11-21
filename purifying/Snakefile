@@ -30,25 +30,28 @@ rule download_rr:
 ### Part A) From whole genome to pure factor FCGRs
 ################################################################################
 
-rule purifying:
+rule factor_proxies:
     input:
         "../data/genomes/{species}_genomes.fna",
         "../data/factors/repeats/{species}_repeats.txt",
         "../data/factors/features/{species}_feature_table.txt"
     output:
-        "data/genomes/{windows}/{species}_{factors}_pure.fna"
+        "../data/following/factor_proxies/{windows}/{species}_{factors}_proxies_done.txt"
     shell:
-        "python3 scripts/masking_to_pure.py {wildcards.factors} \
+        "python3 ../scripts/factor_proxies.py {wildcards.factors} \
             {wildcards.windows} {input} {output}"
 
-rule sampling:
+rule purifying:
     input:
-        "data/genomes/{windows}/{species}_{factors}_pure.fna"
+        "../data/following/factor_proxies/{windows}/{species}_{factors}_proxies_done.txt",
+        "../data/genomes/{species}_genomes.fna",
+        "../data/factors/repeats/{species}_repeats.txt",
+        "../data/factors/features/{species}_feature_table.txt"
     output:
         "data/samples/{windows}_{n_samples}/{species}_{factors}_pure.fna"
     shell:
-        "python3 ../scripts/sampling_windows.py {input} {wildcards.n_samples} \
-            {wildcards.windows} purifying {output}"
+        "python3 scripts/masking_to_pure.py {wildcards.factors} \
+            {wildcards.windows} {wildcards.n_samples} {input} {output}"
 
 rule pure_CGR:
     input:
@@ -113,7 +116,8 @@ rule MDS_each:
         "files/results/{windows}_{n_samples}_{kmer}/{species}_MDS_all_factors.png"
     shell:
         "Rscript scripts/MDS_all_factors.R {output} {input} \
-            {wildcards.windows} {wildcards.kmer}"
+            {wildcards.windows} {wildcards.kmer} {wildcards.species} \
+            {wildcards.n_samples}"
 
 ################################################################################
 ### Part C) when chosing comparison of two species into MDS

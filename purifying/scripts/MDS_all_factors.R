@@ -12,11 +12,18 @@ library(ggplot2)
 # 2. path to the fit of the distance matrix
 # 3. window size
 # 4. k-mer size
+# 5. species name
+# 5. sample size
 args <- commandArgs(trailingOnly=TRUE)
 
 output = args[1]
 window_size <- args[3]
 kmer <- args[4]
+species <- args[5]
+sample_size <- args[6]
+
+# We will need a dictionnary of species abbreviation VS nice species name
+dict <- readRDS('../input/dictionary.RData')
 
 # MDS
 fit <- readRDS(args[2])
@@ -27,17 +34,14 @@ factors <- unname(sapply(all_names, function(each_line) {
   if (length(strsplit(each_line, '_')[[1]]) == 1){
     # First case, when split we only get one result (no '_') = concatenated factor from multiple windows
     return(each_line)
-  } else if (length(strsplit(each_line, '_')[[1]]) == 2) {
-    # Second case, when split we get 2 result = whole genome (only the record name)
+  } else if (length(strsplit(each_line, '_')[[1]]) == 3) {
+    # Second case, when split we get 3 result = untouched genome (only the record name) + start of the window
     return('whole')
-  } else {
-    # Third case, when split we get 3 result = pure non-concatenated, from a specific window
-    return(strsplit(each_line, '_')[[1]][1])
   }
 }))
 
 # We will also prepare the colours
-all_colours <- c("#53b125", "#0057d2", "#d99b24", "#d940ad", "#cf290e")
+all_colours <- c("#3478f3", "#f7262b", "#10b9cf", "#dab000", "#c841ca", "#00982a", "#f75d21")
 # We want the whole genome to be black, so we pick the number of non-whole colour, then add black at the end
 colours <- c(all_colours[1:(nlevels(as.factor(factors))-1)], 'black')
 
@@ -52,8 +56,9 @@ reduced_vis <- unname(sapply(factors, function (each_line) {
 
 data <- data.frame(MDS_1 = fit$points[,1], MDS_2 = fit$points[,2], factors = factors, reduced_vis = reduced_vis)
 
-plot_title <- paste('Distance matrices of either pure factor sequences or whole genome,\nwith kmer = ', 
-                    kmer, ' and ', window_size, ' bp windows ', sep = '')
+plot_title <- paste(dict$true[dict$abbrev == species], 
+                    ': distance matrix of either untouched sequences or only composed of factor\nwith maximum ', 
+                    sample_size, ' windows for each factor, kmer = ', kmer, ' and ', window_size, ' bp windows ', sep = '')
 
 png(output, width=900, height=650, units="px")
 ggplot(data, aes(x = MDS_1, y = MDS_2, colour = as.factor(factors), alpha = reduced_vis)) + 
@@ -69,8 +74,8 @@ ggplot(data, aes(x = MDS_1, y = MDS_2, colour = as.factor(factors), alpha = redu
     legend.text = element_text(size = 15)
   )+
   scale_colour_manual(name = 'Factors', values = colours, 
-                      labels = c(levels(as.factor(factors))[-nlevels(as.factor(factors))], 'Whole\ngenome')) +
-  scale_alpha_discrete(range = c(1, 0.15), guide=FALSE)
+                      labels = c(levels(as.factor(factors))[-nlevels(as.factor(factors))], 'Whole genome')) +
+  scale_alpha_discrete(range = c(1, 0.4), guide=FALSE)
 dev.off() 
 
 
