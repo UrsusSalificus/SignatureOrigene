@@ -13,17 +13,19 @@ library(RColorBrewer)
 # 2. window size
 # 3. k-mer size
 # 4. species 
+# 5. number of samples
 args <- commandArgs(trailingOnly=TRUE)
 
 output = args[1]
 window_size <- args[2]
 kmer <- args[3]
 species <- args[4]
+n_samples <- args[5]
 
 # We will need a dictionnary of species abbreviation VS nice species name
 dict <- readRDS('../input/dictionary.RData')
 
-distance_directory <- paste("files/distances/pearson/", window_size, '_', kmer, '/', sep ='')
+distance_directory <- paste("files/distances/manhattan/", window_size, '_', n_samples, '_', kmer, '/', sep ='')
 
 # Matrix files' path
 masked_distance_matrices_files <- Sys.glob(paste(distance_directory, species, '*_masked_*', sep = ''))
@@ -87,7 +89,7 @@ merged <- factor(sapply(1:length(all_factors), function(each_factor){
 dat <- data.frame(mean_dist = all_mean_distance, factors = all_factors, type = type, merged = merged)
 
 plot_title <- paste(dict$true[dict$abbrev == species], ': distance to center when masking factor\nWith kmer = ', 
-                    kmer, ' and ', window_size, ' bp windows ', sep = '')
+                    kmer, ' and ', n_samples, ' samples ',window_size, ' bp long', sep = '')
 
 # If we want to label the number of windows per group:
 # Write function which will be computed on each group using ggplot2 stat_summary

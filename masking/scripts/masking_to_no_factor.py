@@ -25,15 +25,8 @@ n_samples = int(sys.argv[3])
 species_genome = str(sys.argv[5])
 # Species abbreviation:
 species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
-# Species feature table path, depends on the type of factor:
-if factor in ['LCR', 'TE', 'tandem']:
-    species_table = str(sys.argv[6])
-    factor_type = 'repeats'
-elif factor in ['CDS', 'RNA', 'intron', 'UTR']:
-    species_table = str(sys.argv[7])
-    factor_type = 'features'
 # Output file path
-output = str(sys.argv[8])
+output = str(sys.argv[6])
 
 
 ###
@@ -175,7 +168,7 @@ def find_right_sample(records, window_size, sample_windows, factor_record_length
 
                 # We must make sure there is only ATCG in this sequence:
                 if not any([c not in 'ATCGatcg' for c in sample_seq]):
-                    window_sample_record = SeqRecord(seq=sample_seq, id=sample_id)
+                    window_sample_record = SeqRecord(seq=sample_seq, id=factor)
                     all_sample_records.append(window_sample_record)
                 i += 1
         except IndexError:
@@ -278,7 +271,7 @@ def sampling_using_proxies(records, proxies_directory, window_size, n_samples):
 
                 sample_seq = Seq(masked_seq[start:start + window_size])
 
-                all_sample_records.append(SeqRecord(seq=sample_seq, id =record.id))
+                all_sample_records.append(SeqRecord(seq=sample_seq, id=factor))
 
     return all_sample_records
 

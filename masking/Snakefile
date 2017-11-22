@@ -16,6 +16,12 @@ rule download_features:
     shell:
         "bash ../scripts/download_features.sh {wildcards.species} {output}"
 
+rule download_genes:
+    output:
+        "../data/factors/genes/{species}_genes.gff"
+    shell:
+        "bash ../scripts/download_genes.sh {wildcards.species} {output}"
+
 rule download_repeats:
     output:
         "../data/factors/repeats/{species}_repeats.txt"
@@ -45,7 +51,8 @@ rule factor_proxies:
     input:
         "../data/genomes/{species}_genomes.fna",
         "../data/factors/repeats/{species}_repeats.txt",
-        "../data/factors/features/{species}_feature_table.txt"
+        "../data/factors/features/{species}_feature_table.txt",
+        "../data/factors/genes/{species}_genes.gff"
     output:
         "../data/following/factor_proxies/{windows}/{species}_{factors}_proxies_done.txt"
     shell:
@@ -55,9 +62,7 @@ rule factor_proxies:
 rule masking:
     input:
         "../data/following/factor_proxies/{windows}/{species}_{factors}_proxies_done.txt",
-        "../data/genomes/{species}_genomes.fna",
-        "../data/factors/repeats/{species}_repeats.txt",
-        "../data/factors/features/{species}_feature_table.txt"
+        "../data/genomes/{species}_genomes.fna"
     output:
         "data/samples/{windows}_{n_samples}/{species}_{factors}_masked.fna"
     shell:
@@ -161,4 +166,4 @@ rule boxplots:
         "files/results/{windows}_{n_samples}_{kmer}/{species}_boxplots_all_factors.png"
     shell:
         "Rscript scripts/boxplots_factor_center.R {output} {wildcards.windows}\
-            {wildcards.kmer} {wildcards.species}"
+            {wildcards.kmer} {wildcards.species} {wildcards.n_samples}"

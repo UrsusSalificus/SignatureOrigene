@@ -31,12 +31,12 @@ fit <- readRDS(args[2])
 # We now have to fetch from which factor it is from
 all_names <- row.names(fit$points)
 factors <- unname(sapply(all_names, function(each_line) {
-  if (length(strsplit(each_line, '_')[[1]]) == 1){
-    # First case, when split we only get one result (no '_') = concatenated factor from multiple windows
-    return(each_line)
-  } else if (length(strsplit(each_line, '_')[[1]]) == 3) {
-    # Second case, when split we get 3 result = untouched genome (only the record name) + start of the window
+  if (length(strsplit(each_line, '_')[[1]]) == 3) {
+    # If when split we get 3 result = untouched genome (only the record name) + start of the window
     return('whole')
+  } else {
+    # Else, it's the pure samples, hence factor abbreviation -> keep those
+    return(each_line)
   }
 }))
 

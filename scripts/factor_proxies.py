@@ -24,11 +24,14 @@ species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 if factor in ['LCR', 'TE', 'tandem']:
     species_table = str(sys.argv[4])
     factor_type = 'repeats'
-elif factor in ['CDS', 'RNA', 'intron', 'UTR']:
+elif factor == 'RNA':
     species_table = str(sys.argv[5])
     factor_type = 'features'
+elif factor in ['CDS', 'intron', 'UTR']:
+    species_table = str(sys.argv[6])
+    factor_type = 'genes'
 # Tracking file:
-follow_up = str(sys.argv[6])
+follow_up = str(sys.argv[7])
 
 
 ###
@@ -72,18 +75,19 @@ def as_ranges(list_of_integers):
 
 
 ###
-# Reading line varies in between species table (repeats vs features)
+# Reading line varies in between species table (repeats vs features vs genes)
 ###
 def reading_line(factor_type, feature_table):
     if factor_type == 'repeats':
         return feature_table.readline().rsplit()
+    # Same for features or genes
     else:
         return feature_table.readline().split('\t')
 
 
 ###
 # Will output True if the line contain the right factor (and on the + strand for feature table)
-# Will work differently depending on whether working on repeats or features
+# Will work differently depending on whether working on repeats or features or genes
 ###
 def True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
     # Watch out for commentaries (thus length 1)
@@ -91,6 +95,7 @@ def True_if_right_factor_strand(factor_type, actual_line, feature_column, featur
         # If bigger than one -> feature line
         if factor_type == 'repeats':
             return actual_line[feature_column].split('/')[0].strip('?') in feature_type
+        # Same for features or genes
         else:
             return actual_line[feature_column] in feature_type and actual_line[strand_column] == '+'
     else:
@@ -102,7 +107,7 @@ def True_if_right_factor_strand(factor_type, actual_line, feature_column, featur
 # Compute a proxy of each records composed of 0 (nucleotide != factor) and 1 (nucleotide == factor)
 # Inputs:
 #   - records : fetched sequence (fasta) of the species whole genome
-#   - factor_type : indicating if wants factor that are either repeats or features
+#   - factor_type : indicating if wants factor that are either repeats or features or genes
 #   - feature_type : what are the pattern to look for in the factor/gene column
 #   - species_table : file containing the wanted factor (either RepeatMasker output or gff file)
 #   - *_column : various information related to the internal structure of the species_table file
@@ -222,14 +227,20 @@ if factor_type == 'repeats':
     strand_column = False  # NOT USED
     start_column = 5
     end_column = 6
-else:
+elif factor_type == 'features':
+    id_column = 6
+    feature_column = 0
+    # We want all types of RNA
+    feature_type = ['misc_RNA', 'ncRNA', 'rRNA', 'tRNA']
+    strand_column = 9
+    start_column = 7
+    end_column = 8
+elif factor_type == 'genes':
     id_column = 0
     feature_column = 2
     # The feature type depends on the wanted feature
     if factor == 'CDS':
         feature_type = 'CDS'
-    elif factor == 'RNA':
-        feature_type = ['misc_RNA', 'ncRNA', 'rRNA', 'tRNA']
     elif factor == 'intron':
         feature_type = 'intron'
     elif factor == 'UTR':

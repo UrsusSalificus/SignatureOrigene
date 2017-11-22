@@ -8,11 +8,26 @@ rule download_genomes:
     shell:
         "bash ../scripts/download_genomes.sh {wildcards.species} {output}"
 
+rule sampling:
+    input:
+        "../data/genomes/{species}_genomes.fna"
+    output:
+        "data/samples/{windows}_{n_samples}/{species}_sample.fna"
+    shell:
+        "python3 ../scripts/sampling_windows.py {input} {wildcards.n_samples} \
+            {wildcards.windows} scaling {output}"
+
 rule download_features:
     output:
         "../data/factors/features/{species}_feature_table.txt"
     shell:
         "bash ../scripts/download_features.sh {wildcards.species} {output}"
+
+rule download_genes:
+    output:
+        "../data/factors/genes/{species}_genes.gff"
+    shell:
+        "bash ../scripts/download_genes.sh {wildcards.species} {output}"
 
 rule download_repeats:
     output:
@@ -26,18 +41,33 @@ rule download_rr:
     shell:
         "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
 
-rule sampling:
-    input:
-        "../data/genomes/{species}_genomes.fna"
-    output:
-        "data/samples/{windows}_{n_samples}/{species}_sample.fna"
-    shell:
-        "python3 ../scripts/sampling_windows.py {input} {wildcards.n_samples} \
-            {wildcards.windows} scaling {output}"
-
 ################################################################################
 ### Part A) From whole genome to the wanted figure
 ################################################################################
+
+rule factor_extract:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "data/samples/{windows}_{n_samples}/{species}_sample.fna",
+        "../data/factors/repeats/{species}_repeats.txt",
+        "../data/factors/features/{species}_feature_table.txt",
+        "../data/factors/genes/{species}_genes.gff",
+        "../data/factors/recombination_rates/{species}_RR_spline.RData"
+    output:
+        "files/factors/{windows}_{n_samples}/{species}_{factors}.txt"
+    shell:
+        "bash scripts/factor_type.sh {wildcards.factors} {wildcards.windows} \
+            {input} {output}"
+
+rule ratio_extract:
+    input:
+        "../data/following/CGRs/{windows}_{n_samples}/{species}_done.txt"
+    output:
+        "files/ratios/{windows}_{n_samples}/{species}_ratios.txt"
+    shell:
+        "python3 scripts/extract_nucleotide_ratios.py {input} \
+            {wildcards.species} {wildcards.windows} {wildcards.n_samples} \
+            {threads} {output}"
 
 rule CGR:
     input:
@@ -49,29 +79,6 @@ rule CGR:
     shell:
         "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
             {wildcards.n_samples} {threads} {output}"
-
-rule factor_extract:
-    input:
-        "../data/genomes/{species}_genomes.fna",
-        "data/samples/{windows}_{n_samples}/{species}_sample.fna",
-        "../data/factors/repeats/{species}_repeats.txt",
-        "../data/factors/features/{species}_feature_table.txt",
-        "../data/factors/recombination_rates/{species}_RR_spline.RData"
-    output:
-        "files/factors/{windows}_{n_samples}/{species}_{factors}.txt"
-    shell:
-        "bash scripts/factor_type.sh {wildcards.factors} {wildcards.windows} \
-            {input} {output} {wildcards.species}"
-
-rule ratio_extract:
-    input:
-        "../data/following/CGRs/{windows}_{n_samples}/{species}_done.txt"
-    output:
-        "files/ratios/{windows}_{n_samples}/{species}_ratios.txt"
-    shell:
-        "python3 scripts/extract_nucleotide_ratios.py {input} \
-            {wildcards.species} {wildcards.windows} {wildcards.n_samples} \
-            {threads} {output}"
 
 rule FCGR:
     input:

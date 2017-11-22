@@ -17,17 +17,12 @@ factor = str(sys.argv[1])
 window_size = int(sys.argv[2])
 # Species whole genome path:
 species_genome = str(sys.argv[3])
+# Species abbreviation:
+species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Species sample windows path:
 species_sample = str(sys.argv[4])
-# Species feature table path, depends on the type of factor:
-if factor in ['LCR', 'TE', 'tandem']:
-    species_table = str(sys.argv[5])
-    factor_type = 'repeats'
-elif factor in ['CDS', 'RNA', 'intron', 'UTR']:
-    species_table = str(sys.argv[6])
-    factor_type = 'features'
 # Output path:
-output = str(sys.argv[8])
+output = str(sys.argv[5])
 
 
 ###
@@ -115,6 +110,7 @@ for each_record in range(len(records)):
     record_length = len(records[each_record].seq)
     record_id = records[each_record].id
     record_ranges = proxies_directory + '/' + record_id
+    # Build a proxy of record where 1 = nucleotide within factor ; 0 = nucleotide out of factor
     record_proxy = build_proxy(record_ranges, record_length)
 
     # Extracting all the samples from this record
@@ -130,5 +126,5 @@ checking_parent(output)
 
 # Writing the fasta file
 with open(output, 'w') as outfile:
-    for each_sample in range(len(samples_percentage)):
+    for each_sample in range(len(samples_percentages)):
         outfile.write(samples[each_sample].id + '\t' + str(samples_percentages[each_sample]) + '\n')
