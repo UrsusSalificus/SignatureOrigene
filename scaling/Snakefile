@@ -30,7 +30,7 @@ rule sampling:
     input:
         "../data/genomes/{species}_genomes.fna"
     output:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna"
+        "data/samples/{windows}_{n_samples}/{species}_sample.fna"
     shell:
         "python3 ../scripts/sampling_windows.py {input} {wildcards.n_samples} \
             {wildcards.windows} scaling {output}"
@@ -41,7 +41,7 @@ rule sampling:
 
 rule CGR:
     input:
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna"
+        "data/samples/{windows}_{n_samples}/{species}_sample.fna"
     output:
         "../data/following/CGRs/{windows}_{n_samples}/{species}_done.txt"
     threads:
@@ -53,7 +53,7 @@ rule CGR:
 rule factor_extract:
     input:
         "../data/genomes/{species}_genomes.fna",
-        "../data/samples/{windows}_{n_samples}/{species}_sample.fna",
+        "data/samples/{windows}_{n_samples}/{species}_sample.fna",
         "../data/factors/repeats/{species}_repeats.txt",
         "../data/factors/features/{species}_feature_table.txt",
         "../data/factors/recombination_rates/{species}_RR_spline.RData"
@@ -61,7 +61,7 @@ rule factor_extract:
         "files/factors/{windows}_{n_samples}/{species}_{factors}.txt"
     shell:
         "bash scripts/factor_type.sh {wildcards.factors} {wildcards.windows} \
-            {input} {output}"
+            {input} {output} {wildcards.species}"
 
 rule ratio_extract:
     input:
