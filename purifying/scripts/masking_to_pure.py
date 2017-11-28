@@ -224,6 +224,9 @@ def sampling_using_proxies(records, proxies_directory, window_size, n_samples):
         # This list will contain all the sample records
         all_sample_records = list()
 
+        # If too small -> we must be able to concatenate everything
+        too_small = str()
+
         # We will process the factor from all records
         for each_record in range(len(records)):
             record = records[each_record]
@@ -243,16 +246,32 @@ def sampling_using_proxies(records, proxies_directory, window_size, n_samples):
             # creating some more by removing N is not a problem anymore
             factor_seq = str(''.join([c for c in factor_seq if c in 'ATCGatcg']))
 
-            # How many window for this specific record?
-            record_n_windows = int(math.floor(len(factor_seq) / window_size))
+            # Check if it is not too small already:
+            if factor_only_length < window_size:
+                too_small += factor_seq
+            # Else we have at least one sample big enough
+            else :
+                # How many window for this specific record?
+                record_n_windows = int(math.floor(len(factor_seq) / window_size))
 
-            # For each sample, extract the right nucleotides and append it
-            for each_sample in range(record_n_windows):
+                # For each sample, extract the right nucleotides and append it
+                for each_sample in range(record_n_windows):
+                    start = each_sample * window_size
+
+                    sample_seq = Seq(factor_seq[start:start + window_size])
+
+                    all_sample_records.append(SeqRecord(seq=sample_seq, id =factor))
+
+        # Check if we can get something out of too_small:
+        if too_small and len(too_small) > window_size:
+            # How many window for this concatenated sequence?
+            concatenated_n_windows = int(math.floor(len(too_small) / window_size))
+            for each_sample in range(concatenated_n_windows):
                 start = each_sample * window_size
 
-                sample_seq = Seq(factor_seq[start:start + window_size])
+                concatenated_seq = Seq(too_small[start:start + window_size])
 
-                all_sample_records.append(SeqRecord(seq=sample_seq, id =factor))
+                all_sample_records.append(SeqRecord(seq=concatenated_seq, id=factor))
 
     return all_sample_records
 

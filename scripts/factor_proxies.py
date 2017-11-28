@@ -180,7 +180,9 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
                     else:
                         actual_line = reading_line(factor_type, feature_table)
                     # If we get at the last line, actual_line only have one empty entry
-                    if not actual_line:
+                    try:
+                        actual_line[1]
+                    except IndexError:
                         break
             # We will now extract the factor only ranges
             # Each element of this list represents a nucleotide

@@ -44,6 +44,7 @@ get_mean_distance_masked_or_pure <- function (distance_matrix_path) {
   # Note: if we have only one "row" (one window), we can directly compute the mean of it
   if (ncol(distance_matrix) - length(center) == 1) {
     row_mean <- median(factor_only_matrix)
+    names(row_mean) <- colnames(distance_matrix)[1]
   } else {
     row_mean <- apply(factor_only_matrix, 1, median)
   }
@@ -58,8 +59,8 @@ whole_mean_distance <- get_mean_distance_masked_or_pure(whole_distance_matrix_fi
 all_mean_distance <- c(unlist(masked_mean_distance), unlist(pure_mean_distance), whole_mean_distance)
 
 # We will now create a factor vector:
-masked_factors <- unlist(sapply(masked_mean_distance, names))
-pure_factors <- unlist(sapply(pure_mean_distance, names))
+masked_factors <- unlist(lapply(masked_mean_distance, names))
+pure_factors <- unlist(lapply(pure_mean_distance, names))
 whole_factors <- rep('Whole Genome', time = length(whole_mean_distance))
 
 # Make them as factor
@@ -118,14 +119,6 @@ ggplot(dat,aes(x = factors, y = mean_dist, grp = merged)) +
   guides(col = guide_legend(override.aes = list(alpha = 1), title = "Factor's state\nin the sequences")) +
   stat_summary(fun.data = give.n, geom = "text", position = position_dodge(width = 0.9))
 dev.off() 
-
-test <- split(dat, dat$factors)
-
-wilcox.test(test$intron$mean_dist~test$intron$type)
-
-median(test$intron$mean_dist[test$intron$type == 'Only'])
-
-median(test$`Whole Genome`$mean_dist)
 
       
 
