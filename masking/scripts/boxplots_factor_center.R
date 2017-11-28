@@ -13,17 +13,19 @@ library(RColorBrewer)
 # 2. window size
 # 3. k-mer size
 # 4. species 
+# 5. number of samples
 args <- commandArgs(trailingOnly=TRUE)
 
 output = args[1]
 window_size <- args[2]
 kmer <- args[3]
 species <- args[4]
+n_samples <- args[5]
 
 # We will need a dictionnary of species abbreviation VS nice species name
 dict <- readRDS('../input/dictionary.RData')
 
-distance_directory <- paste("files/distances/pearson/", window_size, '_', kmer, '/', sep ='')
+distance_directory <- paste("files/distances/manhattan/", window_size, '_', n_samples, '_', kmer, '/', sep ='')
 
 # Matrix files' path
 masked_distance_matrices_files <- Sys.glob(paste(distance_directory, species, '*_masked_*', sep = ''))
@@ -48,35 +50,24 @@ get_mean_distance_masked_or_pure <- function (distance_matrix_path) {
   return(row_mean)
 } 
 
-masked_mean_distance <- sapply(masked_distance_matrices_files, get_mean_distance_masked_or_pure)
-pure_mean_distance <- sapply(pure_distance_matrices_files, get_mean_distance_masked_or_pure)
+masked_mean_distance <- lapply(masked_distance_matrices_files, get_mean_distance_masked_or_pure)
+pure_mean_distance <- lapply(pure_distance_matrices_files, get_mean_distance_masked_or_pure)
 whole_mean_distance <- get_mean_distance_masked_or_pure(whole_distance_matrix_file)
 
 # We will concatenate all the distance for the data frame afterward
 all_mean_distance <- c(unlist(masked_mean_distance), unlist(pure_mean_distance), whole_mean_distance)
 
 # We will now create a factor vector:
-get_factor_masked_or_pure <- function(distance_matrix_files, mean_distance, matrix_number) {
-  file <- distance_matrix_files[matrix_number]
-  factor <- strsplit(file, '_')[[1]][4]
-  factor_as_vector <- rep (factor, time = length(mean_distance[[matrix_number]]))
-  return(factor_as_vector)
-}
-
-masked_factors <- unlist(sapply(1:length(masked_distance_matrices_files), function(each_matrix) {
-  get_factor_masked_or_pure (masked_distance_matrices_files, masked_mean_distance, each_matrix)
-}))
-pure_factors <- unlist(sapply(1:length(pure_distance_matrices_files), function(each_matrix) {
-  get_factor_masked_or_pure (pure_distance_matrices_files, pure_mean_distance, each_matrix)
-}))
+masked_factors <- unlist(sapply(masked_mean_distance, names))
+pure_factors <- unlist(sapply(pure_mean_distance, names))
 whole_factors <- rep('Whole Genome', time = length(whole_mean_distance))
 
-# Same for the factors:
+# Make them as factor
 all_factors <- as.factor(c(masked_factors, pure_factors, whole_factors))
 
 # We also need to know if masked or pure
-type <- c(rep('Masked', time = length(unlist(masked_mean_distance))),
-          rep('Pure', time = length(unlist(pure_mean_distance))),
+type <- c(rep('Absent', time = length(unlist(masked_mean_distance))),
+          rep('Only', time = length(unlist(pure_mean_distance))),
           rep('NA', time = length(whole_factors)))
 
 # Finally, we need a merged factor of the two:
@@ -86,8 +77,9 @@ merged <- factor(sapply(1:length(all_factors), function(each_factor){
 
 dat <- data.frame(mean_dist = all_mean_distance, factors = all_factors, type = type, merged = merged)
 
-plot_title <- paste(dict$true[dict$abbrev == species], ': distance to center when masking factor\nWith kmer = ', 
-                    kmer, ' and ', window_size, ' bp windows ', sep = '')
+plot_title <- paste(dict$true[dict$abbrev == species], 
+                    ": impact of factor's presence/absence on the distance to center\nWith kmer = ", 
+                    kmer, ' and maximum ', n_samples, ' -',window_size, ' bp long- samples', sep = '')
 
 # If we want to label the number of windows per group:
 # Write function which will be computed on each group using ggplot2 stat_summary
@@ -115,20 +107,25 @@ ggplot(dat,aes(x = factors, y = mean_dist, grp = merged)) +
     legend.key = element_blank()    # Will remove the grey background
   ) +
   # Change the visible filling colour
-  scale_fill_manual(values = c('#EE6B6B','grey', '#537DE6')) + 
+  #'#EE6B6B','#537DE6', 'grey'
+  scale_fill_manual(values = c('#537DE6','grey', '#EE6B6B')) + 
   # Change the invisible (the legend boxes) colours and labels (note that can avoid the Whole grey color label)
-  scale_color_manual(values = c('#EE6B6B','grey', '#537DE6'), breaks=c("Masked","Pure")) + 
+  scale_color_manual(values = c('#537DE6','grey', '#EE6B6B'), breaks=c("Absent","Only")) + 
   guides(grp = FALSE) +
   # Remove the fill legend
   guides(fill = FALSE) + 
   # Legend we want
-  guides(col = guide_legend(override.aes = list(alpha = 1), title = 'Type of\nsequence')) +
+  guides(col = guide_legend(override.aes = list(alpha = 1), title = "Factor's state\nin the sequences")) +
   stat_summary(fun.data = give.n, geom = "text", position = position_dodge(width = 0.9))
 dev.off() 
 
+test <- split(dat, dat$factors)
 
+wilcox.test(test$intron$mean_dist~test$intron$type)
 
+median(test$intron$mean_dist[test$intron$type == 'Only'])
 
+median(test$`Whole Genome`$mean_dist)
 
       
 

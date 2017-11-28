@@ -4,11 +4,11 @@ Type their corresponding number as single block of numbers (eg. 13), then press
     1. CDS : percentage of coding sequences per windows
     2. Introns : percentage of introns per windows
     3. UTR: percentage of untranslated regions per windows
-    3. RNA : percentage of non-coding DNA per windows
-    4. LCR : percentage of low complexity regions per windows
-    5. TE : percentage of transposable elements per windows
-    6. Tandem : percentage of DNA tandem repeats (including satellites) per windows
-    7. RR : recombination rate per windows
+    4. RNA : percentage of non-coding DNA per windows
+    5. LCR : percentage of low complexity regions per windows
+    6. TE : percentage of transposable elements per windows
+    7. Tandem : percentage of DNA tandem repeats (including satellites) per windows
+    8. RR : recombination rate per windows
         Note: not available for Saccharomyces cerevisiae or Escherichia coli
             If the species were selected beforehand, will simply ignore it for
             them.

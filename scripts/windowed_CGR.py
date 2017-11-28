@@ -3,7 +3,6 @@
 """This script compute CGR of all windows of a certain size, in all species
 """
 from Bio import SeqIO
-import math
 import sys
 import os
 from joblib import Parallel, delayed
@@ -18,10 +17,13 @@ species_genome = str(sys.argv[1])
 species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Wanted window size:
 window_size = int(sys.argv[2])
+# Sample size:
+sample_size = int(sys.argv[3])
 # Wanted number of threads at the same time:
-n_threads = int(sys.argv[3])
+n_threads = int(sys.argv[4])
 # Tracking file:
-follow_up = str(sys.argv[4])
+follow_up = str(sys.argv[5])
+
 
 ###
 # Fetch a fasta file, and clean it (remove N or n, which stands for "any nucleotides)
@@ -117,33 +119,31 @@ def N_sensitive_CGR(window, outfile):
     if not any([c not in 'ATCGatcg' for c in window]):
         CGR_coordinates(window, outfile)
 
+
+# The follow_up file enable us to know if we are working on "scaling" or "masking/purifying",
+# and will change where we store the CGRs:
+def which_directory(follow_up, window_size, species):
+    if follow_up.split('/')[0] == '..':
+        # We are in the scaling case, where we use the genome "as it is"
+        # We store CGRs in source directory:
+        seq_directory = '/'.join(['../files/CGRs', '_'.join([str(window_size), str(sample_size)]), species])
+    else:
+        # We are in the masking/purifying case, where we used sequence of the factor only
+        # We store CGRs directly in the purifying directory
+        factor = follow_up.split('_')[3]
+        seq_directory = '/'.join(['files/CGRs', '_'.join([str(window_size), str(sample_size)]), species, factor])
+    return seq_directory
+
+
 # Fetching the genomic fasta file
 records = fetch_fasta(species_genome)
 
-# We will know compute the CGR of all windows, in all records:
-for each_record in range(len(records)):
-    if len(records[each_record].seq) > window_size:
-        n_windows = math.floor(len(records[each_record].seq) / window_size)  # Number of windows
-
-        # The follow_up file enable us to know if we are working on "scaling" or "masking/purifying",
-        # and will change where we store the CGRs:
-        if follow_up.split('/')[0] == '..':
-            # We are in the scaling case, where we use the genome "as it is"
-            # We store CGRs in source directory:
-            seq_directory = '/'.join(['../files/CGRs', str(window_size), species, records[each_record].id, 'CGR_region_'])
-        else:
-            # We are in the masking/purifying case, where we used sequence of the factor only
-            # We store CGRs directly in the purifying directory
-            factor = follow_up.split('_')[2]
-            seq_directory = '/'.join(['files/CGRs', str(window_size), species, factor,
-                                      records[each_record].id, 'CGR_region_'])
-
-        # Parallel the CGR on n_jobs core
-        Parallel(n_jobs=n_threads)(delayed(N_sensitive_CGR)
-                                   (str(records[each_record].seq[
-                                        (start * window_size):((start * window_size) + window_size)]),
-                                    seq_directory + str(start))
-                                   for start in range(0, n_windows))
+# We will know compute the CGR of all windows, in all records by paralleling on n_jobs core
+Parallel(n_jobs=n_threads)(delayed(N_sensitive_CGR)
+                           (records[each_record].seq,
+                            which_directory(follow_up, window_size, species) + '/' +
+                            records[each_record].id + '_' + str(each_record))
+                           for each_record in range(len(records)))
 
 # Follow the progression of the analysis
 checking_parent(follow_up)

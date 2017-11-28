@@ -17,10 +17,12 @@ __license__ = "MIT"
 species = str(sys.argv[2])
 # Wanted window size:
 window_size = int(sys.argv[3])
+# Sample size:
+sample_size = int(sys.argv[4])
 # Wanted number of threads at the same time:
-n_threads = int(sys.argv[4])
+n_threads = int(sys.argv[5])
 # Output file:
-output = str(sys.argv[5])
+output = str(sys.argv[6])
 
 
 ###
@@ -263,8 +265,14 @@ def FCGR_from_CGR(k_size, CGR, outfile):
         return FCGR
 
 
-def ratios (each_CGR, window_size):
-    FCGR = FCGR_from_CGR(1, each_CGR, '')
+###
+# Compute various nucleotide ratios using CGRs
+# Input:
+#   - CGR : Path to the file containing the coordinates of a CGR
+#   - window_size
+###
+def ratios (CGR, window_size):
+    FCGR = FCGR_from_CGR(1, CGR, '')
 
     nA = FCGR[0]
     nC = FCGR[1]
@@ -291,23 +299,31 @@ with open(output, 'w') as outfile:
     outfile.write(header + '\t' + '\n')     # + '\t' to keep same number of column
 
     # Path to CGR directory
-    CGR_directory = '/'.join(['../files/CGRs', str(window_size), species])
+    CGR_directory = '/'.join(['../files/CGRs', '_'.join([str(window_size), str(sample_size)]), species])
     # Get all the different CGRs files path
     all_records = extract_path(CGR_directory + '/', '*')
-    for each_record in range(len(all_records)):
-        # Find all CGR files with glob:
-        CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
-        # Extract all the record names and store it for later:
-        record_name = all_records[each_record].split('/')[-1]
-        # Parallel computation for every region:
-        every_ratio = Parallel(n_jobs=n_threads)(delayed(ratios)
-                                           (CGR_files[each_region], window_size)
-                                           for each_region in range(len(CGR_files)))
+    # Maintain the initial order of sampling
+    all_records.sort(key=lambda r: int(r.split('_')[-1]))
 
-        # Write each region's genomic signature in a single file:
-        for each_region in range(len(every_ratio)):
-            outfile.write(record_name + '\t')
-            for each_count in every_ratio[each_region]:
-                outfile.write(str(each_count) + '\t')
-            outfile.write('\n')
+    # Parallel computation for every region:
+    every_ratio = Parallel(n_jobs=n_threads)(delayed(ratios)
+                                             (all_records[each_region], window_size)
+                                             for each_region in range(len(all_records)))
+
+    # Take all the records names from the file paths
+    record_names = list()
+    for each_record in all_records:
+        file_name = os.path.basename(each_record).split('_')
+        record_names.append('_'.join([file_name[0], file_name[1], file_name[2]]))
+
+    # Write each region's genomic signature in a single file:
+    for each_region in range(len(every_ratio)):
+        outfile.write(record_names[each_region] + '\t')
+        for each_count in every_ratio[each_region]:
+            outfile.write(str(each_count) + '\t')
+        outfile.write('\n')
+
+
+
+
 

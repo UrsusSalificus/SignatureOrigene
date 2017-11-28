@@ -21,10 +21,12 @@ species = str(sys.argv[2])
 window_size = int(sys.argv[3])
 # Wanted k-mer size:
 k_size = int(sys.argv[4])
+# Sample size:
+sample_size = int(sys.argv[5])
 # Wanted number of threads at the same time:
-n_threads = int(sys.argv[5])
+n_threads = int(sys.argv[6])
 # Output file:
-output = str(sys.argv[6])
+output = str(sys.argv[7])
 
 
 ###
@@ -60,7 +62,7 @@ def checking_parent(file_path):
 #           Note: if empty, will return the FCGR instead of writing a file.
 # Output:
 #   - Either a file, where each k-mer frequencies are separated by \t
-#   - Or the k-mer frequencies stocked ias a list
+#   - Or the k-mer frequencies stocked as a list
 ###
 def FCGR_from_CGR(k_size, CGR, outfile):
     #####################
@@ -267,36 +269,41 @@ def FCGR_from_CGR(k_size, CGR, outfile):
         return FCGR
 
 
+# The follow_up file enable us to know if we are working on "scaling" or "masking/purifying",
+# and will change where we store the CGRs:
+def which_directory(follow_up, window_size, species):
+    if follow_up.split('/')[0] == '..':
+        # We are in the scaling case, where we use the genome "as it is"
+        # We store CGRs in source directory:
+        seq_directory = '/'.join(['../files/CGRs', '_'.join([str(window_size), str(sample_size)]), species])
+    else:
+        # We are in the masking/purifying case, where we used sequence of the factor only
+        # We store CGRs directly in the purifying directory
+        factor = follow_up.split('_')[3]
+        seq_directory = '/'.join(['files/CGRs', '_'.join([str(window_size), str(sample_size)]), species, factor])
+    return seq_directory
+
+
 checking_parent(output)
 # Opening concatenated file on top level, to avoid rewriting at each record
 with open(output, 'w') as outfile:
-    # The follow_up file enable us to know if we are working on "scaling" or "masking/purifying",
-    # and will change where we store the CGRs:
-    if follow_up.split('/')[0] == '..':
-        # We are in the scaling case, where we use the genome "as it is"
-        # We stored CGRs in source directory:
-        CGR_directory = '/'.join(['../files/CGRs/', str(window_size), species])
-    else:
-        # We are in the masking/purifying case, where we used sequence of the factor only
-        # We stored CGRs directly in the purifying directory
-        factor = follow_up.split('_')[2]
-        CGR_directory = '/'.join(['files/CGRs/', str(window_size), species, factor])
-
     # Get all the different CGRs files path
-    all_records = extract_path(CGR_directory + '/', '*')
-    for each_record in range(len(all_records)):
-        # Find all CGR files with glob:
-        CGR_files = extract_path(str(all_records[each_record] + '/'), '*')
-        # Extract all the record names and store it for later:
-        record_name = all_records[each_record].split('/')[-1]
-        # Parallel computation for every region:
-        FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
-                                           (k_size, CGR_files[each_region], '')
-                                           for each_region in range(len(CGR_files)))
+    all_records = extract_path(which_directory(follow_up, window_size, species) + '/', '*')
+    # Maintain the initial order of sampling (important for the linked factors)
+    all_records.sort(key=lambda r: int(r.split('_')[-1]))
+    FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
+                                       (k_size, all_records[each_record], '')
+                                       for each_record in range(len(all_records)))
+    # Take all the records names from the file paths
+    record_names = list()
+    for each_record in all_records:
+        file_name = os.path.basename(each_record).split('_')
+        # Remove the last bit (used to know the CGR files order, not useful in the FCGRs file)
+        record_names.append('_'.join(file_name[:-1]))
 
-        # Write each region's genomic signature in a single file:
-        for each_region in range(len(FCGRs)):
-            outfile.write(record_name + '\t')
-            for each_count in FCGRs[each_region]:
-                outfile.write(str(each_count) + '\t')
-            outfile.write('\n')
+    # Write each region's genomic signature in a single file:
+    for each_record in range(len(FCGRs)):
+        outfile.write(record_names[each_record] + '\t')
+        for each_count in FCGRs[each_record]:
+            outfile.write(str(each_count) + '\t')
+        outfile.write('\n')

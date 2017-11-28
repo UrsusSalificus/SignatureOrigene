@@ -29,7 +29,6 @@ windows_rr <- sapply(1:length(split_coord), function(each_chrom) {
   chrom_fit <- fit_spline[[which(names(fit_spline) == chrom_windows$V1[1])]]
   # The first and last markers position (bp) usually marks the boundaries of telomeres
   first_marker <- chrom_fit$x[1] ; last_marker <- chrom_fit$x[length(chrom_fit$x)]
-  # We want a table at the end, here with sapply, we end up with column = each window, whereas we want the reverse (hence t())
   sapply(1:nrow(chrom_windows), function (each_window) {
     window_line <- chrom_windows[each_window,]
     # If not telomeres, compute average recombination rate

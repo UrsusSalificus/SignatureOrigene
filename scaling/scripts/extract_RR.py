@@ -12,16 +12,16 @@ __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
 __license__ = "MIT"
 
-# Species genome path:
-species_genome = str(sys.argv[1])
+# Wanted window size:
+window_size = int(sys.argv[1])
+# Species sample windows path:
+species_sample = str(sys.argv[2])
 # Species abbreviation:
-species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
-# Temporary file containing the windows coordinates
+species = '_'.join(str(species_sample.split('/')[-1]).split('_')[:2])
+# Temporary file containing the sample windows coordinates
 species_temp = species + '_temp_all_windows'
 # Species recombination rate as spline functions:
-species_RR = str(sys.argv[2])
-# Wanted window size:
-window_size = int(sys.argv[3])
+species_RR = str(sys.argv[3])
 # Output path:
 output = str(sys.argv[4])
 
@@ -54,7 +54,7 @@ def fetch_fasta(fasta_file):
     except:
         print("Cannot open %s, check path!" % fasta_file)
         sys.exit()
-    return (records)
+    return records
 
 
 ###
@@ -67,28 +67,26 @@ def fetch_fasta(fasta_file):
 #   - A BED file, each row corresponds to a window, and on each row one can find the record ids and
 #       boundaries of the window.
 ###
-def all_coordinates_BED (records, window_size, species_temp):
+def all_coordinates_BED(records, window_size, species_temp):
     with open(species_temp, 'w') as outfile:
         for each_record in range(len(records)):
-            if len(records[each_record].seq) > window_size:
-                n_windows = math.floor(len(records[each_record].seq) / window_size)  # Number of windows
-                for each_window in range(n_windows):
-                    start = each_window * window_size
-                    end = start + window_size
-                    # If any character in the sequence is NOT a standard nucleotides (including unknown nucleotides),
-                    # do NOT compute:
-                    if not any([c not in 'ATCGatcg' for c in records[each_record].seq[start:end]]):
-                        to_write = '\t'.join([records[each_record].id, str(start), str(end)])
-                        outfile.write(to_write + '\n')
+            window_id = '_'.join([records[each_record].id.split('_')[0], records[each_record].id.split('_')[1]])
+            start = int(records[each_record].id.split('_')[2])
+            end = start + window_size
+            # If any character in the sequence is NOT a standard nucleotides (including unknown nucleotides),
+            # do NOT compute:
+            if not any([c not in 'ATCGatcg' for c in records[each_record].seq[start:end]]):
+                to_write = '\t'.join([window_id, str(start), str(end)])
+                outfile.write(to_write + '\n')
+
 
 # Fetch all the records from this species fasta
-records = fetch_fasta(species_genome)
+samples = fetch_fasta(species_sample)
 
-all_coordinates_BED(records, window_size, species_temp)
+all_coordinates_BED(samples, window_size, species_temp)
 
 # Actual averaging of the spline fit of the recombination rates, for each windows
-subprocess.call(['Rscript', '../scripts/extract_RR.R', species_temp, species_RR, output])
+subprocess.call(['Rscript', 'scripts/extract_RR.R', species_temp, species_RR, output])
 
 # Will remove the temp file
 os.remove(species_temp)
-
