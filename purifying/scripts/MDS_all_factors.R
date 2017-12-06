@@ -13,7 +13,7 @@ library(ggplot2)
 # 3. window size
 # 4. k-mer size
 # 5. species name
-# 5. sample size
+# 6. sample size
 args <- commandArgs(trailingOnly=TRUE)
 
 output = args[1]
@@ -57,7 +57,7 @@ reduced_vis <- unname(sapply(factors, function (each_line) {
 data <- data.frame(MDS_1 = fit$points[,1], MDS_2 = fit$points[,2], factors = factors, reduced_vis = reduced_vis)
 
 plot_title <- paste(dict$true[dict$abbrev == species], 
-                    ': distance matrix of either untouched sequences or only composed of factor\nwith maximum ', 
+                    ': proximity between the whole genome and factor only sequences\nWith maximum ', 
                     sample_size, ' windows for each factor, kmer = ', kmer, ' and ', window_size, ' bp windows ', sep = '')
 
 png(output, width=900, height=650, units="px")

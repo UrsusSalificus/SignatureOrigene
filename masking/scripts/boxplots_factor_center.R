@@ -108,7 +108,6 @@ ggplot(dat,aes(x = factors, y = mean_dist, grp = merged)) +
     legend.key = element_blank()    # Will remove the grey background
   ) +
   # Change the visible filling colour
-  #'#EE6B6B','#537DE6', 'grey'
   scale_fill_manual(values = c('#537DE6','grey', '#EE6B6B')) + 
   # Change the invisible (the legend boxes) colours and labels (note that can avoid the Whole grey color label)
   scale_color_manual(values = c('#537DE6','grey', '#EE6B6B'), breaks=c("Absent","Only")) + 

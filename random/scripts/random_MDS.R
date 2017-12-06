@@ -76,21 +76,23 @@ for (each_gs in 1:length(GS)) {
   right <- apply(data[4:5], 1, function(each_row) {identical(as.integer(each_row[1]), as.integer(each_row[2]))})
   data$right <- unlist(right)
   
-  colours <- c("#6839a6","#3a6f2f","#c94e8f","#736221","#006591","#a44023","#8f8ee1")
+  colours <- c("#3478f3", "#f7262b", "#10b9cf", "#dab000", "#c841ca", "#00982a", "#f75d21")
 
   # The plot in itself
-  png(output, width=700, height=500, units="px")
+  png(output, width=1000, height=600, units="px")
   plot <- ggplot(data, aes(x = MDS_1, y = MDS_2)) + 
-    geom_point(aes(shape = factor(cluster), colour = factor(species)),size = 4) + 
+    geom_point(aes(shape = factor(species), colour = factor(cluster)),size = 4) + 
     labs(title=plot_title, x ="Coordinate 1", y = "Coordinate 2") +
     theme(
-      plot.title = element_text(size = 15, face="bold"),
-      axis.title.x = element_text(size = 15),
-      axis.text.x  = element_text(size = 12),
-      axis.title.y = element_text(size = 15),
-      axis.text.y  = element_text(size = 12)
-    ) + scale_shape_manual(name = "Clustering", values=c(0, 1, 2, 3, 7, 8, 9)[1:nlevels(species)]) + 
-    scale_color_manual(name = "Species", values=colours[1:nlevels(species)])
+      plot.title = element_text(size = 24, face="bold"),
+      axis.title.x = element_text(size = 22),
+      axis.text.x  = element_text(size = 18),
+      axis.title.y = element_text(size = 22),
+      axis.text.y  = element_text(size = 18),
+      legend.title = element_text(size=22, face = 'bold'),
+      legend.text = element_text(size=18)
+    ) + scale_shape_manual(name = "Species", values=c(0, 1, 2, 3, 7, 8, 9)[1:nlevels(species)]) + 
+    scale_color_manual(name = "Clustering", values=colours[1:nlevels(species)])
   print(plot)
   dev.off() 
 }
