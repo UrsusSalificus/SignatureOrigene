@@ -1,0 +1,83 @@
+################################################################################
+### Part 0) Downloading part
+################################################################################
+
+rule download_genomes:
+    output:
+        "../data/genomes/{species}_genomes.fna"
+    shell:
+        "bash ../scripts/download_genomes.sh {wildcards.species} {output}"
+
+rule download_features:
+    output:
+        "../data/factors/features/{species}_feature_table.txt"
+    shell:
+        "bash ../scripts/download_features.sh {wildcards.species} {output}"
+
+rule download_genes:
+    output:
+        "../data/factors/genes/{species}_genes.gff"
+    shell:
+        "bash ../scripts/download_genes.sh {wildcards.species} {output}"
+
+rule download_repeats:
+    output:
+        "../data/factors/repeats/{species}_repeats.txt"
+    shell:
+        "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
+
+rule download_rr:
+    output:
+        "../data/factors/recombination_rates/{species}_RR_spline.RData"
+    shell:
+        "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
+
+################################################################################
+### Part A) From whole genome to pure factor FCGRs
+################################################################################
+
+rule factor_proxies:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/factors/repeats/{species}_repeats.txt",
+        "../data/factors/features/{species}_feature_table.txt",
+        "../data/factors/genes/{species}_genes.gff"
+    output:
+        "../data/following/factor_proxies/{windows}/{species}_{factors}_proxies_done.txt"
+    shell:
+        "python3 ../scripts/factor_proxies.py {wildcards.factors} \
+            {wildcards.windows} {input} {output}"
+
+rule extract_overlaps:
+    output:
+        "files/overlaps/{windows}/overlap_percentages.txt"
+    threads:
+        99
+    shell:
+        "python3 scripts/extract_overlap_factors.py {wildcards.windows} \
+        {threads} {output}"
+
+rule barplot_overlap:
+    input:
+        "files/overlaps/{windows}/overlap_percentages.txt"
+    output:
+        "files/results/{windows}/overlap_all_species.png"
+    shell:
+        "Rscript scripts/barplots_factors_overlaps.R {input} {output}"
+
+rule extract_percentages:
+    output:
+        "files/overlaps/{windows}/factor_percentages.txt"
+    threads:
+        99
+    shell:
+        "python3 scripts/extract_overall_factors_percentages.py \
+        {wildcards.windows} {output}"
+
+rule barplot_percentages:
+    input:
+        "files/overlaps/{windows}/factor_percentages.txt"
+    output:
+        "files/results/{windows}/percentages_all_species.png"
+    shell:
+        "Rscript scripts/barplots_factors_percentages.R {input} {output}"
