@@ -38,30 +38,35 @@ def checking_parent(file_path):
 #   - outfile : path to the output file
 # Output: gff file + the introns
 ###
-def adding_introns(species_table, output, feature_column, strand_column,
-                start_column, end_column):
+def adding_introns(species_table, output, feature_column, strand_column, start_column, end_column):
     # Checking parent directory of output are present
     checking_parent(output)
 
     with open(species_table, 'r') as feature_table, open(output, 'w') as outfile:
         for each_line in feature_table:
             actual_line = each_line.split('\t')
+            # We will use the fact that there is no \t in the comments to detect them
             if len(actual_line) != 9:
-                # We will use the fact that there is no \t in the comments to detect them
                 outfile.write(each_line)
                 # We store this line for the next line as a phony variable as it is not with the right structure
                 previous_line = ['.'] * 9
+            # We also avoid all the lines which are not exons
             elif actual_line[feature_column] != 'exon':
-                # We also avoid all the lines which are not exons
                 outfile.write(each_line)
                 # Here, no phony, as it is already at the right structure
                 previous_line = actual_line
+            # We have stored the previous line each time, we can thus check whether it is an exon or not
             else:
-                # We have stored the previous line each time, we can thus check whether it is an exon or not
                 if previous_line[feature_column] == 'exon':
                     # We are in between two exons = intron! We will create the line to write:
-                    start = int(previous_line[end_column]) + 1 # +1 to take intron nucleotide only
-                    end = int(actual_line[start_column]) - 1
+                    # NOTE: we take into account both strand, and when the strand is negative,
+                    # we must invert the start and end, as the negative gene have reverse coordinates
+                    if actual_line[strand_column] == '+':
+                        start = int(previous_line[end_column]) + 1 # +1 to take intron nucleotide only
+                        end = int(actual_line[start_column]) - 1
+                    else:
+                        start = int(actual_line[start_column]) - 1
+                        end = int(previous_line[end_column]) + 1
                     # First 2 elements and last 4 elements are the same for exon/intron
                     line_to_write = actual_line[0:2] + ['intron', start, end] + actual_line[5:]
                     for each_element in range(len(line_to_write)):
