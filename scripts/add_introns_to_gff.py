@@ -51,8 +51,8 @@ def adding_introns(species_table, output, feature_column, strand_column,
                 outfile.write(each_line)
                 # We store this line for the next line as a phony variable as it is not with the right structure
                 previous_line = ['.'] * 9
-            elif actual_line[feature_column] != 'exon' or actual_line[strand_column] != '+':
-                # We also avoid all the lines which are not exons, or on the negative strand
+            elif actual_line[feature_column] != 'exon':
+                # We also avoid all the lines which are not exons
                 outfile.write(each_line)
                 # Here, no phony, as it is already at the right structure
                 previous_line = actual_line

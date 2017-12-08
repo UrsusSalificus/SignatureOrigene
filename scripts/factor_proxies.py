@@ -86,10 +86,10 @@ def reading_line(factor_type, feature_table):
 
 
 ###
-# Will output True if the line contain the right factor (and on the + strand for feature table)
+# Will output True if the line contain the right factor
 # Will work differently depending on whether working on repeats or features or genes
 ###
-def True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
+def True_if_right_factor(factor_type, actual_line, feature_column, feature_type):
     # Watch out for commentaries (thus length 1)
     if len(actual_line) > 1:
         # If bigger than one -> feature line
@@ -97,7 +97,7 @@ def True_if_right_factor_strand(factor_type, actual_line, feature_column, featur
             return actual_line[feature_column].split('/')[0].strip('?') in feature_type
         # Same for features or genes
         else:
-            return actual_line[feature_column] in feature_type and actual_line[strand_column] == '+'
+            return actual_line[feature_column] in feature_type
     else:
         # Else we know it is a commentary = not the right factor...
         return False
@@ -120,7 +120,7 @@ def True_if_right_factor_strand(factor_type, actual_line, feature_column, featur
 #       of nucleotide which are factors
 ###
 def extract_factor(records, factor_type, feature_type, species_table, id_column, feature_column,
-                   strand_column, start_column, end_column, output):
+                   start_column, end_column, output):
     # Note: we always add -1 to make it compatible the pythonic start of counting at 0!
     if not output:
         # We will store the proxies of records in this list
@@ -149,7 +149,7 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
             if factor == 'UTR':
                 for each_line in feature_table:
                     actual_line = each_line.split('\t')
-                    if True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type,strand_column) \
+                    if True_if_right_factor(factor_type, actual_line, feature_column, feature_type) \
                             and records[each_record].id == actual_line[id_column]:
                         all_ranges.add((int(actual_line[start_column]) - 1, int(actual_line[end_column]) - 1))
             # Any other factor than than UTR does not have this problem -> slightly faster version:
@@ -159,8 +159,7 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
                     actual_line = reading_line(factor_type, feature_table)
 
                 # We also have to find the first time the wanted feature appears
-                while not True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type,
-                                                      strand_column):
+                while not True_if_right_factor(factor_type, actual_line, feature_column, feature_type):
                     actual_line = reading_line(factor_type, feature_table)
 
                 # This line will be the first result
@@ -172,7 +171,7 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
                 # While from the actual record, continue extracting
                 while records[each_record].id == actual_line[id_column]:
                     # Only do this for wanted feature
-                    if True_if_right_factor_strand(factor_type, actual_line, feature_column, feature_type, strand_column):
+                    if True_if_right_factor(factor_type, actual_line, feature_column, feature_type):
                         all_ranges.add((int(actual_line[start_column]) - 1, int(actual_line[end_column]) - 1))
                         # Continue searching
                         actual_line = reading_line(factor_type, feature_table)
@@ -223,10 +222,9 @@ if factor_type == 'repeats':
     if factor == 'LCR':
         feature_type = 'Low_complexity'
     elif factor == 'TE':
-        feature_type = ['DNA', 'LINE', 'LTR', 'SINE', 'Retroposon']
+        feature_type = ['DNA', 'LINE', 'LTR', 'SINE', 'Retroposon', 'RC']
     elif factor == 'tandem':
         feature_type = ['Satellite', 'Simple_repeat']
-    strand_column = False  # NOT USED
     start_column = 5
     end_column = 6
 elif factor_type == 'features':
@@ -234,7 +232,6 @@ elif factor_type == 'features':
     feature_column = 0
     # We want all types of RNA
     feature_type = ['misc_RNA', 'ncRNA', 'rRNA', 'tRNA']
-    strand_column = 9
     start_column = 7
     end_column = 8
 elif factor_type == 'genes':
@@ -247,7 +244,6 @@ elif factor_type == 'genes':
         feature_type = 'intron'
     elif factor == 'UTR':
         feature_type = ['five_prime_UTR', 'three_prime_UTR']
-    strand_column = 6
     start_column = 3
     end_column = 4
 
@@ -257,8 +253,8 @@ records = fetch_fasta(species_genome)
 proxies_directory = '/'.join(['../files/factor_proxies', str(window_size), species, factor])
 
 # Compute factor proxy of records
-extract_factor(records, factor_type, feature_type, species_table, id_column, feature_column,
-               strand_column, start_column, end_column, proxies_directory)
+extract_factor(records, factor_type, feature_type, species_table, id_column, feature_column, start_column, end_column,
+               proxies_directory)
 
 # Follow the progression of the analysis
 checking_parent(follow_up)

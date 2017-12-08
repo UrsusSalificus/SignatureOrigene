@@ -136,7 +136,6 @@ def find_right_sample(records, window_size, sample_windows, factor_record_length
             # While the sample windows are in this record
             while sample_windows[i] < record_n_windows + sum_n_windows:
                 start = (sample_windows[i] - sum_n_windows) * window_size
-                sample_id = record.id
 
                 # Find the right index ranges of this sample window
                 sample_factor_only = factor_only[start:start + window_size]
