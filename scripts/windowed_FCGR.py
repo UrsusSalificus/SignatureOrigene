@@ -60,11 +60,12 @@ def checking_parent(file_path):
 #       - Or a set a of coordinates (list) obtained through CGR_coordinates function
 #   - outfile : path to the output file, which will contain the FCGR
 #           Note: if empty, will return the FCGR instead of writing a file.
+#   - halving: whether or not (by default = False) we should sum the reverse complementary kmer counts
 # Output:
 #   - Either a file, where each k-mer frequencies are separated by \t
 #   - Or the k-mer frequencies stocked as a list
 ###
-def FCGR_from_CGR(k_size, CGR, outfile):
+def FCGR_from_CGR(k_size, CGR, outfile, halving = False):
     #####################
     # 1)  Fetch the coordinates and compute all the boundaries of the grid (for a certain k-mer size)
     #####################
@@ -81,7 +82,7 @@ def FCGR_from_CGR(k_size, CGR, outfile):
     # Else it's a Python list of coordinates
     else:
         coordinates = CGR
-    # We take out the k_size-1 first coordinates, are these are the coordinates of words smaller than our
+    # We take out the k_size-1 first coordinates, as these are the coordinates of words smaller than our
     # wanted k-mer size, and would add small errors later on when counting the frequencies
     for each_xy in [0, 1]:
         coordinates[each_xy] = coordinates[each_xy][k_size - 1::]
@@ -256,6 +257,25 @@ def FCGR_from_CGR(k_size, CGR, outfile):
             else:
                 FCGR.append((y_boundaries[each_column][next_kmer]) - y_boundaries[each_column][each_kmer])
 
+    if halving:
+        # Number of element per column
+        mini_square = int(math.sqrt(grid_size))
+
+        # To have reverse complementary kmer joined, we must kind of cut the vector in 2, then join the right column
+        # to one another (first to last, second to last-1, and so on)
+        cut_FCGR = list()
+        for each_half_column in range(int(mini_square / 2)):
+            positive_strand_start = each_half_column * mini_square
+            positive_strand_end = positive_strand_start + mini_square
+            positive_indexes = FCGR[positive_strand_start:positive_strand_end]
+            negative_strand_start = ((mini_square - each_half_column) - 1) * mini_square
+            negative_strand_end = negative_strand_start + mini_square
+            negative_indexes = FCGR[negative_strand_start:negative_strand_end]
+
+            cut_FCGR.extend([sum(x) for x in zip(*[positive_indexes, negative_indexes])])
+
+        FCGR = cut_FCGR
+
     # If outfile is non-empty, write the output
     if outfile:
         checking_parent(outfile)
@@ -292,7 +312,7 @@ with open(output, 'w') as outfile:
     # Maintain the initial order of sampling (important for the linked factors)
     all_records.sort(key=lambda r: int(r.split('_')[-1]))
     FCGRs = Parallel(n_jobs=n_threads)(delayed(FCGR_from_CGR)
-                                       (k_size, all_records[each_record], '')
+                                       (k_size, all_records[each_record], '', True)
                                        for each_record in range(len(all_records)))
     # Take all the records names from the file paths
     record_names = list()
