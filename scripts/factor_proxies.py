@@ -104,6 +104,30 @@ def True_if_right_factor(factor_type, actual_line, feature_column, feature_type)
 
 
 ###
+# Merge the overlapping intervals
+###
+def merge_intervals(intervals):
+    # Sort the intervals
+    sorted_interval = sorted(intervals, key=lambda interval: interval[0])
+
+    # This list will contain all the merged intervals
+    merged = [sorted_interval[0]]
+
+    for interval in sorted_interval:
+        # Remove and return last element of the list
+        last = merged.pop()
+
+        # If actual start is lower than this last interval end -> overlap
+        if last[1] >= interval[0]:
+            new_interval = (last[0], max(last[1], interval[1]))
+            merged.append(new_interval)
+        else:
+            merged.append(last)
+            merged.append(interval)
+    return merged
+
+
+###
 # Compute a proxy of each records composed of 0 (nucleotide != factor) and 1 (nucleotide == factor)
 # Inputs:
 #   - records : fetched sequence (fasta) of the species whole genome
@@ -147,6 +171,9 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
             # We ended up with some issues with UTR, as for unknown reasons, the line are sometimes placed
             # after the end of the record...
             if factor == 'UTR':
+                # We must rewind every time to the start (commentaries are not a problem in this case)
+                feature_table.seek(0, 0)
+
                 for each_line in feature_table:
                     actual_line = each_line.split('\t')
                     if True_if_right_factor(factor_type, actual_line, feature_column, feature_type) \
@@ -183,21 +210,8 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
                         actual_line[1]
                     except IndexError:
                         break
-            # We will now extract the factor only ranges
-            # Each element of this list represents a nucleotide
-            record_proxy = [0] * len(records[each_record].seq)
 
-            for each_range in all_ranges:
-                # For each nucleotide from start to end of the CDS:
-                for each_nucleotide in range(each_range[0], each_range[1]):
-                    record_proxy[each_nucleotide] = 1
-
-            # Translate it to numpy array
-            record_proxy = np.asarray(record_proxy)
-
-            factor_only = np.where(record_proxy == 1)[0]
-
-            factor_ranges = list(as_ranges(factor_only))
+            factor_ranges = merge_intervals(all_ranges)
 
             # If not output, use the ranges to mark the proxy
             if not output:
