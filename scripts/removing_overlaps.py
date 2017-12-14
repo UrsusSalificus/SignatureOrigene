@@ -18,12 +18,10 @@ __license__ = "MIT"
 species_genome = str(sys.argv[1])
 # Species abbreviation:
 species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
-# Wanted window size:
-window_size = int(sys.argv[3])
 # Wanted number of threads at the same time:
-n_threads = int(sys.argv[4])
+n_threads = int(sys.argv[3])
 # Follow up
-follow_up = str(sys.argv[5])
+follow_up = str(sys.argv[4])
 
 
 ###
@@ -200,7 +198,7 @@ def remove_overlap(to_clean, species_proxies_directory):
 records = fetch_fasta(species_genome)
 
 # Directory which lead to the different species proxies
-species_proxies_directory = '/'.join(["../files/factor_proxies", str(window_size), species])
+species_proxies_directory = '/'.join(["../files/factor_proxies", species])
 
 # Find all the different factors ready
 all_levels = [os.path.basename(each) for each in extract_path(species_proxies_directory + '/', '*')]

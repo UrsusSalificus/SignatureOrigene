@@ -14,24 +14,22 @@ __license__ = "MIT"
 
 # Wanted factor:
 factor = str(sys.argv[1])
-# Wanted window size:
-window_size = int(sys.argv[2])
 # Species genome path:
-species_genome = str(sys.argv[3])
+species_genome = str(sys.argv[2])
 # Species abbreviation:
 species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Species feature table path, depends on the type of factor:
 if factor in ['LCR', 'TE', 'tandem']:
-    species_table = str(sys.argv[4])
+    species_table = str(sys.argv[3])
     factor_type = 'repeats'
 elif factor == 'RNA':
-    species_table = str(sys.argv[5])
+    species_table = str(sys.argv[4])
     factor_type = 'features'
 elif factor in ['CDS', 'intron', 'UTR']:
-    species_table = str(sys.argv[6])
+    species_table = str(sys.argv[5])
     factor_type = 'genes'
 # Tracking file:
-follow_up = str(sys.argv[7])
+follow_up = str(sys.argv[6])
 
 
 ###
@@ -264,7 +262,7 @@ elif factor_type == 'genes':
 # Fetch all the records from this species fasta
 records = fetch_fasta(species_genome)
 
-proxies_directory = '/'.join(['../files/factor_proxies', str(window_size), species, factor])
+proxies_directory = '/'.join(['../files/factor_proxies', species, factor])
 
 # Compute factor proxy of records
 extract_factor(records, factor_type, feature_type, species_table, id_column, feature_column, start_column, end_column,
