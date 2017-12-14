@@ -42,32 +42,62 @@ rule download_rr:
         "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
 
 ################################################################################
+### Part 0.2) Extract and clean ranges
+################################################################################
+
+rule factor_proxies:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/factors/repeats/{species}_repeats.txt",
+        "../data/factors/features/{species}_feature_table.txt",
+        "../data/factors/genes/{species}_genes.gff"
+    output:
+        "../data/following/factor_proxies/{species}/{factors}_proxies_done.txt"
+    shell:
+        "python3 ../scripts/factor_proxies.py {wildcards.factors} {input} \
+        {output}"
+
+rule extract_overlaps:
+    input:
+        "../data/genomes/{species}_genomes.fna"
+    output:
+        "../data/following/factor_proxies/overlaps/{species}_done.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/extract_overlaps.py {input} {threads} {output}"
+
+rule clean_ranges:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/following/factor_proxies/overlaps/{species}_done.txt"
+    output:
+        "../data/following/factor_proxies/cleaning/{species}_done.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/removing_overlaps.py {input} {threads} {output}"
+
+################################################################################
 ### Part A) From whole genome to the wanted figure
 ################################################################################
 
-rule factor_extract:
+rule factor_percentages:
     input:
         "../data/genomes/{species}_genomes.fna",
         "data/samples/{windows}_{n_samples}/{species}_sample.fna",
-        "../data/factors/repeats/{species}_repeats.txt",
-        "../data/factors/features/{species}_feature_table.txt",
-        "../data/factors/genes/{species}_genes.gff",
         "../data/factors/recombination_rates/{species}_RR_spline.RData"
     output:
         "files/factors/{windows}_{n_samples}/{species}_{factors}.txt"
     shell:
-        "bash scripts/factor_type.sh {wildcards.factors} {wildcards.windows} \
-            {input} {output}"
-
-rule ratio_extract:
-    input:
-        "../data/following/CGRs/{windows}_{n_samples}/{species}_done.txt"
-    output:
-        "files/ratios/{windows}_{n_samples}/{species}_ratios.txt"
-    shell:
-        "python3 scripts/extract_nucleotide_ratios.py {input} \
-            {wildcards.species} {wildcards.windows} {wildcards.n_samples} \
-            {threads} {output}"
+        """
+        if [[ {wildcards.factors} == 'RR' ]]; then
+            python3 scripts/extract_RR.py {wildcards.windows} {input} {output}
+        else
+            python3 scripts/extracting_factor_percentage.py \
+            {wildcards.factors} {wildcards.windows} {input} {output}
+        fi
+        """
 
 rule CGR:
     input:
@@ -79,6 +109,16 @@ rule CGR:
     shell:
         "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
             {wildcards.n_samples} {threads} {output}"
+
+rule ratio_extract:
+    input:
+        "../data/following/CGRs/{windows}_{n_samples}/{species}_done.txt"
+    output:
+        "files/ratios/{windows}_{n_samples}/{species}_ratios.txt"
+    shell:
+        "python3 scripts/extract_nucleotide_ratios.py {input} \
+            {wildcards.species} {wildcards.windows} {wildcards.n_samples} \
+            {threads} {output}"
 
 rule FCGR:
     input:

@@ -15,15 +15,15 @@ __license__ = "MIT"
 # Wanted window size:
 window_size = int(sys.argv[1])
 # Species sample windows path:
-species_sample = str(sys.argv[2])
+species_sample = str(sys.argv[3])
 # Species abbreviation:
 species = '_'.join(str(species_sample.split('/')[-1]).split('_')[:2])
 # Temporary file containing the sample windows coordinates
 species_temp = species + '_temp_all_windows'
 # Species recombination rate as spline functions:
-species_RR = str(sys.argv[3])
+species_RR = str(sys.argv[4])
 # Output path:
-output = str(sys.argv[4])
+output = str(sys.argv[5])
 
 
 ###

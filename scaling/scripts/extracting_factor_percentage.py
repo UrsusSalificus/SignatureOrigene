@@ -22,7 +22,7 @@ species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Species sample windows path:
 species_sample = str(sys.argv[4])
 # Output path:
-output = str(sys.argv[5])
+output = str(sys.argv[6])
 
 
 ###
@@ -103,7 +103,7 @@ records = fetch_fasta(species_genome)
 samples = fetch_fasta(species_sample)
 
 # Directory containing all the ranges in all the different files
-proxies_directory = '/'.join(['../files/factor_proxies', str(window_size), species, factor])
+proxies_directory = '/'.join(['../files/factor_proxies', species, factor])
 
 samples_percentages = list()
 for each_record in range(len(records)):

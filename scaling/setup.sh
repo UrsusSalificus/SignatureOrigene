@@ -262,7 +262,30 @@ cd ../figures
 FIGURES=$( find * )
 cd ../..
 
-# Launching the whole Snakemake cascade
+# The first part is to extract and clean factor ranges:
+for each_species in $SPECIES; do
+    for each_factor in $FACTORS; do
+        # If factor = Recombination Rate -> no need to do this step:
+        if [[ $each_factor == 'RR' ]]; then
+            echo "$each_factor already clean"
+        # If factor = UTR, do not compute for S. cerevisiae and E. coli
+        elif [[ $each_factor == 'UTR' ]] && \
+            ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
+            echo "$each_factor not computed for $each_species"
+        elif [[ $each_factor == 'intron' && $each_species == 'e_coli' ]] ; then
+            echo "$each_factor not computed for $each_species"
+        else
+            # Finding factor ranges
+            snakemake $snakemake_arguments \
+                ../data/following/factor_proxies/$each_species/$each_factor\_proxies_done.txt
+        fi
+    done
+    # After finding all the factors' ranges, we must clean them from overlaps
+    snakemake $snakemake_arguments \
+        ../data/following/factor_proxies/cleaning/$each_species\_done.txt
+done
+
+# The second part uses these ranges to find how present are the different factors in the sequences
 for each_species in $SPECIES; do
     for each_sample in $SAMPLES; do
         for each_window in $WINDOWS; do
