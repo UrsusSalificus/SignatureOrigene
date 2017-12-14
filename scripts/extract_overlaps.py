@@ -120,7 +120,8 @@ def intersects(a, b):
         if overlap_ranges[i][1] in (overlap_ranges[i + 1][0], overlap_ranges[i + 1][0] - 1):
             overlap_ranges[i:i + 2] = [[overlap_ranges[i][0], overlap_ranges[i + 1][1]]]
             length_of_list -= 1
-        i += 1
+        else:
+            i += 1
 
     return overlap_ranges
 
@@ -153,7 +154,7 @@ def pairwise_overlap(record, factor_directory, factor, comparison_directory, com
         # Find all overlapping ranges
         overlap_ranges = intersects(factor_ranges, comparison_ranges)
 
-        # If we do find some overlaps -> must remove them from the factor ranges files
+        # If we do find some overlaps -> must write them to remove them from the factor ranges files later on
         if overlap_ranges:
             # We will now store the overlapping ranges
             checking_parent(overlap_directory + '/*')
