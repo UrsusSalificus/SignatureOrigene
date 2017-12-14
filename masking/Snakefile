@@ -1,7 +1,7 @@
 ruleorder: finding_center > masked_FCGR
 
 ################################################################################
-### Part 0) Downloading part
+### Part 0.1) Downloading part
 ################################################################################
 
 rule download_genomes:
@@ -35,17 +35,8 @@ rule download_rr:
         "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
 
 ################################################################################
-### Part A) From whole genome to masked factor vs center distance matrix
+### Part 0.2) Extract and clean ranges
 ################################################################################
-
-rule finding_center:
-    input:
-        "../scaling/files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_FCGRs.txt",
-        "../scaling/files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData"
-    output:
-        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_center_FCGRs.txt"
-    shell:
-        "python3 scripts/get_center_FCGRs.py {input} {output}"
 
 rule factor_proxies:
     input:
@@ -54,14 +45,39 @@ rule factor_proxies:
         "../data/factors/features/{species}_feature_table.txt",
         "../data/factors/genes/{species}_genes.gff"
     output:
-        "../data/following/factor_proxies/{windows}/{species}_{factors}_proxies_done.txt"
+        "../data/following/factor_proxies/{species}/{factors}_proxies_done.txt"
     shell:
-        "python3 ../scripts/factor_proxies.py {wildcards.factors} \
-            {wildcards.windows} {input} {output}"
+        "python3 ../scripts/factor_proxies.py {wildcards.factors} {input} \
+        {output}"
+
+rule extract_overlaps:
+    input:
+        "../data/genomes/{species}_genomes.fna"
+    output:
+        "../data/following/factor_proxies/overlaps/{species}_done.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/extract_overlaps.py {input} {threads} {output}"
+
+rule clean_ranges:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/following/factor_proxies/overlaps/{species}_done.txt"
+    output:
+        "../data/following/factor_proxies/cleaning/{species}_done.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/removing_overlaps.py {input} {threads} {output}"
+
+################################################################################
+### Part B) From ranges of masked factor to FCGR
+################################################################################
 
 rule masking:
     input:
-        "../data/following/factor_proxies/{windows}/{species}_{factors}_proxies_done.txt",
+        "../data/following/factor_proxies/{windows}/cleaning/{species}_done.txt"
         "../data/genomes/{species}_genomes.fna"
     output:
         "data/samples/{windows}_{n_samples}/{species}_{factors}_masked.fna"
@@ -92,6 +108,15 @@ rule masked_FCGR:
             {wildcards.windows} {wildcards.kmer} {wildcards.n_samples} \
             {threads} {output}"
 
+rule finding_center:
+    input:
+        "../scaling/files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_FCGRs.txt",
+        "../scaling/files/distances/manhattan/{windows}_{n_samples}_{kmer}/{species}_dist_matrix.RData"
+    output:
+        "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_center_FCGRs.txt"
+    shell:
+        "python3 scripts/get_center_FCGRs.py {input} {output}"
+
 rule masked_concatenating:
     input:
         "files/FCGRs/{windows}_{n_samples}_{kmer}/{species}_{factors}_masked_FCGRs.txt",
@@ -112,7 +137,7 @@ rule masked_FCGRs_dist:
         "Rscript ../scripts/manhattan_distance.R {input} {output}"
 
 ################################################################################
-### Part B) From pure factor FCGRs to pure factor vs center distance matrix
+### Part C) From pure factor FCGRs to pure factor vs center distance matrix
 ################################################################################
 
 rule pure_concatenating:
@@ -135,7 +160,7 @@ rule pure_FCGRs_dist:
         "Rscript ../scripts/manhattan_distance.R {input} {output}"
 
 ################################################################################
-### Part C) From sample FCGRs to sample vs sample center distance matrix
+### Part D) From sample FCGRs to sample vs sample center distance matrix
 ################################################################################
 
 rule whole_concatenating:
@@ -158,7 +183,7 @@ rule whole_FCGRs_dist:
         "Rscript ../scripts/manhattan_distance.R {input} {output}"
 
 ################################################################################
-### Part D) Using all the distance matrices to produce figure
+### Part E) Using all the distance matrices to produce figure
 ################################################################################
 
 rule boxplots:

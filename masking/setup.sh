@@ -243,7 +243,28 @@ cd ../..
 # Remember where we are :
 go_back=$( pwd )
 
-# Launching the whole Snakemake cascade
+# The first part is to extract and clean factor ranges:
+for each_species in $SPECIES; do
+    for each_factor in $FACTORS; do
+        # If feature = UTR, do not compute for S. cerevisiae and E. coli
+        if [[ $each_factor == 'UTR' ]] && \
+            ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
+            echo "$each_factor not computed for $each_species"
+        elif [[ $each_factor == 'intron' && $each_species == 'e_coli' ]] ; then
+            echo "$each_factor not computed for $each_species"
+        else
+            # Finding factor ranges
+            snakemake $snakemake_arguments \
+                ../data/following/factor_proxies/$each_species/$each_factor\_proxies_done.txt
+        fi
+    done
+    # After finding all the factors' ranges, we must clean them from overlaps
+    snakemake $snakemake_arguments \
+        ../data/following/factor_proxies/cleaning/$each_species\_done.txt
+done
+
+
+# The second part goes from these ranges to find sequences where the factor is absent
 for each_species in $SPECIES; do
     for each_sample in $SAMPLES; do
         for each_window in $WINDOWS; do
@@ -263,6 +284,7 @@ for each_species in $SPECIES; do
                     elif [[ $each_factor == 'intron' && $each_species == 'e_coli' ]] ; then
                         echo "$each_factor not computed for $each_species"
                     else
+
                         # B.1) Masked will be done all on the masking directory
                         snakemake $snakemake_arguments \
                             files/distances/manhattan/$each_window\_$each_sample\_$each_kmer/$each_species\_$each_factor\_masked_vs_center_dist_matrix.RData
