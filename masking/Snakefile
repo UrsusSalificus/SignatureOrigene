@@ -77,7 +77,7 @@ rule clean_ranges:
 
 rule masking:
     input:
-        "../data/following/factor_proxies/{windows}/cleaning/{species}_done.txt"
+        "../data/following/factor_proxies/cleaning/{species}_done.txt"
         "../data/genomes/{species}_genomes.fna"
     output:
         "data/samples/{windows}_{n_samples}/{species}_{factors}_masked.fna"
