@@ -280,7 +280,7 @@ for each_species in $SPECIES; do
     done
     # After finding all the factors' ranges, we must clean them from overlaps
     snakemake $snakemake_arguments \
-        ../data/following/factor_proxies/cleaning/$each_species\_done.txt
+        ../data/following/factor_proxies/uncategorized/$each_species\_done.txt
 done
 
 # The second part goes from these ranges to find sequences where we only find the factor

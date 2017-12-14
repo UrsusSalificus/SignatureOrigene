@@ -69,13 +69,23 @@ rule clean_ranges:
     shell:
         "python3 ../scripts/removing_overlaps.py {input} {threads} {output}"
 
+rule extract_uncategorized:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/following/factor_proxies/cleaning/{species}_done.txt"
+    output:
+        "../data/following/factor_proxies/uncategorized/{species}_done.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/extract_uncategorized.py {input} {threads} {output}"
+
 ################################################################################
 ### Part A) From ranges of pure factor to FCGR
 ################################################################################
 
 rule purifying:
     input:
-        "../data/following/factor_proxies/cleaning/{species}_done.txt"
         "../data/genomes/{species}_genomes.fna"
     output:
         "data/samples/{windows}_{n_samples}/{species}_{factors}_pure.fna"

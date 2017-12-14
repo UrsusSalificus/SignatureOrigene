@@ -22,11 +22,11 @@ window_size = int(sys.argv[2])
 # Sample size:
 n_samples = int(sys.argv[3])
 # Species genome path:
-species_genome = str(sys.argv[5])
+species_genome = str(sys.argv[4])
 # Species abbreviation:
 species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
 # Output file path
-output = str(sys.argv[6])
+output = str(sys.argv[5])
 
 
 ###
