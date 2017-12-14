@@ -101,7 +101,8 @@ def intersects(a, b):
         if overlap_ranges[i][1] in (overlap_ranges[i + 1][0], overlap_ranges[i + 1][0] - 1):
             overlap_ranges[i:i + 2] = [[overlap_ranges[i][0], overlap_ranges[i + 1][1]]]
             length_of_list -= 1
-        i += 1
+        else:
+            i += 1
 
     return overlap_ranges
 
