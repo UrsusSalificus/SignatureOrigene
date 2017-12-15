@@ -65,8 +65,8 @@ def adding_introns(species_table, output, feature_column, strand_column, start_c
                         start = int(previous_line[end_column]) + 1 # +1 to take intron nucleotide only
                         end = int(actual_line[start_column]) - 1
                     else:
-                        start = int(actual_line[start_column]) - 1
-                        end = int(previous_line[end_column]) + 1
+                        start = int(actual_line[end_column]) + 1
+                        end = int(previous_line[start_column]) - 1
                     # First 2 elements and last 4 elements are the same for exon/intron
                     line_to_write = actual_line[0:2] + ['intron', start, end] + actual_line[5:]
                     for each_element in range(len(line_to_write)):

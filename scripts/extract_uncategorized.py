@@ -113,8 +113,6 @@ def extract_uncategorized(record, all_files, species_proxies_directory):
     if record_ranges[0][1] != len(record):
         uncategorized.append([record_ranges[0][1] + 1, len(record)])
 
-
-
     # If we find some ranges -> can write them
     if uncategorized:
         uncategorized_directory = '/'.join([species_proxies_directory, 'uncategorized', record.id])

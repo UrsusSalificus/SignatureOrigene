@@ -126,6 +126,16 @@ def merge_intervals(intervals):
 
 
 ###
+# As we look in both strands, for unknown reasons some feature on the - strain are put in the reverse order...
+###
+def strand_sensitive(actual_line, start_column, end_column):
+    both = [int(actual_line[start_column]) - 1, int(actual_line[end_column]) - 1]
+    both.sort()
+
+    return tuple(both)
+
+
+###
 # Compute a proxy of each records composed of 0 (nucleotide != factor) and 1 (nucleotide == factor)
 # Inputs:
 #   - records : fetched sequence (fasta) of the species whole genome
@@ -176,7 +186,7 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
                     actual_line = each_line.split('\t')
                     if True_if_right_factor(factor_type, actual_line, feature_column, feature_type) \
                             and records[each_record].id == actual_line[id_column]:
-                        all_ranges.add((int(actual_line[start_column]) - 1, int(actual_line[end_column]) - 1))
+                        all_ranges.add(strand_sensitive(actual_line, start_column, end_column))
             # Any other factor than than UTR does not have this problem -> slightly faster version:
             else:
                 # Whenever we are not already at our chromosome part -> skip until at it
@@ -188,7 +198,8 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
                     actual_line = reading_line(factor_type, feature_table)
 
                 # This line will be the first result
-                all_ranges.add((int(actual_line[start_column]) - 1, int(actual_line[end_column]) - 1))
+
+                all_ranges.add(strand_sensitive(actual_line, start_column, end_column))
 
                 # Continue the search
                 actual_line = reading_line(factor_type, feature_table)
@@ -197,7 +208,7 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
                 while records[each_record].id == actual_line[id_column]:
                     # Only do this for wanted feature
                     if True_if_right_factor(factor_type, actual_line, feature_column, feature_type):
-                        all_ranges.add((int(actual_line[start_column]) - 1, int(actual_line[end_column]) - 1))
+                        all_ranges.add(strand_sensitive(actual_line, start_column, end_column))
                         # Continue searching
                         actual_line = reading_line(factor_type, feature_table)
                     # If it is not our factor, just continue the search
@@ -210,6 +221,17 @@ def extract_factor(records, factor_type, feature_type, species_table, id_column,
                         break
 
             factor_ranges = merge_intervals(all_ranges)
+
+            # Merge two intervals which are next to each other
+            length_of_list = len(factor_ranges)
+
+            i = 0
+            while i < (length_of_list - 1):
+                if factor_ranges[i][1] in (factor_ranges[i + 1][0], factor_ranges[i + 1][0] - 1):
+                    factor_ranges[i:i + 2] = [[factor_ranges[i][0], factor_ranges[i + 1][1]]]
+                    length_of_list -= 1
+                else:
+                    i += 1
 
             # If not output, use the ranges to mark the proxy
             if not output:
