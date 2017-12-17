@@ -80,6 +80,28 @@ rule extract_uncategorized:
     shell:
         "python3 ../scripts/extract_uncategorized.py {input} {threads} {output}"
 
+rule factor_percentages:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/following/factor_proxies/uncategorized/{species}_done.txt"
+    output:
+        "../files/factor_percentages/{species}_factors_percentages.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/factor_percentages.py {input} {wildcards.windows} \
+        {output}"
+
+rule filter_factors:
+    input:
+        "../files/factor_percentages/{species}_factors_percentages.txt"
+    output:
+        "../data/following/factor_filtered/{species}_done.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/filter_by_percentages.py {input} {output}"
+
 ################################################################################
 ### Part A) From ranges of pure factor to FCGR
 ################################################################################
