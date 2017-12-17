@@ -260,12 +260,16 @@ for each_species in $SPECIES; do
     done
     # After finding all the factors' ranges, we must clean them from overlaps
     snakemake $snakemake_arguments \
-        ../data/following/factor_proxies/uncategorized/$each_species\_done.txt
+        ../data/following/factor_filtered/$each_species\_done.txt
 done
-
 
 # The second part goes from these ranges to find sequences where the factor is absent
 for each_species in $SPECIES; do
+    # We now have new filtered factors
+    cd config/new_factors/$each_species
+    FACTORS=$( find * )
+    cd ../..
+
     for each_sample in $SAMPLES; do
         for each_window in $WINDOWS; do
             for each_kmer in $KMER; do
