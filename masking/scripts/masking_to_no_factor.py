@@ -10,6 +10,7 @@ import os
 import numpy as np
 import math
 import itertools
+import os.path
 
 __author__ = "Titouan Laessle"
 __copyright__ = "Copyright 2017 Titouan Laessle"
@@ -111,16 +112,20 @@ def count_masked_record_length(record, proxies_directory):
     record_ranges = proxies_directory + '/' + record.id
 
     length_masked_factor = 0
-    with open(record_ranges, 'r') as all_ranges:
-        for each_range in all_ranges:
-            line_range = each_range.strip().split()
-            # Add the range length
-            length_masked_factor += len(range(int(line_range[0]), int(line_range[1]) + 1))
+    try:
+        with open(record_ranges, 'r') as all_ranges:
+            for each_range in all_ranges:
+                line_range = each_range.strip().split()
+                # Add the range length
+                length_masked_factor += len(range(int(line_range[0]), int(line_range[1]) + 1))
 
-    # We want the number of nucleotides which are NOT within the factor
-    length_masked_factor = len(record.seq) - length_masked_factor
+            # We want the number of nucleotides which are NOT within the factor
+            length_masked_factor = len(record.seq) - length_masked_factor
 
-    return length_masked_factor
+            return length_masked_factor
+    # If no record for this factor, return length of 0
+    except FileNotFoundError:
+        return 0
 
 
 ###
@@ -145,35 +150,37 @@ def find_right_sample(records, window_size, sample_windows, factor_record_length
         record = records[each_record]
         record_ranges = proxies_directory + '/' + record.id
 
-        # Extract the indexes of nucleotide within the factor
-        masked_only_length = factor_record_lengths[each_record]
-        masked_only = build_proxy(record_ranges, masked_only_length)
+        # Does the rest only if the record exists
+        if os.path.isfile(record_ranges):
+            # Extract the indexes of nucleotide within the factor
+            masked_only_length = factor_record_lengths[each_record]
+            masked_only = build_proxy(record_ranges, masked_only_length)
 
-        record_n_windows = math.floor(len(masked_only) / window_size)
-        # We will catch any "index out of range" error -> end of document = break the while
-        try:
-            # While the sample windows are in this record
-            while sample_windows[i] < record_n_windows + sum_n_windows:
-                start = (sample_windows[i] - sum_n_windows) * window_size
-                sample_id = record.id
+            record_n_windows = math.floor(len(masked_only) / window_size)
+            # We will catch any "index out of range" error -> end of document = break the while
+            try:
+                # While the sample windows are in this record
+                while sample_windows[i] < record_n_windows + sum_n_windows:
+                    start = (sample_windows[i] - sum_n_windows) * window_size
+                    sample_id = record.id
 
-                # Find the right index ranges of this sample window
-                sample_masked_only = masked_only[start:start + window_size]
-                sample_factor_only_ranges = list(as_ranges(sample_masked_only))
+                    # Find the right index ranges of this sample window
+                    sample_masked_only = masked_only[start:start + window_size]
+                    sample_factor_only_ranges = list(as_ranges(sample_masked_only))
 
-                # For each of these index ranges -> find the nucleotide associated with
-                sample_seq = str()
-                for each_range in sample_factor_only_ranges:
-                    sample_seq += record.seq[each_range[0]:each_range[1]+1]
+                    # For each of these index ranges -> find the nucleotide associated with
+                    sample_seq = str()
+                    for each_range in sample_factor_only_ranges:
+                        sample_seq += record.seq[each_range[0]:each_range[1]+1]
 
-                # We must make sure there is only ATCG in this sequence:
-                if not any([c not in 'ATCGatcg' for c in sample_seq]):
-                    window_sample_record = SeqRecord(seq=sample_seq, id=factor)
-                    all_sample_records.append(window_sample_record)
-                i += 1
-        except IndexError:
-            break
-        sum_n_windows += record_n_windows
+                    # We must make sure there is only ATCG in this sequence:
+                    if not any([c not in 'ATCGatcg' for c in sample_seq]):
+                        window_sample_record = SeqRecord(seq=sample_seq, id=factor)
+                        all_sample_records.append(window_sample_record)
+                    i += 1
+            except IndexError:
+                break
+            sum_n_windows += record_n_windows
     return all_sample_records
 
 
@@ -248,30 +255,32 @@ def sampling_using_proxies(records, proxies_directory, window_size, n_samples):
             record = records[each_record]
             record_ranges = proxies_directory + '/' + record.id
 
-            # We need the indexes of all nucleotide that are within the wanted factor
-            masked_only_length = factor_record_lengths[each_record]
-            masked_only = build_proxy(record_ranges, masked_only_length)
+            # Does the rest only if the record exists
+            if os.path.isfile(record_ranges):
+                # We need the indexes of all nucleotide that are within the wanted factor
+                masked_only_length = factor_record_lengths[each_record]
+                masked_only = build_proxy(record_ranges, masked_only_length)
 
-            # We translate the whole genome sequence of this record as a numpy array to use with the indexes
-            numpy_seq = np.asarray([c for c in record.seq])
+                # We translate the whole genome sequence of this record as a numpy array to use with the indexes
+                numpy_seq = np.asarray([c for c in record.seq])
 
-            # Extract the sequence of nucleotides which are within the wanted factor
-            masked_seq = numpy_seq[masked_only]
+                # Extract the sequence of nucleotides which are within the wanted factor
+                masked_seq = numpy_seq[masked_only]
 
-            # We already created many random new k-mer by copy-pasting:
-            # creating some more by removing N is not a problem anymore
-            masked_seq = str(''.join([c for c in masked_seq if c in 'ATCGatcg']))
+                # We already created many random new k-mer by copy-pasting:
+                # creating some more by removing N is not a problem anymore
+                masked_seq = str(''.join([c for c in masked_seq if c in 'ATCGatcg']))
 
-            # How many window for this specific record?
-            record_n_windows = int(math.floor(len(masked_seq) / window_size))
+                # How many window for this specific record?
+                record_n_windows = int(math.floor(len(masked_seq) / window_size))
 
-            # For each sample, extract the right nucleotides and append it
-            for each_sample in range(record_n_windows):
-                start = each_sample * window_size
+                # For each sample, extract the right nucleotides and append it
+                for each_sample in range(record_n_windows):
+                    start = each_sample * window_size
 
-                sample_seq = Seq(masked_seq[start:start + window_size])
+                    sample_seq = Seq(masked_seq[start:start + window_size])
 
-                all_sample_records.append(SeqRecord(seq=sample_seq, id=factor))
+                    all_sample_records.append(SeqRecord(seq=sample_seq, id=factor))
 
     return all_sample_records
 
@@ -280,7 +289,7 @@ def sampling_using_proxies(records, proxies_directory, window_size, n_samples):
 records = fetch_fasta(species_genome)
 
 # Directory containing all the ranges in all the different files
-proxies_directory = '/'.join(['../files/factor_proxies', str(window_size), species, factor])
+proxies_directory = '/'.join(['../files/factor_proxies', species, factor])
 
 all_windows_samples = sampling_using_proxies(records, proxies_directory, window_size, n_samples)
 
