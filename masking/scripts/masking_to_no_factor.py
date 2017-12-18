@@ -129,6 +129,48 @@ def count_masked_record_length(record, proxies_directory):
 
 
 ###
+# Find all the coordinates ranges of this sample of NOT factor
+###
+def find_sample_ranges_mask(record_ranges, start, window_size):
+    sample_ranges = list()
+
+    # This vector will first help us find which ranges are the sample ranges
+    adding_up = 0
+    with open(record_ranges, 'r') as range_file:
+        range = range_file.readline().strip().split()
+        # This will be the proxy of start for now, but later help find NOT factor
+        adding_up += int(range[0])
+        while adding_up < start:
+            previous_range = range
+            range = range_file.readline().strip().split()
+            adding_up += (int(range[0]) - 1) - (int(previous_range[1]) + 1)
+
+        # If we went too far, we must cut the actual range a bit, to find the starting indexes
+        if adding_up > start:
+            # We use another filler to find when we have a complete window
+            left = adding_up - start
+            sample_ranges.append([(int(range[0]) - 1) - left, (int(range[0]) - 1)])
+        # Otherwise we only have the first nucleotide
+        else:
+            left = 1
+            sample_ranges.append([int(range[1]), int(range[1])])
+
+        while left < window_size:
+            previous_range = range
+            range = range_file.readline().strip().split()
+            left += (int(range[0]) - 1) - (int(previous_range[1]) + 1)
+            sample_ranges.append([(int(previous_range[1]) + 1), (int(range[0]) - 1)])
+
+        # Same for the last one, except if left = window size -> nothing to do, perfect
+        if left > window_size:
+            last_range = sample_ranges.pop()
+            right = left - window_size
+            sample_ranges.append([last_range[0], last_range[1] - right])
+
+    return sample_ranges
+
+
+###
 # Given a list of start of windows, will fetch the sequences
 # Inputs:
 #   - records : fetched sequence (fasta)
@@ -154,29 +196,28 @@ def find_right_sample(records, window_size, sample_windows, factor_record_length
         if os.path.isfile(record_ranges):
             # Extract the indexes of nucleotide within the factor
             masked_only_length = factor_record_lengths[each_record]
-            masked_only = build_proxy(record_ranges, masked_only_length)
 
-            record_n_windows = math.floor(len(masked_only) / window_size)
+            record_n_windows = math.floor(masked_only_length / window_size)
             # We will catch any "index out of range" error -> end of document = break the while
             try:
                 # While the sample windows are in this record
                 while sample_windows[i] < record_n_windows + sum_n_windows:
                     start = (sample_windows[i] - sum_n_windows) * window_size
-                    sample_id = record.id
 
                     # Find the right index ranges of this sample window
-                    sample_masked_only = masked_only[start:start + window_size]
-                    sample_factor_only_ranges = list(as_ranges(sample_masked_only))
+                    sample_factor_only_ranges = find_sample_ranges_mask(record_ranges, start, window_size)
 
                     # For each of these index ranges -> find the nucleotide associated with
                     sample_seq = str()
                     for each_range in sample_factor_only_ranges:
-                        sample_seq += record.seq[each_range[0]:each_range[1]+1]
+                        sample_seq += record.seq[each_range[0]:each_range[1] + 1]
 
-                    # We must make sure there is only ATCG in this sequence:
+                    # We must make sure there is only ATCG in this sequence, else simply not take this sample
                     if not any([c not in 'ATCGatcg' for c in sample_seq]):
                         window_sample_record = SeqRecord(seq=sample_seq, id=factor)
                         all_sample_records.append(window_sample_record)
+
+                    # Moving to the next sample
                     i += 1
             except IndexError:
                 break

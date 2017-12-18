@@ -31,21 +31,6 @@ output = str(sys.argv[5])
 
 
 ###
-# Check if parent directory is present, if not create it
-###
-def checking_parent(file_path):
-    # We don't need the file name, so will take everything but the last part
-    parent_directories = '/'.join(file_path.split('/')[0:(len(file_path.split('/')) - 1)])
-    # As we uses parallel, we ended up we one thread doesn't seeing the directory, attempting
-    # creating it, while another just did the same -> error "The file already exist", and stopped everything...
-    try:
-        if not os.path.exists(parent_directories):
-            os.makedirs(parent_directories)
-    except:
-        pass
-
-
-###
 # Fetch a fasta file, and clean it (remove N or n, which stands for "any nucleotides)
 # Note that if the fasta file contain multiple sequences, only the first will have its CGR computed !
 # Input:
@@ -59,34 +44,6 @@ def fetch_fasta(fasta_file):
         print("Cannot open %s, check path!" % fasta_file)
         sys.exit()
     return (records)
-
-
-###
-# Translate a list of integers into a list of all the ranges found in this list of integers
-###
-def as_ranges(list_of_integers):
-    for p in itertools.groupby(enumerate(list_of_integers), lambda x_y: x_y[1] - x_y[0]):
-        b = list(p[1])
-        yield b[0][1], b[-1][1]
-
-
-###
-# Build a numpy proxy record of all the indexes where there is the wanted factor, using the record ranges
-###
-def build_proxy(record_ranges, factor_only_length):
-    # This list will contain all the indexes of nucleotide that are within a factor
-    record_proxy = np.zeros(factor_only_length, dtype=np.int64)
-
-    end_previous = 0
-    with open(record_ranges, 'r') as range_file:
-        for each_range in range_file:
-            line_range = range(int(each_range.split()[0]), int(each_range.split()[1]) + 1)
-            # For each nucleotide from start to end of the factor:
-            for index, item in enumerate(line_range):
-                record_proxy[index + end_previous] = item
-            end_previous += len(line_range)
-
-    return record_proxy
 
 
 ###
@@ -107,6 +64,80 @@ def count_pure_record_length(record, proxies_directory):
     # If no record for this factor, return length of 0
     except FileNotFoundError:
         return 0
+
+
+###
+# Build a numpy proxy record of all the indexes where there is NOT the wanted factor, using the record ranges
+###
+def build_proxy(record_ranges, masked_only_length):
+    # This list will contain all the indexes of nucleotide that are within a factor
+    record_proxy = np.zeros(masked_only_length, dtype=np.int64)
+
+    end_previous_range = 0
+    keep_track = 0
+    with open(record_ranges, 'r') as range_file:
+        for each_range in range_file:
+            line_range = [int(each_range.split()[0]), int(each_range.split()[1]) + 1]
+
+            if end_previous_range == 0:
+                start = 0
+            else:
+                start = end_previous_range
+            end = line_range[0] - 1
+            non_factor_range = range(start, end)
+
+            # For each nucleotide from start to end of the factor:
+            for index, item in enumerate(non_factor_range):
+                record_proxy[index + keep_track] = item
+            end_previous_range = line_range[1]
+            keep_track += len(non_factor_range)
+
+    # We probably don't have factors ranging up to the end of the record sequence -> must add this last range
+    if keep_track < masked_only_length:
+        last_range = range(keep_track, masked_only_length)
+        for index, item in enumerate(last_range):
+            record_proxy[index + keep_track] = item
+
+    return record_proxy
+
+
+###
+# Find all the coordinates ranges of this sample of factor
+###
+def find_sample_ranges_pure(record_ranges, start, window_size):
+    sample_ranges = list()
+
+    # This vector will first help us find which ranges are the sample ranges
+    adding_up = 0
+    with open(record_ranges, 'r') as range_file:
+        range = range_file.readline().strip().split()
+        adding_up += int(range[1]) - int(range[0])
+        while adding_up < start:
+            range = range_file.readline().strip().split()
+            adding_up += int(range[1]) - int(range[0])
+
+        # If we went too far, we must cut the actual range a bit, to find the starting indexes
+        if adding_up > start:
+            # We use another filler to find when we have a complete window
+            left = adding_up - start
+            sample_ranges.append([int(range[1]) - left, int(range[1])])
+        # Otherwise we only have the first nucleotide
+        else:
+            left = 1
+            sample_ranges.append([int(range[1]), int(range[1])])
+
+        while left < window_size:
+            range = range_file.readline().strip().split()
+            left += (int(range[1]) - int(range[0]))
+            sample_ranges.append([int(range[0]), int(range[1])])
+
+        # Same for the last one, except if left = window size -> nothing to do, perfect
+        if left > window_size:
+            last_range = sample_ranges.pop()
+            right = left - window_size
+            sample_ranges.append([last_range[0], last_range[1] - right])
+
+    return sample_ranges
 
 
 ###
@@ -135,9 +166,8 @@ def find_right_sample(records, window_size, sample_windows, factor_record_length
         if os.path.isfile(record_ranges):
             # Extract the indexes of nucleotide within the factor
             factor_only_length = factor_record_lengths[each_record]
-            factor_only = build_proxy(record_ranges, factor_only_length)
 
-            record_n_windows = math.floor(len(factor_only) / window_size)
+            record_n_windows = math.floor(factor_only_length / window_size)
             # We will catch any "index out of range" error -> end of document = break the while
             try:
                 # While the sample windows are in this record
@@ -145,8 +175,7 @@ def find_right_sample(records, window_size, sample_windows, factor_record_length
                     start = (sample_windows[i] - sum_n_windows) * window_size
 
                     # Find the right index ranges of this sample window
-                    sample_factor_only = factor_only[start:start + window_size]
-                    sample_factor_only_ranges = list(as_ranges(sample_factor_only))
+                    sample_factor_only_ranges = find_sample_ranges_pure(record_ranges, start, window_size)
 
                     # For each of these index ranges -> find the nucleotide associated with
                     sample_seq = str()
@@ -157,6 +186,8 @@ def find_right_sample(records, window_size, sample_windows, factor_record_length
                     if not any([c not in 'ATCGatcg' for c in sample_seq]):
                         window_sample_record = SeqRecord(seq=sample_seq, id=factor)
                         all_sample_records.append(window_sample_record)
+
+                    # Moving to the next sample
                     i += 1
             except IndexError:
                 break
@@ -257,7 +288,7 @@ def sampling_using_proxies(records, proxies_directory, window_size, n_samples):
                 # Check if it is not too small already:
                 if factor_only_length < window_size:
                     too_small += factor_seq
-                # Else we have at least one sample big enough
+                # Else we have at least one sample big enough to have multiple windows
                 else:
                     # How many window for this specific record?
                     record_n_windows = int(math.floor(len(factor_seq) / window_size))
