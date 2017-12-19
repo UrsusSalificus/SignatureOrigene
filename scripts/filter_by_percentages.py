@@ -10,9 +10,9 @@ __license__ = "MIT"
 # Factor percentages for this species:
 factor_percentages = str(sys.argv[1])
 # Species name
-species = '_'.join(str(factor_percentages.split('/')[-1]).split('_')[:2])
+species = str(sys.argv[2])
 # Follow up:
-follow_up = str(sys.argv[2])
+follow_up = str(sys.argv[3])
 
 
 ###
@@ -40,7 +40,7 @@ with open(factor_percentages, 'r') as percs:
             factor_kept.append(line[1])
 
 # Write these new factors in the config file
-new_config_directory = 'config/new_factors/' + species + '/'
+new_config_directory = '../config/new_factors/' + species + '/'
 
 # Writing the factors kept
 checking_parent(new_config_directory)

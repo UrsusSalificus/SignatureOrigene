@@ -111,7 +111,7 @@ def extract_uncategorized(record, all_files, species_proxies_directory):
 
     # On the other end, if the last range is not until the end, we need to add this last range
     if record_ranges[0][1] != len(record):
-        uncategorized.append([record_ranges[0][1] + 1, len(record)])
+        uncategorized.append([record_ranges[0][1] + 1, len(record) - 1])
 
     # If we find some ranges -> can write them
     if uncategorized:

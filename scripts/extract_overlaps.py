@@ -163,7 +163,7 @@ def pairwise_overlap(record, factor_directory, factor, comparison_directory, com
                     overlap_file.write('\t'.join([str(each) for each in each_range]) + '\n')
 
             # We also return the factor_comparison to avoid repeats
-            return '_'.join([factor, comparison])
+            return '-'.join([factor, comparison])
 
 
 def comparing_ranges(factor_to_compare, all_factors, records, species_proxies_directory):
@@ -186,7 +186,7 @@ def comparing_ranges(factor_to_compare, all_factors, records, species_proxies_di
             else:
                 factor_directory = species_proxies_directory + '/' + factor
                 comparison_directory = species_proxies_directory + '/' + comparison
-                overlap_directory = species_proxies_directory + '/' + '_'.join([factor, comparison])
+                overlap_directory = species_proxies_directory + '/' + '-'.join([factor, comparison])
 
                 # Find the sum of all nucleotide which are either factor or comparison factor
                 pure_factor_length = sum([count_pure_record_length(records[each_record], factor_directory)
