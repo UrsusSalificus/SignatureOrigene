@@ -67,36 +67,20 @@ def count_pure_record_length(record, proxies_directory):
 
 
 ###
-# Build a numpy proxy record of all the indexes where there is NOT the wanted factor, using the record ranges
+# Build a numpy proxy record of all the indexes where there is the wanted factor, using the record ranges
 ###
-def build_proxy(record_ranges, masked_only_length):
+def build_proxy(record_ranges, factor_only_length):
     # This list will contain all the indexes of nucleotide that are within a factor
-    record_proxy = np.zeros(masked_only_length, dtype=np.int64)
+    record_proxy = np.zeros(factor_only_length, dtype=np.int64)
 
-    end_previous_range = 0
-    keep_track = 0
+    end_previous = 0
     with open(record_ranges, 'r') as range_file:
         for each_range in range_file:
-            line_range = [int(each_range.split()[0]), int(each_range.split()[1]) + 1]
-
-            if end_previous_range == 0:
-                start = 0
-            else:
-                start = end_previous_range
-            end = line_range[0] - 1
-            non_factor_range = range(start, end)
-
+            line_range = range(int(each_range.split()[0]), int(each_range.split()[1]) + 1)
             # For each nucleotide from start to end of the factor:
-            for index, item in enumerate(non_factor_range):
-                record_proxy[index + keep_track] = item
-            end_previous_range = line_range[1]
-            keep_track += len(non_factor_range)
-
-    # We probably don't have factors ranging up to the end of the record sequence -> must add this last range
-    if keep_track < masked_only_length:
-        last_range = range(keep_track, masked_only_length)
-        for index, item in enumerate(last_range):
-            record_proxy[index + keep_track] = item
+            for index, item in enumerate(line_range):
+                record_proxy[index + end_previous] = item
+            end_previous += len(line_range)
 
     return record_proxy
 
@@ -272,6 +256,7 @@ def sampling_using_proxies(records, proxies_directory, window_size, n_samples):
             # Does the rest only if the record exists
             if os.path.isfile(record_ranges):
                 # We need the indexes of all nucleotide that are within the wanted factor
+                # Note: -1 as we have to translate from length to pythonic indexing
                 factor_only_length = factor_record_lengths[each_record]
                 factor_only = build_proxy(record_ranges, factor_only_length)
 
