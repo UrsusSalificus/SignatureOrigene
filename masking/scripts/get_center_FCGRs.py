@@ -22,15 +22,16 @@ center_indexes = [int(each_window) - 1 for each_window in center_indexes.split()
 center_indexes.sort()
 
 with open(FCGRs, 'r') as infile, open(output, 'w') as outfile:
-    # Start the countdown
+    line = infile.readline()
+    # Start the countdown at one -> already red one line
     i = 0
     for each_index in range(len(center_indexes)):
         # Keep going til we are at the right index/line on the FCGR file
-        while i != center_indexes[each_index]:
-            good_line = infile.readline()
+        while i < center_indexes[each_index]:
+            line = infile.readline()
             i += 1
         # Prepare the line to have the id of "center" instead of the record's id
-        good_line = good_line.split()
+        good_line = line.split()
         good_line[0] = 'center'
         for each_count in good_line:
             outfile.write(each_count + '\t')

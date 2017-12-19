@@ -100,7 +100,7 @@ ggplot(dat,aes(x = factors, y = mean_dist, grp = merged)) +
   theme(
     plot.title = element_text(size = 18, face="bold"),
     axis.title.x = element_text(size = 18),
-    axis.text.x  = element_text(size = 15),
+    axis.text.x  = element_text(size = 15, angle = 90, hjust = 1),
     axis.title.y = element_text(size = 18),
     axis.text.y  = element_text(size = 15),
     legend.title = element_text(size=16, face = 'bold'),

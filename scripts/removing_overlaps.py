@@ -186,7 +186,7 @@ def remove_overlap(to_clean, species_proxies_directory):
             for each_overlap in range(len(level_to_clean)):
                 overlap = level_to_clean[each_overlap]
                 # We only remove when factor in the overlapping factors
-                if len(list(set(factor.split('_')) & set(overlap.split('_')))) == len(factor.split('_')):
+                if len(list(set(factor.split('-')) & set(overlap.split('-')))) == len(factor.split('-')):
                     factor_directory = species_proxies_directory + '/' + factor
                     overlap_directory = species_proxies_directory + '/' + overlap
 
@@ -205,12 +205,12 @@ species_proxies_directory = '/'.join(["../files/factor_proxies", species])
 all_levels = [os.path.basename(each) for each in extract_path(species_proxies_directory + '/', '*')]
 
 # How many different levels we have?
-n_levels = max([len(each.split('_')) for each in all_levels])
+n_levels = max([len(each.split('-')) for each in all_levels])
 
 to_clean = list()
 # Note: we add + 1 due to the pythonic counting starting at 0
 for each_level in range(1, n_levels + 1):
-    to_clean.append([each for each in all_levels if len(each.split('_')) == each_level])
+    to_clean.append([each for each in all_levels if len(each.split('-')) == each_level])
 
 remove_overlap(to_clean, species_proxies_directory)
 
