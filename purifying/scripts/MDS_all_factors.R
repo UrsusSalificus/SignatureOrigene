@@ -24,6 +24,7 @@ sample_size <- args[6]
 
 # We will need a dictionnary of species abbreviation VS nice species name
 dict <- readRDS('../input/dictionary.RData')
+factor_colours <-  readRDS('../input/factor_colours.RData')
 
 # MDS
 fit <- readRDS(args[2])
@@ -35,15 +36,37 @@ factors <- unname(sapply(all_names, function(each_line) {
     # If when split we get 3 result = untouched genome (only the record name) + start of the window
     return('whole')
   } else {
-    # Else, it's the pure samples, hence factor abbreviation -> keep those
+    # Else, it's the pure samples, hence colorRampPalettefactor abbreviation -> keep those
     return(each_line)
   }
 }))
+factors_names <- unique(factors)
 
 # We will also prepare the colours
-all_colours <- c("#3478f3", "#f7262b", "#10b9cf", "#dab000", "#c841ca", "#00982a", "#f75d21")
-# We want the whole genome to be black, so we pick the number of non-whole colour, then add black at the end
-colours <- c(all_colours[1:(nlevels(as.factor(factors))-1)], 'black')
+# The first vector will contain the "basic" colors -> one for each factor
+all_colours = unlist(sapply(factors_names, function (each_factor) {
+  # First case, if factor is Whole Genome -> black
+  if (each_factor == 'whole') {return('black')}
+  # Else, if it is individual factor, find their colours
+  else if (length(strsplit(each_factor, '-')[[1]]) == 1){
+    return(toString(factor_colours$colours[factor_colours$factors == each_factor]))
+  }
+  # Finally if it is more than one factor, must find compromise between the colours
+  else {
+    first_factor_col <- toString(factor_colours$colours[factor_colours$factors == strsplit(each_factor, '-')[[1]][1]])
+    second_factor_col <- toString(factor_colours$colours[factor_colours$factors == strsplit(each_factor, '-')[[1]][2]])
+    # Take the intermediate colour
+    col <- colorRampPalette(c(first_factor_col, second_factor_col))(3)[2]
+    i <- 2
+    # Redo this for each remaining associating factor
+    while (i < length(strsplit(each_factor, '-')[[1]])) {
+      i_factor_col <- toString(factor_colours$colours[factor_colours$factors == strsplit(each_factor, '-')[[1]][i]])
+      col <- colorRampPalette(c(col, i_factor_col))(3)[2]
+      i <- i + 1
+    }
+    return(col)
+  }
+}))
 
 # We will reduce visibility of the whole genome points:
 reduced_vis <- unname(sapply(factors, function (each_line) {
@@ -73,7 +96,7 @@ ggplot(data, aes(x = MDS_1, y = MDS_2, colour = as.factor(factors), alpha = redu
     legend.title = element_text(size=18, face = 'bold'),
     legend.text = element_text(size = 15)
   )+
-  scale_colour_manual(name = 'Factors', values = colours, 
+  scale_colour_manual(name = 'Factors', values = all_colours , 
                       labels = c(levels(as.factor(factors))[-nlevels(as.factor(factors))], 'Whole genome')) +
   scale_alpha_discrete(range = c(1, 0.4), guide=FALSE)
 dev.off() 
