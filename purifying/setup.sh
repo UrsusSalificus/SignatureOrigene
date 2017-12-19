@@ -278,17 +278,19 @@ for each_species in $SPECIES; do
                 ../data/following/factor_proxies/$each_species/$each_factor\_proxies_done.txt
         fi
     done
-    # After finding all the factors' ranges, we must clean them from overlaps
-    snakemake $snakemake_arguments \
-        ../data/following/factor_filtered/$each_species\_done.txt
+    for each_window in $WINDOWS; do
+        # After finding all the factors' ranges, we must clean them from overlaps
+        snakemake $snakemake_arguments \
+            ../data/following/factor_filtered/$each_window/$each_species\_done.txt
+    done
 done
 
 # The second part goes from these ranges to find sequences where we only find the factor
 for each_species in $SPECIES; do
     # We now have new filtered factors
-    cd config/new_factors/$each_species
+    cd ../config/new_factors/$each_species
     FACTORS=$( find * )
-    cd ../..
+    cd $go_back
 
     for each_sample in $SAMPLES; do
         for each_window in $WINDOWS; do

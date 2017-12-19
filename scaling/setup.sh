@@ -262,6 +262,9 @@ cd ../figures
 FIGURES=$( find * )
 cd ../..
 
+# Remember where we are :
+go_back=$( pwd )
+
 # The first part is to extract and clean factor ranges:
 for each_species in $SPECIES; do
     for each_factor in $FACTORS; do
@@ -280,17 +283,19 @@ for each_species in $SPECIES; do
                 ../data/following/factor_proxies/$each_species/$each_factor\_proxies_done.txt
         fi
     done
-    # After finding all the factors' ranges, we must clean them from overlaps
-    snakemake $snakemake_arguments \
-        ../data/following/factor_filtered/$each_species\_done.txt
+    for each_window in $WINDOWS; do
+        # After finding all the factors' ranges, we must clean them from overlaps
+        snakemake $snakemake_arguments \
+            ../data/following/factor_filtered/$each_window/$each_species\_done.txt
+    done
 done
 
 # The second part uses these ranges to find how present are the different factors in the sequences
 for each_species in $SPECIES; do
     # We now have new filtered factors
-    cd config/new_factors/$each_species
+    cd ../config/new_factors/$each_species
     FACTORS=$( find * )
-    cd ../..
+    cd $go_back
 
     # To which we may have to add the Recombination Rate:
     if [ -f config/factors/RR ]; then

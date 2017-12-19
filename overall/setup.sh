@@ -179,26 +179,29 @@ cd ../..
 # Remember where we are :
 go_back=$( pwd )
 
-# Launching the whole Snakemake cascade
+# The first part is to extract and clean factor ranges:
 for each_species in $SPECIES; do
+    for each_factor in $FACTORS; do
+        # If feature = UTR, do not compute for S. cerevisiae and E. coli
+        if [[ $each_factor == 'UTR' ]] && \
+            ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
+            echo "$each_factor not computed for $each_species"
+        elif [[ $each_factor == 'intron' && $each_species == 'e_coli' ]] ; then
+            echo "$each_factor not computed for $each_species"
+        else
+            # Finding factor ranges
+            snakemake $snakemake_arguments \
+                ../data/following/factor_proxies/$each_species/$each_factor\_proxies_done.txt
+        fi
+    done
     for each_window in $WINDOWS; do
-        for each_factor in $FACTORS; do
-            # If feature = UTR, do not compute for S. cerevisiae and E. coli
-            if [[ $each_factor == 'UTR' ]] && \
-                ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
-                echo "$each_factor not computed for $each_species"
-            elif [[ $each_factor == 'intron' && $each_species == 'e_coli' ]] ; then
-                echo "$each_factor not computed for $each_species"
-            else
-                cd ../purifying
-                snakemake $snakemake_arguments \
-                    ../data/following/factor_proxies/$each_window/$each_species\_$each_factor\_proxies_done.txt
-                cd $go_back
-            fi
-        done
+        # After finding all the factors' ranges, we must clean them from overlaps
+        snakemake $snakemake_arguments \
+            ../data/following/factor_filtered/$each_window/$each_species\_done.txt
     done
 done
 
+# Second part will extract and plot the various percentages
 for each_window in $WINDOWS; do
     for each_figure in $FIGURES; do
         snakemake $snakemake_arguments files/results/$each_window/$each_figure\_all_species.png

@@ -1,5 +1,5 @@
 ################################################################################
-### Part 0) Downloading part
+### Part 0.1) Downloading part
 ################################################################################
 
 rule download_genomes:
@@ -33,7 +33,7 @@ rule download_rr:
         "bash ../scripts/download_repeats.sh {wildcards.species} {output}"
 
 ################################################################################
-### Part A) From whole genome to pure factor FCGRs
+### Part 0.2) Extract and clean ranges
 ################################################################################
 
 rule factor_proxies:
@@ -43,10 +43,69 @@ rule factor_proxies:
         "../data/factors/features/{species}_feature_table.txt",
         "../data/factors/genes/{species}_genes.gff"
     output:
-        "../data/following/factor_proxies/{windows}/{species}_{factors}_proxies_done.txt"
+        "../data/following/factor_proxies/{species}/{factors}_proxies_done.txt"
     shell:
-        "python3 ../scripts/factor_proxies.py {wildcards.factors} \
-            {wildcards.windows} {input} {output}"
+        "python3 ../scripts/factor_proxies.py {wildcards.factors} {input} \
+        {output}"
+
+rule extract_overlaps:
+    input:
+        "../data/genomes/{species}_genomes.fna"
+    output:
+        "../data/following/factor_proxies/overlaps/{species}_done.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/extract_overlaps.py {input} {threads} {output}"
+
+rule clean_ranges:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/following/factor_proxies/overlaps/{species}_done.txt"
+    output:
+        "../data/following/factor_proxies/cleaning/{species}_done.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/removing_overlaps.py {input} {threads} {output}"
+
+rule extract_uncategorized:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/following/factor_proxies/cleaning/{species}_done.txt"
+    output:
+        "../data/following/factor_proxies/uncategorized/{species}_done.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/extract_uncategorized.py {input} {threads} {output}"
+
+rule factor_percentages:
+    input:
+        "../data/genomes/{species}_genomes.fna",
+        "../data/following/factor_proxies/uncategorized/{species}_done.txt"
+    output:
+        "../files/factor_percentages/{windows}/{species}.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/factor_percentages.py {input} {wildcards.windows} \
+        {output}"
+
+rule filter_factors:
+    input:
+        "../files/factor_percentages/{windows}/{species}.txt"
+    output:
+        "../data/following/factor_filtered/{windows}/{species}_done.txt"
+    threads:
+        99
+    shell:
+        "python3 ../scripts/filter_by_percentages.py {input} \
+        {wildcards.species} {output}"
+
+################################################################################
+### Part A)
+################################################################################
 
 rule extract_overlaps:
     output:

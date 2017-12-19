@@ -87,7 +87,7 @@ rule factor_percentages:
         "../data/genomes/{species}_genomes.fna",
         "../data/following/factor_proxies/uncategorized/{species}_done.txt"
     output:
-        "../files/factor_percentages/{species}_factors_percentages.txt"
+        "../files/factor_percentages/{windows}/{species}.txt"
     threads:
         99
     shell:
@@ -96,13 +96,14 @@ rule factor_percentages:
 
 rule filter_factors:
     input:
-        "../files/factor_percentages/{species}_factors_percentages.txt"
+        "../files/factor_percentages/{windows}/{species}.txt"
     output:
-        "../data/following/factor_filtered/{species}_done.txt"
+        "../data/following/factor_filtered/{windows}/{species}_done.txt"
     threads:
         99
     shell:
-        "python3 ../scripts/filter_by_percentages.py {input} {output}"
+        "python3 ../scripts/filter_by_percentages.py {input} \
+        {wildcards.species} {output}"
 
 ################################################################################
 ### Part B) From ranges of masked factor to FCGR
