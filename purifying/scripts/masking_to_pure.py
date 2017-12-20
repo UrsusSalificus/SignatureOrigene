@@ -256,7 +256,6 @@ def sampling_using_proxies(records, proxies_directory, window_size, n_samples):
             # Does the rest only if the record exists
             if os.path.isfile(record_ranges):
                 # We need the indexes of all nucleotide that are within the wanted factor
-                # Note: -1 as we have to translate from length to pythonic indexing
                 factor_only_length = factor_record_lengths[each_record]
                 factor_only = build_proxy(record_ranges, factor_only_length)
 
