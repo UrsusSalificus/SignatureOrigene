@@ -141,8 +141,8 @@ rule CGR:
     threads:
         99
     shell:
-        "python3 ../scripts/windowed_CGR.py {input} {wildcards.windows} \
-            {wildcards.n_samples} {threads} {output}"
+        "python3 ../scripts/windowed_CGR.py {input} {wildcards.species} \
+            {wildcards.windows} {wildcards.n_samples} {threads} {output}"
 
 rule ratio_extract:
     input:

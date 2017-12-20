@@ -14,15 +14,15 @@ __license__ = "MIT"
 # Species genome path:
 species_genome = str(sys.argv[1])
 # Species abbreviation:
-species = '_'.join(str(species_genome.split('/')[-1]).split('_')[:2])
+species = str(sys.argv[2])
 # Wanted window size:
-window_size = int(sys.argv[2])
+window_size = int(sys.argv[3])
 # Sample size:
-sample_size = int(sys.argv[3])
+sample_size = int(sys.argv[4])
 # Wanted number of threads at the same time:
-n_threads = int(sys.argv[4])
+n_threads = int(sys.argv[5])
 # Tracking file:
-follow_up = str(sys.argv[5])
+follow_up = str(sys.argv[6])
 
 
 ###
@@ -130,7 +130,7 @@ def which_directory(follow_up, window_size, species):
     else:
         # We are in the masking/purifying case, where we used sequence of the factor only
         # We store CGRs directly in the purifying directory
-        factor = follow_up.split('_')[3]
+        factor = follow_up.split('/')[-1].split('_')[0]
         seq_directory = '/'.join(['files/CGRs', '_'.join([str(window_size), str(sample_size)]), species, factor])
     return seq_directory
 

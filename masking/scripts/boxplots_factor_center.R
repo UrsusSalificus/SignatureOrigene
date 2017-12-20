@@ -25,12 +25,12 @@ n_samples <- args[5]
 # We will need a dictionnary of species abbreviation VS nice species name
 dict <- readRDS('../input/dictionary.RData')
 
-distance_directory <- paste("files/distances/manhattan/", window_size, '_', n_samples, '_', kmer, '/', sep ='')
+distance_directory <- paste("files/distances/manhattan/", window_size, '_', n_samples, '_', kmer, sep ='')
 
 # Matrix files' path
-masked_distance_matrices_files <- Sys.glob(paste(distance_directory, species, '*_masked_*', sep = ''))
-pure_distance_matrices_files <- Sys.glob(paste(distance_directory, species, '*_pure_*', sep = ''))
-whole_distance_matrix_file <- paste(distance_directory, species, '_whole_vs_center_dist_matrix.RData', sep = '')
+masked_distance_matrices_files <- Sys.glob(paste(distance_directory, species, '*_masked_*', sep = '/'))
+pure_distance_matrices_files <- Sys.glob(paste(distance_directory, species, '*_pure_*', sep = '/'))
+whole_distance_matrix_file <- paste(distance_directory, species, 'whole_vs_center_dist_matrix.RData', sep = '/')
 
 get_mean_distance_masked_or_pure <- function (distance_matrix_path) {
   distance_matrix <- as.matrix(readRDS(distance_matrix_path))

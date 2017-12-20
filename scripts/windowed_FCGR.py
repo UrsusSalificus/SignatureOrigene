@@ -299,7 +299,7 @@ def which_directory(follow_up, window_size, species):
     else:
         # We are in the masking/purifying case, where we used sequence of the factor only
         # We store CGRs directly in the purifying directory
-        factor = follow_up.split('_')[3]
+        factor = follow_up.split('/')[-1].split('_')[0]
         seq_directory = '/'.join(['files/CGRs', '_'.join([str(window_size), str(sample_size)]), species, factor])
     return seq_directory
 

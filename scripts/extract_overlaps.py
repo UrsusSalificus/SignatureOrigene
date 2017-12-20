@@ -130,12 +130,12 @@ def intersects(a, b):
 # Will check if we already computed this combination of factor/comparison but in a different order
 ###
 def check_for_repeat(all_overlaps, factor, comparison):
-    all_names = comparison.split('_')
+    all_names = comparison.split('-')
     all_names.append(factor)
     repeat = False
 
     for each_already in all_overlaps:
-        each_already = each_already.split('_')
+        each_already = each_already.split('-')
 
         in_common = list(set(all_names) & set(each_already))
 
@@ -177,7 +177,7 @@ def comparing_ranges(factor_to_compare, all_factors, records, species_proxies_di
 
             # Avoid comparing factor overlap to himself...
             # Note the split by _ for further comparison (e.g. CDS_RNA vs CDS)
-            if factor in comparison.split('_'):
+            if factor in comparison.split('-'):
                 continue
             # We only do the "lower diagonal" when first comparing each individual factor to each other
             # as we don't want to do twice the same operation (e.g. CDS_RNA and RNA_CDS)

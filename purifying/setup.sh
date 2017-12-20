@@ -305,7 +305,7 @@ for each_species in $SPECIES; do
                         echo "$each_factor not computed for $each_species"
                     else
                         snakemake $snakemake_arguments \
-                            files/FCGRs/$each_window\_$each_sample\_$each_kmer/$each_species\_$each_factor\_pure_FCGRs.txt
+                            files/FCGRs/$each_window\_$each_sample\_$each_kmer/$each_species/$each_factor\_pure_FCGRs.txt
                     fi
                 done
 
