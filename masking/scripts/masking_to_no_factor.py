@@ -131,43 +131,75 @@ def count_masked_record_length(record, proxies_directory):
 ###
 # Find all the coordinates ranges of this sample of NOT factor
 ###
-def find_sample_ranges_mask(record_ranges, start, window_size):
+def find_sample_ranges_mask(record_ranges, start, window_size, record_length):
     sample_ranges = list()
 
     # This vector will first help us find which ranges are the sample ranges
     adding_up = 0
+    # This one will make use know if there is premature ends of document
+    ended_at_adding = False
     with open(record_ranges, 'r') as range_file:
-        range = range_file.readline().strip().split()
+        ranges = range_file.readline().strip().split()
         # This will be the proxy of start for now, but later help find NOT factor
-        adding_up += int(range[0])
+        adding_up += int(ranges[0])
         while adding_up < start:
-            previous_range = range
-            range = range_file.readline().strip().split()
-            adding_up += (int(range[0]) - 1) - (int(previous_range[1]) + 1)
+            previous_range = ranges
+            ranges = range_file.readline().strip().split()
+            # We might be at the end of the record proxies ranges.
+            try:
+                adding_up += (int(ranges[0]) - 1) - (int(previous_range[1]) + 1)
+            except IndexError:
+                # In this case, there is no ranges anymore from this point to the end of the record...
+                ranges = [int(previous_range[1]) + 1, record_length - 1]
+                adding_up += ranges[1] - ranges[0]
+                # We will mark this hallmark, as it changes the way we handle ranges
+                # (from gap filling to using the actual range)
+                ended_at_adding = True
 
         # If we went too far, we must cut the actual range a bit, to find the starting indexes
         if adding_up > start:
             # We use another filler to find when we have a complete window
             left = adding_up - start
-            sample_ranges.append([(int(range[0]) - 1) - left, (int(range[0]) - 1)])
+            # The way we handle this varies whether we are already at the end or not
+            if ended_at_adding:
+                # In this case, we don't have to worry of having to find gaps in between ranges further...
+                ended_start = int(ranges[1]) - left
+                sample_ranges.append([ended_start, ended_start + window_size])
+            else:
+                sample_ranges.append([(int(ranges[0]) - 1) - left, (int(ranges[0]) - 1)])
         # Otherwise we only have the first nucleotide
         else:
             left = 1
-            sample_ranges.append([int(range[1]), int(range[1])])
+            sample_ranges.append([int(ranges[1]), int(ranges[1])])
 
+        # If what's left is smaller than the window size, it won't be engouh to fill or masked ranges
+        # As such we must continue in searching gaps
         while left < window_size:
-            previous_range = range
-            range = range_file.readline().strip().split()
-            left += (int(range[0]) - 1) - (int(previous_range[1]) + 1)
-            sample_ranges.append([(int(previous_range[1]) + 1), (int(range[0]) - 1)])
+            previous_range = ranges
+            ranges = range_file.readline().strip().split()
+            # We might be at the end of the record proxies ranges.
+            try:
+                left += (int(ranges[0]) - 1) - (int(previous_range[1]) + 1)
+                sample_ranges.append([(int(previous_range[1]) + 1), (int(ranges[0]) - 1)])
+            except IndexError:
+                # If we are at the end, we again don't bother with bumping on factor ranges anymore
+                ended_last_start = int(previous_range[1]) + 1
+                left = window_size - left
+                sample_ranges.append([ended_last_start, ended_last_start + left])
+                break
 
-        # Same for the last one, except if left = window size -> nothing to do, perfect
+        # Last case, we have a range which is too big -> we will remove the last added range and trim it.
         if left > window_size:
             last_range = sample_ranges.pop()
             right = left - window_size
             sample_ranges.append([last_range[0], last_range[1] - right])
 
-    return sample_ranges
+    # Just to make sure...
+    if sample_ranges[-1][1] > record_length - 1:
+        # If we try to add ranges which are beyond the record length, there is something fishy...
+        return None
+    else:
+        return sample_ranges
 
 
 ###
@@ -205,17 +237,19 @@ def find_right_sample(records, window_size, sample_windows, factor_record_length
                     start = (sample_windows[i] - sum_n_windows) * window_size
 
                     # Find the right index ranges of this sample window
-                    sample_factor_only_ranges = find_sample_ranges_mask(record_ranges, start, window_size)
+                    sample_factor_only_ranges = find_sample_ranges_mask(record_ranges, start, window_size, len(record))
 
                     # For each of these index ranges -> find the nucleotide associated with
                     sample_seq = str()
                     for each_range in sample_factor_only_ranges:
                         sample_seq += record.seq[each_range[0]:each_range[1] + 1]
 
-                    # We must make sure there is only ATCG in this sequence, else simply not take this sample
-                    if not any([c not in 'ATCGatcg' for c in sample_seq]):
-                        window_sample_record = SeqRecord(seq=sample_seq, id=factor)
-                        all_sample_records.append(window_sample_record)
+                    # If we did found a sequence in the end
+                    if sample_seq:
+                        # We must make sure there is only ATCG in this sequence, else simply not take this sample
+                        if not any([c not in 'ATCGatcg' for c in sample_seq]):
+                            window_sample_record = SeqRecord(seq=sample_seq, id=factor)
+                            all_sample_records.append(window_sample_record)
 
                     # Moving to the next sample
                     i += 1
