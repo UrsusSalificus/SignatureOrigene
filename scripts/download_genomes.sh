@@ -25,17 +25,13 @@ IFS='/' read -r -a array <<< $accession
 # The 9th element contains the file "name", which we use to extract the files we need
 whole_genome=$( echo ${array[9]}'_genomic.fna.gz' )
 
-if [ $species != e_coli ]; then
-    repeats=$( echo ${array[9]}'_rm.out.gz' )
-fi
-
 wget $accession$whole_genome
 gunzip < $whole_genome > $output_genome
 rm $whole_genome
 
 if [[ $species == hsap_sample || $species == mmus_sample ]]; then
-    python3 scripts/sampling_chromosomes.py $output_genome
+    python3 ../scripts/sampling_chromosomes.py $output_genome
 fi
 
 # Keep only wanted records
-python3 scripts/keep_wanted_records.py $output_genome
+python3 ../scripts/keep_wanted_records.py $output_genome

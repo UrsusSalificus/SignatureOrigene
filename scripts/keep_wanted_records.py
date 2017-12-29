@@ -29,8 +29,9 @@ def fetch_fasta(fasta_file):
         sys.exit()
     return (records)
 
+
 # Store all the records we which to keep
-with open("input/wanted_records.txt") as records_ids:
+with open("../input/wanted_records.txt") as records_ids:
     do_want = [each_id.split()[0].strip() for each_id in records_ids]
 
 records = fetch_fasta(species_genome)
