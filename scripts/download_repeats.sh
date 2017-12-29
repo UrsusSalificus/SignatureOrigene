@@ -17,7 +17,7 @@ species="$1"
 # Checking if parent directory already exist
 # (except for E. coli -> we already have the repeats for it):
 if [ $species != e_coli ]; then
-    output_repeats="$4"
+    output_repeats="$2"
     check_parent $output_repeats
 fi
 
