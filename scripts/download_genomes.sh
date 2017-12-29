@@ -15,7 +15,8 @@ function check_parent {
 # Will download whole concatenated genome of the species
 species="$1"
 # Checking if parent directory already exist
-output_genome="$2" ; check_parent $output_genome
+output_genome="$2"
+check_parent $output_genome
 
 # Using accession script to find the right accession
 accession=$( bash ../input/accessions.sh $species )

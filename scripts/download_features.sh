@@ -15,7 +15,8 @@ function check_parent {
 # Will download the feature table of the species
 species="$1"
 # Checking if parent directory already exist
-output_table="$2" ; check_parent $output_table
+output_table="$2"
+check_parent $output_table
 
 # Using accession script to find the right accession
 accession=$( bash ../input/accessions.sh $species )

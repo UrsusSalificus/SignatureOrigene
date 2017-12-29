@@ -15,6 +15,7 @@ function check_parent {
 # Will download genetic map, and then find the fitting spline of recombination rates through a Mareymap
 species="$1"
 output_rr="$2"
+check_parent $output_rr
 
 mkdir temp
 cd temp
