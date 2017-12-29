@@ -221,7 +221,7 @@ rule whole_FCGRs_dist:
 
 rule boxplots:
     output:
-        "files/results/{windows}_{n_samples}_{kmer}/{species}_boxplots_all_factors.png"
+        "files/results/{windows}_{n_samples}_{kmer}/{all_factors}/{species}_boxplots_all_factors.png"
     shell:
         "Rscript scripts/boxplots_factor_center.R {output} {wildcards.windows}\
             {wildcards.kmer} {wildcards.species} {wildcards.n_samples}"

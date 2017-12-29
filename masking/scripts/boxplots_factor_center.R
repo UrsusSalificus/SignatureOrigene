@@ -16,6 +16,7 @@ library(grid)
 # 3. k-mer size
 # 4. species 
 # 5. number of samples
+# 6. list of all factors
 args <- commandArgs(trailingOnly=TRUE)
 
 output = args[1]
@@ -23,6 +24,10 @@ window_size <- args[2]
 kmer <- args[3]
 species <- args[4]
 n_samples <- args[5]
+list_factors <- args[6]
+list_factors <- strsplit(list_factors, '_')[[1]]    # Keep it as a list
+# Finally, add the uncategorized factor
+list_factors <- c(list_factors, 'uncategorized')
 
 # We will need a dictionnary of species abbreviation VS nice species name
 dict <- readRDS('../input/dictionary.RData')
@@ -40,6 +45,18 @@ method_pval = 'bh'
 masked_distance_matrices_files <- Sys.glob(paste(distance_directory, species, '*_masked_*', sep = '/'))
 pure_distance_matrices_files <- Sys.glob(paste(distance_directory, species, '*_pure_*', sep = '/'))
 whole_distance_matrix_file <- paste(distance_directory, species, 'whole_vs_center_dist_matrix.RData', sep = '/')
+
+# We will keep only the files from the wanted list of factors
+keep_only_wanted_factor <- function(file) {
+  file_factors <- strsplit(basename(file), '_')[[1]][1]
+  file_factors <- strsplit(file_factors, '-')[[1]]
+  if (all(file_factors %in% list_factors)) {
+    return(file)
+  }
+}
+
+masked_distance_matrices_files <- unlist(lapply(masked_distance_matrices_files, keep_only_wanted_factor))
+pure_distance_matrices_files <- unlist(lapply(pure_distance_matrices_files, keep_only_wanted_factor))
 
 get_mean_distance_masked_or_pure <- function (distance_matrix_path) {
   distance_matrix <- as.matrix(readRDS(distance_matrix_path))

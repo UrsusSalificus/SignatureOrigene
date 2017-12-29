@@ -240,6 +240,11 @@ cd ../kmer
 KMER=$( find * )
 cd ../..
 
+# We will have to know which were the factors chosen at the setup
+function join_by { local IFS="$1"; shift; echo "$*"; }
+
+all_factors=$( join_by _ $FACTORS )
+
 # Remember where we are :
 go_back=$( pwd )
 
@@ -269,7 +274,7 @@ done
 for each_species in $SPECIES; do
     # We now have new filtered factors
     cd ../config/new_factors/$each_species
-    FACTORS=$( find * )
+    NEW_FACTORS=$( find * )
     cd $go_back
 
     for each_sample in $SAMPLES; do
@@ -282,7 +287,7 @@ for each_species in $SPECIES; do
                 cd $go_back
 
                 # B) We now will compute both the masked and pure factors distance matrix VS center
-                for each_factor in $FACTORS; do
+                for each_factor in $NEW_FACTORS; do
                     # If feature = UTR, do not compute for S. cerevisiae and E. coli
                     if [[ $each_factor == 'UTR' ]] && \
                         ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
@@ -312,7 +317,7 @@ for each_species in $SPECIES; do
 
                 # D) We would finally be able to use both distance matrices to produces boxplots
                 snakemake $snakemake_arguments \
-                        files/results/$each_window\_$each_sample\_$each_kmer/$each_species\_boxplots_all_factors.png
+                        files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_species\_boxplots_all_factors.png
             done
         done
     done
