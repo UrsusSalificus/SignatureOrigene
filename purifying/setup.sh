@@ -260,6 +260,11 @@ cd ../kmer
 KMER=$( find * )
 cd ../..
 
+# We will have to know which were the factors chosen at the setup
+function join_by { local IFS="$1"; shift; echo "$*"; }
+
+all_factors=$( join_by _ $FACTORS )
+
 # Remember where we are :
 go_back=$( pwd )
 
@@ -289,14 +294,14 @@ done
 for each_species in $SPECIES; do
     # We now have new filtered factors
     cd ../config/new_factors/$each_species
-    FACTORS=$( find * )
+    NEW_FACTORS=$( find * )
     cd $go_back
 
     for each_sample in $SAMPLES; do
         for each_window in $WINDOWS; do
             for each_kmer in $KMER; do
                 # A) This part will compute all the FCGRs of pure sequences we need from the purifying snakemake
-                for each_factor in $FACTORS; do
+                for each_factor in $NEW_FACTORS; do
                     # If feature = UTR, do not compute for S. cerevisiae and E. coli
                     if [[ $each_factor == 'UTR' ]] && \
                         ([[ $each_species == 's_cerevisiae' ]] || [[ $each_species == 'e_coli' ]]); then
@@ -330,15 +335,15 @@ for each_species in $SPECIES; do
                     # From the concatenated FCGRs of all factors in each species, to the MDS these factors
                     # (concatenating FCGRs of factor + whole -> distance matrix -> fitting -> MDS)
                     snakemake $snakemake_arguments \
-                        files/results/$each_window\_$each_sample\_$each_kmer/$each_species\_MDS_all_factors.png
+                        files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_species\_MDS_all_factors.png
                 elif [[ $each_figure == 'PC' ]] ; then
                     # Comparing the concatenated FCGRs of all factors between species
                     # Only fo this if it doesn't already exist (reverse order of species/comparison)
                     for each_comparison in $SPECIES; do
                         if [[ $each_comparison != $each_species ]] && \
-                            [[ ! -f files/distances/manhattan/$each_window\_$each_sample\_$each_kmer/pairwise_concatenated/$each_comparison\_vs_$each_species\_fit.RData ]] ; then
+                            [[ ! -f files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_species\_vs_$each_comparison\_MDS_pairwise.png ]] ; then
                             snakemake $snakemake_arguments \
-                            files/distances/manhattan/$each_window\_$each_sample\_$each_kmer/pairwise_concatenated/$each_species\_vs_$each_comparison\_fit.RData
+                            files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_species\_vs_$each_comparison\_MDS_pairwise.png
                         fi
                     done
                 fi

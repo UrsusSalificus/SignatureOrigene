@@ -19,7 +19,9 @@ args <- commandArgs(trailingOnly=TRUE)
 output = args[1]
 window_size <- args[4]
 kmer <- args[5]
+
 dict <- readRDS('../input/dictionary.RData')
+factor_colours <-  readRDS('../input/factor_colours.RData')
 
 # Distance matrix
 distance_matrix <- readRDS(args[2])
@@ -36,11 +38,33 @@ factors <- unname(sapply(all_names, function(each_line) {
   factor <- strsplit(each_line, '_')[[1]][3]
   return(factor)
 }))
+factors_names <- sort(unique(factors))
+
 
 # We will also prepare the colours
-all_colours <- c("#53b125", "#0057d2", "#d99b24", "#d940ad", "#cf290e")
-# We want the whole genome to be black, so we pick the number of non-whole colour, then add black at the end
-colours <- c(all_colours[1:(nlevels(as.factor(factors)))])
+all_colours = unlist(sapply(factors_names, function (each_factor) {
+  # First case, if factor is Whole Genome -> black
+  if (each_factor == 'whole') {return('black')}
+  # Else, if it is individual factor, find their colours
+  else if (length(strsplit(each_factor, '-')[[1]]) == 1){
+    return(toString(factor_colours$colours[factor_colours$factors == each_factor]))
+  }
+  # Finally if it is more than one factor, must find compromise between the colours
+  else {
+    first_factor_col <- toString(factor_colours$colours[factor_colours$factors == strsplit(each_factor, '-')[[1]][1]])
+    second_factor_col <- toString(factor_colours$colours[factor_colours$factors == strsplit(each_factor, '-')[[1]][2]])
+    # Take the intermediate colour
+    col <- colorRampPalette(c(first_factor_col, second_factor_col))(3)[2]
+    i <- 2
+    # Redo this for each remaining associating factor
+    while (i < length(strsplit(each_factor, '-')[[1]])) {
+      i_factor_col <- toString(factor_colours$colours[factor_colours$factors == strsplit(each_factor, '-')[[1]][i]])
+      col <- colorRampPalette(c(col, i_factor_col))(3)[2]
+      i <- i + 1
+    }
+    return(col)
+  }
+}))
 
 data <- data.frame(MDS_1 = fit$points[,1], MDS_2 = fit$points[,2], factors = factors, species = species)
 
@@ -51,8 +75,8 @@ species_nice_names <- unname(sapply(levels(as.factor(species)), function (each) 
   return(dict$true[dict$abbrev == each])
 }))
 
-png(output, width=1200, height=800, units="px")
-ggplot(data, aes(x = MDS_1, y = MDS_2, shape = as.factor(factors), colour = as.factor(species))) + 
+png(output, width=900, height=650, units="px")
+ggplot(data, aes(x = MDS_1, y = MDS_2, shape = as.factor(species), fill = as.factor(factors))) + 
   geom_point(size = 2, alpha = 1) +
   labs(title=plot_title, x ="Coordinate 1", y = "Coordinate 2") +
   theme(
@@ -62,90 +86,14 @@ ggplot(data, aes(x = MDS_1, y = MDS_2, shape = as.factor(factors), colour = as.f
     axis.title.y = element_text(size = 18),
     axis.text.y  = element_text(size = 15),
     legend.title = element_text(size=18, face = 'bold'),
-    legend.text = element_text(size = 15),
-    legend.direction = "horizontal",
-    legend.position="bottom",
-    legend.box = "vertical"
+    legend.text = element_text(size = 15)
   ) +
-  scale_shape_discrete(name = 'Factors', labels = levels(as.factor(factors))) +
-  scale_colour_manual(name = 'Species', values = colours, labels = species_nice_names) 
+  guides(
+    fill = guide_legend(override.aes = list(shape = 21)),
+    shape = guide_legend(override.aes = list(fill = 'black'))
+  ) +
+  scale_shape_manual(name = 'Species', values = c(21, 24), labels = species_nice_names) +
+  scale_fill_manual(name = 'Factors', values = all_colours, labels = factors_names)
 dev.off() 
 
 
-
-# TESTING PART
-cluster2 <- kmeans(distance_matrix, centers = 2)
-
-table(species, cluster2$cluster)
-table(factors, cluster2$cluster)
-
-plot_title <- paste('Clustering of H.sapiens/M.musculus pure factor sequences,\nwith kmer = ', 
-                    kmer, 'kmean = 2 and ', window_size, ' bp windows ', sep = '')
-
-png('hsap_sample_mmus_sample_2cluster.png', width=1200, height=800, units="px")
-ggplot(data, aes(x = MDS_1, y = MDS_2, shape = as.factor(factors), colour = as.factor(cluster2$cluster))) + 
-  geom_point(size = 2, alpha = 1) +
-  labs(title=plot_title, x ="Coordinate 1", y = "Coordinate 2") +
-  theme(
-    plot.title = element_text(size = 20, face="bold"),
-    axis.title.x = element_text(size = 18),
-    axis.text.x  = element_text(size = 15),
-    axis.title.y = element_text(size = 18),
-    axis.text.y  = element_text(size = 15),
-    legend.title = element_text(size=18, face = 'bold'),
-    legend.text = element_text(size = 15),
-    legend.direction = "horizontal",
-    legend.position="bottom",
-    legend.box = "vertical"
-  ) +
-  scale_shape_discrete(name = 'Factors', labels = levels(as.factor(factors))) +
-  scale_colour_manual(name = 'Clustering', values = rev(colours)[4:5]) 
-dev.off()
-
-cluster5 <- kmeans(distance_matrix, centers = 5)
-
-table(species, cluster5$cluster)
-table(factors, cluster5$cluster)
-
-plot_title <- paste('Clustering of H.sapiens/M.musculus pure factor sequences,\nwith kmer = ', 
-                    kmer, 'kmean = 5 and ', window_size, ' bp windows ', sep = '')
-
-png('hsap_sample_mmus_sample_5cluster.png', width=1200, height=800, units="px")
-ggplot(data, aes(x = MDS_1, y = MDS_2, shape = as.factor(factors), colour = as.factor(cluster5$cluster))) + 
-  geom_point(size = 2, alpha = 1) +
-  labs(title=plot_title, x ="Coordinate 1", y = "Coordinate 2") +
-  theme(
-    plot.title = element_text(size = 20, face="bold"),
-    axis.title.x = element_text(size = 18),
-    axis.text.x  = element_text(size = 15),
-    axis.title.y = element_text(size = 18),
-    axis.text.y  = element_text(size = 15),
-    legend.title = element_text(size=18, face = 'bold'),
-    legend.text = element_text(size = 15),
-    legend.direction = "horizontal",
-    legend.position="bottom",
-    legend.box = "vertical"
-  ) +
-  scale_shape_discrete(name = 'Factors', labels = levels(as.factor(factors))) +
-  scale_colour_manual(name = 'Clustering', values = rev(colours)) 
-dev.off()
-
-png('hsap_sample_mmus_sample_factors.png', width=1200, height=800, units="px")
-ggplot(data, aes(x = MDS_1, y = MDS_2, shape = as.factor(species), colour = as.factor(factors))) + 
-  geom_point(size = 2, alpha = 1) +
-  labs(title=plot_title, x ="Coordinate 1", y = "Coordinate 2") +
-  theme(
-    plot.title = element_text(size = 20, face="bold"),
-    axis.title.x = element_text(size = 18),
-    axis.text.x  = element_text(size = 15),
-    axis.title.y = element_text(size = 18),
-    axis.text.y  = element_text(size = 15),
-    legend.title = element_text(size=18, face = 'bold'),
-    legend.text = element_text(size = 15),
-    legend.direction = "horizontal",
-    legend.position="bottom",
-    legend.box = "vertical"
-  ) +
-  scale_colour_manual(name = 'Factors', values = colours, labels = levels(as.factor(factors))) +
-  scale_shape_discrete(name = 'Species', labels = species_nice_names) 
-dev.off()
