@@ -215,9 +215,11 @@ rule fitting_pairwise:
 
 rule MDS_pairwise:
     input:
+        "files/distances/manhattan/{windows}_{n_samples}_{kmer}/pairwise_concatenated/{all_factors}/{species}_vs_{comparison}_dist_matrix.RData",
         "files/distances/manhattan/{windows}_{n_samples}_{kmer}/pairwise_concatenated/{all_factors}/{species}_vs_{comparison}_fit.RData"
     output:
         "files/results/{windows}_{n_samples}_{kmer}/{all_factors}/{species}_vs_{comparison}_MDS_pairwise.png"
     shell:
-        "Rscript scripts/MDS_all_factors.R {output} {input} \
-            {wildcards.windows} {wildcards.kmer}"
+        "Rscript scripts/MDS_comparison.R {output} {input} \
+            {wildcards.windows} {wildcards.kmer} {wildcards.n_samples} \
+            {wildcards.species} {wildcards.comparison}"

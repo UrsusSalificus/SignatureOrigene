@@ -5,7 +5,6 @@
 # License : MIT
 
 library(ggplot2)
-library(dbscan)
 
 ### MultiDimensional Scaling (MDS) analysis of a distance matrix
 # Will input the arguments:
@@ -14,11 +13,17 @@ library(dbscan)
 # 3. path to the fit of the distance matrix
 # 4. window size
 # 5. k-mer size
+# 6. sample size
+# 7. species name
+# 8. comparison species name
 args <- commandArgs(trailingOnly=TRUE)
 
 output = args[1]
 window_size <- args[4]
 kmer <- args[5]
+sample_size <- args[6]
+species_abbrev <- args[7]
+comparison_abbrev <- args[8]
 
 dict <- readRDS('../input/dictionary.RData')
 factor_colours <-  readRDS('../input/factor_colours.RData')
@@ -68,12 +73,13 @@ all_colours = unlist(sapply(factors_names, function (each_factor) {
 
 data <- data.frame(MDS_1 = fit$points[,1], MDS_2 = fit$points[,2], factors = factors, species = species)
 
-plot_title <- paste('Distance matrices of H.sapiens/M.musculus pure factor sequences,\nwith kmer = ', 
-                    kmer, ' and ', window_size, ' bp windows ', sep = '')
-
 species_nice_names <- unname(sapply(levels(as.factor(species)), function (each) {
   return(dict$true[dict$abbrev == each])
 }))
+
+plot_title <- paste('Distance between ', species_nice_names[1], '/', species_nice_names[2], 
+                    ' pure factor sequences,\nWith maximum ', sample_size, ' windows for each factor, kmer = ', 
+                    kmer, ' and ', window_size, ' bp windows', sep = '')
 
 png(output, width=900, height=650, units="px")
 ggplot(data, aes(x = MDS_1, y = MDS_2, shape = as.factor(species), fill = as.factor(factors))) + 

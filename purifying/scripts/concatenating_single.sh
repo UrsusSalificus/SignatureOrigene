@@ -19,12 +19,10 @@ function get_factor {
     echo ${array[0]}
 }
 
-
-# This directory will contain all our files temporarily
-mkdir temp
-
 # Extract all the factors
 sep_factors=$( echo $all_factors | tr _ ' ' )
+# Add uncategorized
+sep_factors+=" uncategorized"
 
 # Find all pure factors FCGRS of this species
 all_species_files=$( find files/FCGRs/$windows\_$n_samples\_$kmer/$species/*_pure_FCGRs.txt )
@@ -33,18 +31,10 @@ all_species_files=$( find files/FCGRs/$windows\_$n_samples\_$kmer/$species/*_pur
 for each_file in $all_species_files; do
     for each_factor in $sep_factors; do
         if [[ "$( get_factor $each_file )" == "$each_factor" ]]; then
-            all_actual_species+="lol_$each_factor "
+            files_kept+="$each_file "
         fi
     done
 done
 
-# Now store the right files in temp
-for each_actual in $all_actual_species; do
-    file_name_only=$( basename $each_actual )
-    # Add the species name at the start of each line
-    sed -e "s/^/$species\_/" $each_actual > temp/$species\_$file_name_only
-done
-
 # Now, can concatenate everything in one file
-cat temp/$species*.txt ../scaling/files/FCGRs/$windows\_$n_samples\_$kmer/$species\_FCGRs.txt >> $output
-rm -r temp
+cat $files_kept ../scaling/files/FCGRs/$windows\_$n_samples\_$kmer/$species\_FCGRs.txt >> $output

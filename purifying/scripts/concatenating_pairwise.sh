@@ -26,6 +26,8 @@ mkdir temp
 
 # Extract all the factors
 sep_factors=$( echo $all_factors | tr _ ' ' )
+# Add uncategorized
+sep_factors+=" uncategorized"
 
 # Find all pure factors FCGRS of this species
 all_species_files=$( find files/FCGRs/$windows\_$n_samples\_$kmer/$species/*_pure_FCGRs.txt )
@@ -34,7 +36,7 @@ all_species_files=$( find files/FCGRs/$windows\_$n_samples\_$kmer/$species/*_pur
 for each_file in $all_species_files; do
     for each_factor in $sep_factors; do
         if [[ "$( get_factor $each_file )" == "$each_factor" ]]; then
-            all_actual_species+="lol_$each_factor "
+            all_actual_species+="$each_file "
         fi
     done
 done
@@ -54,7 +56,7 @@ all_comparison_files=$( find files/FCGRs/$windows\_$n_samples\_$kmer/$comparison
 for each_file in $all_comparison_files; do
     for each_factor in $sep_factors; do
         if [[ "$( get_factor $each_file )" == "$each_factor" ]]; then
-            all_comparison+="lol_$each_factor "
+            all_comparison+="$each_file "
         fi
     done
 done

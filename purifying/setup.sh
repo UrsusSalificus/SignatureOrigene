@@ -341,7 +341,7 @@ for each_species in $SPECIES; do
                     # Only fo this if it doesn't already exist (reverse order of species/comparison)
                     for each_comparison in $SPECIES; do
                         if [[ $each_comparison != $each_species ]] && \
-                            [[ ! -f files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_species\_vs_$each_comparison\_MDS_pairwise.png ]] ; then
+                            [[ ! -f files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_comparison\_vs_$each_species\_MDS_pairwise.png ]] ; then
                             snakemake $snakemake_arguments \
                             files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_species\_vs_$each_comparison\_MDS_pairwise.png
                         fi
