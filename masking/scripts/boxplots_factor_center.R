@@ -233,7 +233,7 @@ ggplot(dat,aes(x = factors, y = mean_dist, grp = merged)) +
   annotate('text', x = 1:nlevels(dat$factors), y = max_each_feature + to_add * 1.5, angle = 0, 
            label = groups, size = 6,  fontface="bold") +
   geom_boxplot(aes(fill = type), width = 0.2, outlier.colour = 'NA', position=position_dodge(0.9)) +
-  labs(title=plot_title, x ="Factors", y = "Distance to center") +
+  labs(title=plot_title, x ="Features", y = "Distance to center") +
   theme(
     plot.title = element_text(size = 18, face="bold"),
     axis.title.x = element_text(size = 18),
@@ -252,6 +252,6 @@ ggplot(dat,aes(x = factors, y = mean_dist, grp = merged)) +
   # Remove the fill legend
   guides(fill = FALSE) + 
   # Legend we want
-  guides(col = guide_legend(override.aes = list(alpha = 1), title = "Factor's state\nin the sequences")) +
+  guides(col = guide_legend(override.aes = list(alpha = 1), title = "Feature's state\nin the sequences")) +
   stat_summary(fun.data = give.n, geom = "text", position = position_dodge(width = 0.9))
 dev.off() 

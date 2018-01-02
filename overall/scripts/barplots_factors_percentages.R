@@ -108,6 +108,6 @@ ggplot(percentages, aes(x = species, y = perc, fill = factors, label = perc)) +
     legend.text = element_text(size=18),
     legend.key = element_blank()
   ) +
-  scale_fill_manual(name = 'Factors', values = all_colours, labels = factors_names) +
+  scale_fill_manual(name = 'Features', values = all_colours, labels = factors_names) +
   guides(fill = guide_legend(ncol = 1))
 dev.off() 

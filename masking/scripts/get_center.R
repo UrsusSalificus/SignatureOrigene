@@ -4,8 +4,6 @@
 # Copyright 2017 Titouan Laessle
 # License : MIT
 
-library(ggplot2)
-
 ### MultiDimensional Scaling (MDS) analysis of a distance matrix
 # Will input the arguments:
 # 1. path to the distance matrix

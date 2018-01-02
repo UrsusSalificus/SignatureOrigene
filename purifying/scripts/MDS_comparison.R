@@ -78,7 +78,7 @@ species_nice_names <- unname(sapply(levels(as.factor(species)), function (each) 
 }))
 
 plot_title <- paste('Distance between ', species_nice_names[1], '/', species_nice_names[2], 
-                    ' pure factor sequences,\nWith maximum ', sample_size, ' windows for each factor, kmer = ', 
+                    ' pure feature sequences,\nWith maximum ', sample_size, ' windows for each feature, kmer = ', 
                     kmer, ' and ', window_size, ' bp windows', sep = '')
 
 png(output, width=900, height=650, units="px")
@@ -99,7 +99,7 @@ ggplot(data, aes(x = MDS_1, y = MDS_2, shape = as.factor(species), fill = as.fac
     shape = guide_legend(override.aes = list(fill = 'black'))
   ) +
   scale_shape_manual(name = 'Species', values = c(21, 24), labels = species_nice_names) +
-  scale_fill_manual(name = 'Factors', values = all_colours, labels = factors_names)
+  scale_fill_manual(name = 'Features', values = all_colours, labels = factors_names)
 dev.off() 
 
 

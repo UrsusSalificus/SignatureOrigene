@@ -80,8 +80,8 @@ reduced_vis <- unname(sapply(factors, function (each_line) {
 data <- data.frame(MDS_1 = fit$points[,1], MDS_2 = fit$points[,2], factors = factors, reduced_vis = reduced_vis)
 
 plot_title <- paste(dict$true[dict$abbrev == species], 
-                    ': proximity between the whole genome and factor only sequences\nWith maximum ', 
-                    sample_size, ' windows for each factor, kmer = ', kmer, ' and ', window_size, ' bp windows ', sep = '')
+                    ': proximity between the whole genome and feature only sequences\nWith maximum ', 
+                    sample_size, ' windows for each feature, kmer = ', kmer, ' and ', window_size, ' bp windows ', sep = '')
 
 png(output, width=900, height=650, units="px")
 ggplot(data, aes(x = MDS_1, y = MDS_2, colour = as.factor(factors), alpha = reduced_vis)) + 
@@ -96,7 +96,7 @@ ggplot(data, aes(x = MDS_1, y = MDS_2, colour = as.factor(factors), alpha = redu
     legend.title = element_text(size=18, face = 'bold'),
     legend.text = element_text(size = 15)
   )+
-  scale_colour_manual(name = 'Factors', values = all_colours , 
+  scale_colour_manual(name = 'Features', values = all_colours , 
                       labels = c(levels(as.factor(factors))[-nlevels(as.factor(factors))], 'Whole genome')) +
   scale_alpha_discrete(range = c(1, 0.4), guide=FALSE)
 dev.off() 

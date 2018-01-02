@@ -4,5 +4,8 @@ Type their corresponding number as single block of numbers (eg. 124), then press
     1. MDS : MultiDimensional Scaling of the distance matrix, showing how does
         the different windows of pure factors approximately cluster together.
 
-    2. PC : Pairwise Comparison (NOT FINISHED)
+    2. PC : Pairwise Comparison, will also output a MDS, but it will now compare
+        pure factors sequences of two species.
+            WARNING: will try all combination of species selected in the next
+                question!
 
