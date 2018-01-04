@@ -20,7 +20,7 @@ dat <- read.table(args[1], sep='\t')
 resolution <- nrow(dat)
 
 # Plot without any border/axis
-jpeg(args[2], width=300, height=300, units="px")
+jpeg(args[2], width=500, height=500, units="px")
   plot(dat$V1, dat$V2, pch='.', xaxt='n', yaxt = 'n', ylab='', xlab='', bty='n')
   # Add the nucleotides at the corners
   if (corners == TRUE) {
