@@ -221,7 +221,7 @@ max_each_feature = sapply(split(dat$mean_dist, dat$factors), max)
 
 #### Plotting ####
 
-png(output, width=900, height=650, units="px")
+png(output, width=30, height=18, units="cm", res = 300)
 ggplot(dat,aes(x = factors, y = mean_dist, grp = merged)) + 
   # Invisible points -> enable us to control the color legend to have legend we want
   # Note the shape 15 -> square for square in legend...
@@ -233,9 +233,8 @@ ggplot(dat,aes(x = factors, y = mean_dist, grp = merged)) +
   annotate('text', x = 1:nlevels(dat$factors), y = max_each_feature + to_add * 1.5, angle = 0, 
            label = groups, size = 6,  fontface="bold") +
   geom_boxplot(aes(fill = type), width = 0.2, outlier.colour = 'NA', position=position_dodge(0.9)) +
-  labs(title=plot_title, x ="Features", y = "Distance to center") +
-  theme(
-    plot.title = element_text(size = 18, face="bold"),
+  labs(x ="Features", y = "Distance to center") +
+  theme(    
     axis.title.x = element_text(size = 18),
     axis.text.x  = element_text(size = 15, angle = 90, hjust = 1),
     axis.title.y = element_text(size = 18),

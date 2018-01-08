@@ -81,12 +81,11 @@ plot_title <- paste('Distance between ', species_nice_names[1], '/', species_nic
                     ' pure feature sequences,\nWith maximum ', sample_size, ' windows for each feature, kmer = ', 
                     kmer, ' and ', window_size, ' bp windows', sep = '')
 
-png(output, width=900, height=650, units="px")
+png(output, width=30, height=18, units="cm", res = 300)
 ggplot(data, aes(x = MDS_1, y = MDS_2, shape = as.factor(species), fill = as.factor(factors))) + 
   geom_point(size = 2, alpha = 1) +
-  labs(title=plot_title, x ="Coordinate 1", y = "Coordinate 2") +
+  labs(x ="Coordinate 1", y = "Coordinate 2") +
   theme(
-    plot.title = element_text(size = 20, face="bold"),
     axis.title.x = element_text(size = 18),
     axis.text.x  = element_text(size = 15),
     axis.title.y = element_text(size = 18),
@@ -95,7 +94,7 @@ ggplot(data, aes(x = MDS_1, y = MDS_2, shape = as.factor(species), fill = as.fac
     legend.text = element_text(size = 15)
   ) +
   guides(
-    fill = guide_legend(override.aes = list(shape = 21)),
+    fill = guide_legend(ncol = 1, override.aes = list(shape = 21)),
     shape = guide_legend(override.aes = list(fill = 'black'))
   ) +
   scale_shape_manual(name = 'Species', values = c(21, 24), labels = species_nice_names) +

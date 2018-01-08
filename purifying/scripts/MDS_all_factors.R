@@ -83,22 +83,24 @@ plot_title <- paste(dict$true[dict$abbrev == species],
                     ': proximity between the whole genome and feature only sequences\nWith maximum ', 
                     sample_size, ' windows for each feature, kmer = ', kmer, ' and ', window_size, ' bp windows ', sep = '')
 
-png(output, width=900, height=650, units="px")
+png(output, width=30, height=18, units="cm", res = 300)
 ggplot(data, aes(x = MDS_1, y = MDS_2, colour = as.factor(factors), alpha = reduced_vis)) + 
   geom_point(size = 2) +
-  labs(title=plot_title, x ="Coordinate 1", y = "Coordinate 2") +
+  labs(x ="Coordinate 1", y = "Coordinate 2") +
   theme(
-    plot.title = element_text(size = 20, face="bold"),
     axis.title.x = element_text(size = 18),
     axis.text.x  = element_text(size = 15),
     axis.title.y = element_text(size = 18),
     axis.text.y  = element_text(size = 15),
     legend.title = element_text(size=18, face = 'bold'),
     legend.text = element_text(size = 15)
-  )+
-  scale_colour_manual(name = 'Features', values = all_colours , 
+  ) +
+  scale_colour_manual(name = 'Features', values = all_colours,
                       labels = c(levels(as.factor(factors))[-nlevels(as.factor(factors))], 'Whole genome')) +
-  scale_alpha_discrete(range = c(1, 0.4), guide=FALSE)
+  scale_alpha_discrete(range = c(1, 0.4), guide=FALSE) + 
+  guides(
+    colour = guide_legend(ncol = 1)
+  )
 dev.off() 
 
 
