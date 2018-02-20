@@ -21,10 +21,8 @@ check_parent $output_table
 # Using accession script to find the right accession
 accession=$( bash ../input/accessions.sh $species )
 
-# Will cut the accession in array delimited by '/'
-IFS='/' read -r -a array <<< $accession
-# The 9th element contains the file "name", which we use to extract the files we need
-feature_table=$( echo ${array[9]}'_feature_table.txt.gz' )
+# The 10th element contains the file "name", which we use to extract the files we need
+feature_table=$( echo $accession | cut -f 10 -d '/')'_feature_table.txt.gz'
 
 wget $accession$feature_table
 gunzip < $feature_table > $output_table

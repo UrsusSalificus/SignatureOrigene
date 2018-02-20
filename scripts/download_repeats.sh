@@ -24,11 +24,9 @@ fi
 # Using accession script to find the right accession
 accession=$( bash ../input/accessions.sh $species )
 
-# Will cut the accession in array delimited by '/'
-IFS='/' read -r -a array <<< $accession
-# The 9th element contains the file "name", which we use to extract the files we need
+# The 10th element contains the file "name", which we use to extract the files we need
 if [ $species != e_coli ]; then
-    repeats=$( echo ${array[9]}'_rm.out.gz' )
+    repeats=$(echo $accession | cut -f 10 -d '/')'_rm.out.gz'
 fi
 
 if [ $species != e_coli ]; then
