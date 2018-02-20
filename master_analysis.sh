@@ -144,8 +144,22 @@ cd ..
 
 
 
-### Third part: the human/mouse comparison ###
+### Third part: percentages of all the features ###
 
+# Specific inputs
+each_figure="percentages"
+
+cd overall
+
+snakemake files/results/$each_window/percentages_all_species.png
+
+cd ..
+
+
+
+### Fourth part: the human/mouse comparison ###
+
+# Specific inputs
 SPECIES="h_sapiens m_musculus"
 
 cd purifying
@@ -165,8 +179,9 @@ done
 
 
 
-### Fourth part: the human/mouse comparison but without tandem and LCR ###
+### Fifth part: the human/mouse comparison but without tandem and LCR ###
 
+# Specific inputs
 all_factors="CDS_intron_UTR_RNA_TE"
 
 # Again, all the FCGRs are already computed, the difference resides in what to concatenates ($all_factors)
