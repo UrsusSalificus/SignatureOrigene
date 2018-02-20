@@ -21,10 +21,8 @@ check_parent $output_genome
 # Using accession script to find the right accession
 accession=$( bash ../input/accessions.sh $species )
 
-# Will cut the accession in array delimited by '/'
-IFS='/' read -r -a array <<< $accession
-# The 9th element contains the file "name", which we use to extract the files we need
-whole_genome=$( echo ${array[9]}'_genomic.fna.gz' )
+# The 10th element contains the file "name", which we use to extract the files we need
+whole_genome=$(echo $accession | cut -f 10 -d '/')'_genomic.fna.gz'
 
 wget $accession$whole_genome
 gunzip < $whole_genome > $output_genome
