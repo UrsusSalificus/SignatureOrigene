@@ -107,36 +107,8 @@ rule filter_factors:
 ### Part A)
 ################################################################################
 
-rule extract_overlaps:
-    output:
-        "files/overlaps/{windows}/overlap_percentages.txt"
-    threads:
-        99
-    shell:
-        "python3 scripts/extract_overlap_factors.py {wildcards.windows} \
-        {threads} {output}"
-
-rule barplot_overlap:
-    input:
-        "files/overlaps/{windows}/overlap_percentages.txt"
-    output:
-        "files/results/{windows}/overlap_all_species.png"
-    shell:
-        "Rscript scripts/barplots_factors_overlaps.R {input} {output}"
-
-rule extract_percentages:
-    output:
-        "files/overlaps/{windows}/factor_percentages.txt"
-    threads:
-        99
-    shell:
-        "python3 scripts/extract_overall_factors_percentages.py \
-        {wildcards.windows} {output}"
-
 rule barplot_percentages:
-    input:
-        "files/overlaps/{windows}/factor_percentages.txt"
     output:
         "files/results/{windows}/percentages_all_species.png"
     shell:
-        "Rscript scripts/barplots_factors_percentages.R {input} {output}"
+        "Rscript scripts/barplots_factors_percentages.R {output} {wildcards.windows}"

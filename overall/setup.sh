@@ -40,26 +40,6 @@ echo "
 ########### SOURCING THE CHOOSING FUNCTIONS ###########
 source ../scripts/setup_functions.sh
 
-########### FIGURES ###########
-title="config/temp/title.txt"
-cat << "EOF" > $title
- _______ __
-|    ___|__|.-----.--.--.----.-----.-----.
-|    ___|  ||  _  |  |  |   _|  -__|__ --|
-|___|   |__||___  |_____|__| |_____|_____|
-            |_____|
-
-EOF
-intro="Please chose among the following list which figures should be included in the analysis."
-table="../input/overall_specific/table_figures.txt"
-choice=fixed
-good_inputs="../input/overall_specific/good_figures.txt"
-abbrev="../input/overall_specific/abbrev_figures.txt"
-out_dir="config/figures/"
-nice="../input/overall_specific/all_figures.txt"
-
-confirm
-
 
 
 ########### SPECIES ###########
@@ -172,8 +152,6 @@ cd ../windows
 WINDOWS=$( find * )
 cd ../factors
 FACTORS=$( find * )
-cd ../figures
-FIGURES=$( find * )
 cd ../..
 
 # Remember where we are :
@@ -203,7 +181,5 @@ done
 
 # Second part will extract and plot the various percentages
 for each_window in $WINDOWS; do
-    for each_figure in $FIGURES; do
-        snakemake $snakemake_arguments files/results/$each_window/$each_figure\_all_species.png
-    done
+    snakemake $snakemake_arguments files/results/$each_window/percentages_all_species.png
 done

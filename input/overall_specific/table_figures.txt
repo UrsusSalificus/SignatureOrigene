@@ -1,8 +1,0 @@
-Type their corresponding number as single block of numbers (eg. 124), then press
-[ENTER]:
-
-    1. Overlap : Barplot of cumulative percentage of nucleotide which overlap
-        between factors
-
-    2. Percentages : Barplot of percentage of the whole genome which is occupied
-        by each factor
