@@ -4,6 +4,12 @@ This project is the result of my Master project in MLS Bioinformatic at Lausanne
 [group of Marc Robinson-Rechavi](https://www.unil.ch/dee/robinson-rechavi-group), 
 and under the supervision of [Kamil Jaron](https://github.com/KamilSJaron).
 
+To perform the whole analysis as it was performed for the master thesis, one can simply run the 
+`master_analysis.sh` script on the root of this repository.  
+&#9888; **THIS MAY TAKE SEVERAL HOURS TO COMPLETE** &#9888;  
+To speed up the analysis multiple cores may be allocated, using the following syntax (for 2 cores):  
+`bash master_analysis.sh --cores 2`
+
 ### Description of the project
 The project is very briefly presented in the wiki page [The project](https://github.com/UrsusSalificus/SignatureOrigene/wiki/The-project) 
 The rest of the [wiki](https://github.com/UrsusSalificus/SignatureOrigene/wiki) also contain some useful information

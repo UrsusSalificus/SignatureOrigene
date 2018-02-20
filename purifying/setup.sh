@@ -327,26 +327,27 @@ done
 
 # C) Figures: varies in between figure type:
 for each_species in $SPECIES; do
-    # Launching the whole Snakemake cascade
-    for each_window in $WINDOWS; do
-        for each_kmer in $KMER; do
-            for each_figure in $FIGURES; do
-                if [[ $each_figure == 'MDS' ]] ; then
-                    # From the concatenated FCGRs of all factors in each species, to the MDS these factors
-                    # (concatenating FCGRs of factor + whole -> distance matrix -> fitting -> MDS)
-                    snakemake $snakemake_arguments \
-                        files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_species\_MDS_all_factors.png
-                elif [[ $each_figure == 'PC' ]] ; then
-                    # Comparing the concatenated FCGRs of all factors between species
-                    # Only fo this if it doesn't already exist (reverse order of species/comparison)
-                    for each_comparison in $SPECIES; do
-                        if [[ $each_comparison != $each_species ]] && \
-                            [[ ! -f files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_comparison\_vs_$each_species\_MDS_pairwise.png ]] ; then
-                            snakemake $snakemake_arguments \
-                            files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_species\_vs_$each_comparison\_MDS_pairwise.png
-                        fi
-                    done
-                fi
+    for each_sample in $SAMPLES; do
+        for each_window in $WINDOWS; do
+            for each_kmer in $KMER; do
+                for each_figure in $FIGURES; do
+                    if [[ $each_figure == 'MDS' ]] ; then
+                        # From the concatenated FCGRs of all factors in each species, to the MDS these factors
+                        # (concatenating FCGRs of factor + whole -> distance matrix -> fitting -> MDS)
+                        snakemake $snakemake_arguments \
+                            files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_species\_MDS_all_factors.png
+                    elif [[ $each_figure == 'PC' ]] ; then
+                        # Comparing the concatenated FCGRs of all factors between species
+                        # Only fo this if it doesn't already exist (reverse order of species/comparison)
+                        for each_comparison in $SPECIES; do
+                            if [[ $each_comparison != $each_species ]] && \
+                                [[ ! -f files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_comparison\_vs_$each_species\_MDS_pairwise.png ]] ; then
+                                snakemake $snakemake_arguments \
+                                files/results/$each_window\_$each_sample\_$each_kmer/$all_factors/$each_species\_vs_$each_comparison\_MDS_pairwise.png
+                            fi
+                        done
+                    fi
+                done
             done
         done
     done
